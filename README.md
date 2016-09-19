@@ -11,10 +11,10 @@
 
 Project Code | Description | Status
 --- | --- | ---
-101-adol | Another day of Life | [x] Active
-135-pf | Piszkos Fred | [x] Active
-144-kpr | Kinder Pingui Raspberry | [x] Active
-145 bb | Blade Bound | [x] Active
+101-adol | Another day of Life | Active
+135-pf | Piszkos Fred | Active
+144-kpr | Kinder Pingui Raspberry | Active
+145 bb | Blade Bound | Active
 
 
 
