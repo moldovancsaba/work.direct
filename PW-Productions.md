@@ -6,12 +6,23 @@ Puppetworks \> [PM Space](README.md) (20160919)
 ## Active Products
 ---
 
-Project Code | Description
---- | ---
-101-adol | Another day of Life
-135-pf | Piszkos Fred
-144-kpr | Kinder Pingui Raspberry
-145 bb | Blade Bound
+\# | ID | Name | Type
+--- | --- | --- | ---
+101 | adol | Another day of Life | Feature Movie
+135 | pf | Piszkos Fred | Feature Movie
+138 | cs | Cairo's Tale Series | Series
+141 | lm | Lords Mobile | Game Trailer
+144 | kpr | Kinder Pingui Raspberry | Series
+145 | bb | Blade Bound | Game Trailer
+146 | px | Phoenix - Kingdom Trailer | Game Trailer
 
+## Archived Products
 ---
-[PM Space](README.md)
+
+\# | ID | Name | Type
+--- | --- | --- | ---
+133	| sgw |	Dog Animation Test | Game Anim
+131	| panchinko | Mortal Combat - Pachinko | Game Concept
+132	| ff | Final Fantasy | Feature Movie
+121 | ctt | Cairo's Tale Trailer | Game Trailer
+126 | tl | Torchlight Trailer | Game Trailer
