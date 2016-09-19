@@ -7,8 +7,8 @@ Puppetworks \> [PM Space](README.md) (20160919)
 ## Support your daily tasks
 ---
 - [General Documentation](General-Documentation.md)
-- [PM Daily Routin](Daily-Routine.md)
-- [Active Products](PW-Productions.md)
+- [Daily Routin](Daily-Routine.md)
+- [PW Products](PW-Productions.md)
 
 ## Members
 ---
