@@ -5,3 +5,5 @@
 - Bernadett Madudák
 - Edina Schmidt
 - Csaba Moldovan
+
+[Confluence](https://superfast.atlassian.net/wiki/spaces/PM)
