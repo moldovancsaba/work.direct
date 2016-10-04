@@ -7,5 +7,6 @@
 + Csaba Moldovan
 
 [Confluence](https://superfast.atlassian.net/wiki/spaces/PM)
+[Jira](https://superfast.atlassian.net)
 
 [Projects](https://superfast.atlassian.net/wiki/display/PM/Projects)
