@@ -7,3 +7,5 @@ Ide be kellene talán húzni a confluence backup-ot
 kell macdown
 kell github
 gyakorolni kell
+
+[README](README.md)

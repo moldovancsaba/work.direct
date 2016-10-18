@@ -12,3 +12,5 @@
 [Jira](https://superfast.atlassian.net)
 
 [Projects](https://superfast.atlassian.net/wiki/display/PM/Projects)
+
+[notes](notes.md)
