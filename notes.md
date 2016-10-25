@@ -1,11 +1,9 @@
-Resource management
-Wiki hosszútávú megoldás
-Ide be kellene talán húzni a confluence backup-ot
-#3 Markdown itt is működik? és az ékezetek?? őőőőő ez jó kérdés
+##Where the notes collected
 
 
-kell macdown
-kell github
-gyakorolni kell
+- macdown
+- github
+- rocket.chat vs. slack
+- confluence
 
 [README](README.md)
