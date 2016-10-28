@@ -5,5 +5,6 @@
 - github
 - rocket.chat vs. slack
 - confluence
+- facebook for workplace
 
 [README](README.md)
