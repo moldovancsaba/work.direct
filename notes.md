@@ -3,7 +3,10 @@
 
 - macdown
 - github
-- rocket.chat vs. slack
+- slack
 - confluence
+- jira
+
 
 [README](README.md)
+
