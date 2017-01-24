@@ -5,7 +5,7 @@
 - slack
 - confluence
 - jira
-- facebook for workplace
+- facebook for workplace - :)
 
 
 [README](README.md)
