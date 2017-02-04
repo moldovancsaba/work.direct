@@ -5,6 +5,7 @@
 - slack
 - confluence
 - jira
+- affinity design
 - facebook for workplace - :)
 
 
