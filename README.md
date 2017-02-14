@@ -1,6 +1,7 @@
 [notes](notes.md)
 
 Moldován Csaba - egyéni vállalkozó adatai
+
 Nyilvántartási szám:         50879292
 Adószám:                     67870116143
 KSH szám:                    67870116702223101
