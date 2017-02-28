@@ -2,6 +2,9 @@
 
 *egyéni vállalkozó adatai*
 
+Be kell jelenteni az új bankszámlaszámot
+
+
 Nyilvántartási szám:
 50879292
 
