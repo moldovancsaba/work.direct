@@ -2,8 +2,8 @@
 
 *egyéni vállalkozó adatai*
 
-Be kell jelenteni az új bankszámlaszámot
-
+Budapest Bank
+Account: HU20 - 10101559-13428600-01004009
 
 Nyilvántartási szám:
 50879292
