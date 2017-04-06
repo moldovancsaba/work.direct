@@ -31,3 +31,6 @@ Tevékenység(ek):
 900307 - Műfordítás
 900305 - Független újságírói tevékenység
 743002 - Nyelvi lektorálás
+
+
+Whatever
