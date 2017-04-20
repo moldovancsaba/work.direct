@@ -6,6 +6,9 @@
 - confluence
 - jira
 - affinity design
+- paper by dropbox
+- dropbox
+- google drive
 - facebook for workplace - :)
 
 
