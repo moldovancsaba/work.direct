@@ -1,6 +1,6 @@
 [notes](notes.md)
 
-*egyéni vállalkozó adatai*
+Contractor Information
 
 Budapest Bank
 Account: HU20 - 10101559-13428600-01004009
@@ -11,14 +11,11 @@ Nyilvántartási szám:
 Adószám:
 67870116143
 
-
 KSH szám:
 67870116702223101
 
-
 Székhely:
 1122 BUDAPEST XII. kerület HAJNÓCZY JÓZSEF UTCA 17. 3. emelet 8. ajtó
-
 
 Főtevékenység:
 702201 - Általános üzletviteli tanácsadás
@@ -31,6 +28,3 @@ Tevékenység(ek):
 900307 - Műfordítás
 900305 - Független újságírói tevékenység
 743002 - Nyelvi lektorálás
-
-
-Whatever
