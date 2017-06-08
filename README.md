@@ -10,7 +10,6 @@
 - paper by dropbox
 - dropbox
 - canva
-- autodraw
 - google drive
 - facebook for workplace :)
 
