@@ -1,6 +1,5 @@
 [notes](notes.md)
 
-personal data
 
 Moldován Csaba - egyéni vállalkozó adatai
 Nyilvántartási szám:         50879292
