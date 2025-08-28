@@ -284,10 +284,10 @@ function WheelSegmentComponent({
     'Z'
   ].join(' ')
   
-  // Calculate text position
+  // Calculate text position - center it in the middle of the segment
   const textAngle = (startAngle + endAngle) / 2
   const textAngleRad = (textAngle * Math.PI) / 180
-  const textRadius = radius * 0.75
+  const textRadius = radius * 0.65 // Move text closer to center for better readability
   const textX = centerX + textRadius * Math.cos(textAngleRad)
   const textY = centerY + textRadius * Math.sin(textAngleRad)
   
@@ -308,14 +308,14 @@ function WheelSegmentComponent({
         y={textY}
         textAnchor="middle"
         dominantBaseline="central"
-        fontSize={Math.min(12, radius / 10)}
+        fontSize={Math.min(14, radius / 8)} // Slightly larger text
         fontWeight="bold"
         fill="#ffffff"
         stroke="#000000"
-        strokeWidth={0.5}
-        transform={`rotate(${textAngle + 90} ${textX} ${textY})`}
+        strokeWidth={0.8}
+        transform={`rotate(${textAngle > 90 && textAngle < 270 ? textAngle - 90 : textAngle + 90} ${textX} ${textY})`}
       >
-        {segment.label.length > 15 ? segment.label.substring(0, 12) + '...' : segment.label}
+        {segment.label.length > 12 ? segment.label.substring(0, 10) + '...' : segment.label}
       </text>
     </g>
   )

@@ -306,8 +306,15 @@ export async function POST(
     }
     
     // Determine if participant can play again
+    // Calculate actual attempts for this specific game
+    const currentGameAttempts = await GameResultModel.countDocuments({
+      gameId: game._id,
+      participantId: participant._id,
+      isValidated: true
+    })
+    
     const remainingAttempts = game.configuration.allowMultipleAttempts ? 
-      Math.max(0, game.configuration.maxAttemptsPerUser - (participant.totalGamesPlayed)) : 0
+      Math.max(0, game.configuration.maxAttemptsPerUser - currentGameAttempts) : 0
     const canPlayAgain = remainingAttempts > 0 && isPlayable
     
     // Prepare response
