@@ -137,12 +137,15 @@ export default function AdminPage() {
             </div>
             
             <div className="flex space-x-4 justify-center">
-              <a
-                href={gameUrl}
+              <button
+                onClick={() => {
+                  const fullUrl = `${window.location.origin}${gameUrl}`
+                  window.open(fullUrl, '_blank')
+                }}
                 className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
               >
                 Play Game
-              </a>
+              </button>
               <button
                 onClick={() => {
                   setCreatedGame(null)
