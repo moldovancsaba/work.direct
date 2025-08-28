@@ -217,12 +217,15 @@ export async function POST(
     }
     
     // Determine outcome type and rewards
+    // A segment is considered a win if it has a rewardId OR if its value is not 'try-again'
+    const isWinningSegment = wheelResult.rewardId || (wheelResult.value !== 'try-again' && wheelResult.label !== 'Try Again')
+    
     const outcome: GameOutcome = {
-      type: wheelResult.rewardId ? 'WIN' : 'NO_REWARD',
+      type: isWinningSegment ? 'WIN' : 'NO_REWARD',
       segmentId: wheelResult.id,
       value: wheelResult.value,
       rewardIds: wheelResult.rewardId ? [wheelResult.rewardId] : [],
-      message: wheelResult.rewardId ? 
+      message: isWinningSegment ? 
         `Congratulations! You won: ${wheelResult.label}` : 
         `You landed on: ${wheelResult.label}. Better luck next time!`
     }

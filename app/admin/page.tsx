@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { WheelSegment, CreateGameRequest } from '../types'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -136,7 +137,7 @@ export default function AdminPage() {
               </div>
             </div>
             
-            <div className="flex space-x-4 justify-center">
+            <div className="flex flex-wrap justify-center gap-4">
               <button
                 onClick={() => {
                   const fullUrl = `${window.location.origin}${gameUrl}`
@@ -157,6 +158,12 @@ export default function AdminPage() {
               >
                 Create Another
               </button>
+              <Link
+                href="/admin/games"
+                className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors font-medium"
+              >
+                Manage Games
+              </Link>
             </div>
           </div>
         </div>

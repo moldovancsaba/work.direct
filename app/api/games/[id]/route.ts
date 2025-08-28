@@ -243,6 +243,87 @@ export async function PUT(
   }
 }
 
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+): Promise<NextResponse<ApiResponse>> {
+  try {
+    // Connect to database
+    await connectDB()
+    
+    // Await params
+    const { id } = await params
+    
+    // Validate game ID format
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({
+        success: false,
+        message: 'Invalid game ID format',
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Game ID must be a valid MongoDB ObjectId'
+        }
+      }, { status: 400 })
+    }
+    
+    // Parse request body for partial updates
+    const patchData = await request.json()
+    
+    // Find existing game
+    const existingGame = await GameModel.findById(id)
+    
+    if (!existingGame) {
+      return NextResponse.json({
+        success: false,
+        message: 'Game not found',
+        error: {
+          code: 'NOT_FOUND',
+          message: `No game found with ID: ${id}`
+        }
+      }, { status: 404 })
+    }
+    
+    // Update the game with partial data
+    const updatedGame = await GameModel.findByIdAndUpdate(
+      id,
+      { $set: patchData },
+      { 
+        new: true, // Return updated document
+        runValidators: true // Run mongoose validations
+      }
+    )
+    
+    if (!updatedGame) {
+      return NextResponse.json({
+        success: false,
+        message: 'Failed to update game',
+        error: {
+          code: 'UPDATE_FAILED',
+          message: 'Game update operation failed'
+        }
+      }, { status: 500 })
+    }
+    
+    return NextResponse.json({
+      success: true,
+      data: updatedGame,
+      message: 'Game updated successfully'
+    })
+    
+  } catch (error) {
+    console.error('Patch game error:', error)
+    
+    return NextResponse.json({
+      success: false,
+      message: 'Failed to update game',
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: error instanceof Error ? error.message : 'Unknown error occurred'
+      }
+    }, { status: 500 })
+  }
+}
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -350,7 +431,7 @@ export async function OPTIONS(request: NextRequest): Promise<NextResponse> {
     status: 200,
     headers: {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, PUT, PATCH, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       'Access-Control-Max-Age': '86400'
     }
