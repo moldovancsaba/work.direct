@@ -199,25 +199,8 @@ export async function POST(
       }
     }
     
-    // Anti-cheat: Check for suspicious rapid-fire attempts
-    const recentAttempts = await GameResultModel.countDocuments({
-      ipAddress: clientIP,
-      gameId: game._id,
-      playedAt: {
-        $gte: new Date(Date.now() - 60 * 1000) // Last minute
-      }
-    })
-    
-    if (recentAttempts >= 3) {
-      return NextResponse.json({
-        success: false,
-        message: 'Too many attempts from your location. Please wait before trying again.',
-        error: {
-          code: 'RATE_LIMIT_EXCEEDED',
-          message: 'Anti-cheat protection activated'
-        }
-      }, { status: 429 })
-    }
+    // Note: IP-based rate limiting removed to support hostess/event use cases
+    // where multiple participants may play from the same location
     
     // Calculate Lucky Wheel result using probability-based selection
     const wheelResult = calculateWheelResult(game.configuration.wheel.segments)
