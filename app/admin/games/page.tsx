@@ -62,7 +62,7 @@ export default function GamesManagementPage() {
       }
       
       // Remove from local state
-      setGames(games.filter(game => game._id !== gameId))
+      setGames(games.filter(game => game._id.toString() !== gameId))
       setDeleteConfirm(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete game')
@@ -94,7 +94,7 @@ export default function GamesManagementPage() {
       
       // Update local state
       setGames(games.map(game => 
-        game._id === gameId ? { ...game, status: newStatus } : game
+        game._id.toString() === gameId ? { ...game, status: newStatus } : game
       ))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update game status')
@@ -231,7 +231,7 @@ export default function GamesManagementPage() {
                     {/* Status */}
                     <div className="col-span-2">
                       <button
-                        onClick={() => toggleGameStatus(game._id, game.status)}
+                        onClick={() => toggleGameStatus(game._id.toString(), game.status)}
                         className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(game.status)} hover:opacity-80 transition-opacity`}
                       >
                         <div className={`w-2 h-2 rounded-full mr-2 ${game.status === 'ACTIVE' ? 'bg-green-500' : 'bg-gray-500'}`}></div>
@@ -296,19 +296,19 @@ export default function GamesManagementPage() {
 
                         {/* Delete Game */}
                         <button
-                          onClick={() => handleDelete(game._id)}
-                          disabled={deleting === game._id}
+                          onClick={() => handleDelete(game._id.toString())}
+                          disabled={deleting === game._id.toString()}
                           className={`text-sm font-medium ${
-                            deleteConfirm === game._id
+                            deleteConfirm === game._id.toString()
                               ? 'text-red-600 hover:text-red-800'
                               : 'text-gray-400 hover:text-red-600'
                           }`}
-                          title={deleteConfirm === game._id ? "Click again to confirm" : "Delete Game"}
+                          title={deleteConfirm === game._id.toString() ? "Click again to confirm" : "Delete Game"}
                         >
-                          {deleting === game._id ? (
+                          {deleting === game._id.toString() ? (
                             <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
                           ) : (
-                            deleteConfirm === game._id ? '✅' : '🗑️'
+                            deleteConfirm === game._id.toString() ? '✅' : '🗑️'
                           )}
                         </button>
                       </div>
