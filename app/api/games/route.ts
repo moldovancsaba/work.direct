@@ -1,0 +1,321 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { connectDB } from '../../lib/mongodb'
+import GameModel from '../../lib/models/Game'
+import { ApiResponse, CreateGameRequest, GameFilters } from '../../types'
+import { v4 as uuidv4 } from 'uuid'
+
+/**
+ * Games API Route Handler
+ * 
+ * This endpoint handles CRUD operations for games:
+ * - POST: Create new Lucky Wheel games
+ * - GET: Retrieve games with filtering and pagination
+ * 
+ * Used by admin interfaces for game management and public interfaces for game discovery
+ */
+
+export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse>> {
+  try {
+    // Connect to database
+    await connectDB()
+    
+    // Parse request body
+    const gameData: CreateGameRequest = await request.json()
+    
+    // Validate required fields
+    if (!gameData.title || !gameData.type || !gameData.createdBy) {
+      return NextResponse.json({
+        success: false,
+        message: 'Missing required fields: title, type, and createdBy are required',
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid game data provided'
+        }
+      }, { status: 400 })
+    }
+    
+    // Validate Lucky Wheel specific configuration
+    if (gameData.type === 'LUCKY_WHEEL') {
+      if (!gameData.configuration.wheel?.segments || gameData.configuration.wheel.segments.length === 0) {
+        return NextResponse.json({
+          success: false,
+          message: 'Lucky Wheel games must have at least one wheel segment',
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Invalid wheel configuration'
+          }
+        }, { status: 400 })
+      }
+      
+      // Validate probability total
+      const totalProbability = gameData.configuration.wheel.segments.reduce(
+        (sum, segment) => sum + segment.probability, 
+        0
+      )
+      
+      if (Math.abs(totalProbability - 100) > 0.01) {
+        return NextResponse.json({
+          success: false,
+          message: 'Wheel segment probabilities must add up to 100%',
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: `Current total probability: ${totalProbability}%`
+          }
+        }, { status: 400 })
+      }
+      
+      // Ensure each segment has a unique ID
+      const segmentIds = gameData.configuration.wheel.segments.map(s => s.id)
+      const uniqueSegmentIds = new Set(segmentIds)
+      if (segmentIds.length !== uniqueSegmentIds.size) {
+        return NextResponse.json({
+          success: false,
+          message: 'All wheel segments must have unique IDs',
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Duplicate segment IDs found'
+          }
+        }, { status: 400 })
+      }
+      
+      // Generate unique IDs for segments that don't have them
+      gameData.configuration.wheel.segments.forEach(segment => {
+        if (!segment.id) {
+          segment.id = uuidv4()
+        }
+      })
+    }
+    
+    // Create new game document
+    const game = new GameModel({
+      ...gameData,
+      // Set default configuration values
+      configuration: {
+        ...gameData.configuration,
+        allowMultipleAttempts: gameData.configuration.allowMultipleAttempts ?? true,
+        maxAttemptsPerUser: gameData.configuration.maxAttemptsPerUser ?? 1,
+        requireRegistration: gameData.configuration.requireRegistration ?? false,
+        showResults: gameData.configuration.showResults ?? true
+      },
+      // Initialize tracking fields
+      totalParticipants: 0,
+      totalPlays: 0,
+      shareLinks: [],
+      // Set default visibility
+      isPublic: gameData.isPublic ?? false
+    })
+    
+    // Save to database
+    const savedGame = await game.save()
+    
+    // Return success response
+    return NextResponse.json({
+      success: true,
+      data: savedGame,
+      message: 'Game created successfully'
+    }, { status: 201 })
+    
+  } catch (error) {
+    console.error('Create game error:', error)
+    
+    // Handle validation errors
+    if (error instanceof Error && error.name === 'ValidationError') {
+      return NextResponse.json({
+        success: false,
+        message: 'Game validation failed',
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: error.message
+        }
+      }, { status: 400 })
+    }
+    
+    // Handle duplicate key errors
+    if (error instanceof Error && 'code' in error && error.code === 11000) {
+      return NextResponse.json({
+        success: false,
+        message: 'Game with this configuration already exists',
+        error: {
+          code: 'DUPLICATE_ERROR',
+          message: 'Duplicate game data'
+        }
+      }, { status: 409 })
+    }
+    
+    // Handle general errors
+    return NextResponse.json({
+      success: false,
+      message: 'Failed to create game',
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: error instanceof Error ? error.message : 'Unknown error occurred'
+      }
+    }, { status: 500 })
+  }
+}
+
+export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse>> {
+  try {
+    // Connect to database
+    await connectDB()
+    
+    // Parse query parameters
+    const { searchParams } = new URL(request.url)
+    
+    // Pagination parameters
+    const page = parseInt(searchParams.get('page') || '1')
+    const limit = Math.min(parseInt(searchParams.get('limit') || '10'), 50) // Cap at 50
+    const skip = (page - 1) * limit
+    
+    // Filter parameters
+    const filters: GameFilters = {}
+    
+    // Status filter
+    const statusParam = searchParams.get('status')
+    if (statusParam) {
+      filters.status = statusParam.split(',') as any
+    }
+    
+    // Type filter
+    const typeParam = searchParams.get('type')
+    if (typeParam) {
+      filters.type = typeParam.split(',') as any
+    }
+    
+    // Creator filter
+    const createdBy = searchParams.get('createdBy')
+    if (createdBy) {
+      filters.createdBy = createdBy
+    }
+    
+    // Public games filter
+    const isPublic = searchParams.get('isPublic')
+    if (isPublic) {
+      filters.isPublic = isPublic.toLowerCase() === 'true'
+    }
+    
+    // Date range filters
+    const startDate = searchParams.get('startDate')
+    const endDate = searchParams.get('endDate')
+    if (startDate) {
+      filters.startDate = new Date(startDate)
+    }
+    if (endDate) {
+      filters.endDate = new Date(endDate)
+    }
+    
+    // Search text parameter
+    const searchText = searchParams.get('search')
+    
+    // Build MongoDB query
+    const query: any = {}
+    
+    // Apply filters
+    if (filters.status) {
+      query.status = { $in: filters.status }
+    }
+    
+    if (filters.type) {
+      query.type = { $in: filters.type }
+    }
+    
+    if (filters.createdBy) {
+      query.createdBy = filters.createdBy
+    }
+    
+    if (filters.isPublic !== undefined) {
+      query.isPublic = filters.isPublic
+    }
+    
+    // Date range query
+    if (filters.startDate || filters.endDate) {
+      query.createdAt = {}
+      if (filters.startDate) {
+        query.createdAt.$gte = filters.startDate
+      }
+      if (filters.endDate) {
+        query.createdAt.$lte = filters.endDate
+      }
+    }
+    
+    // Text search query
+    if (searchText) {
+      query.$text = { $search: searchText }
+    }
+    
+    // Execute query with pagination
+    const gamesPromise = GameModel.find(query)
+      .sort(searchText ? { score: { $meta: 'textScore' } } : { createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate('targetGroups', 'name memberCount')
+      .exec()
+    
+    const countPromise = GameModel.countDocuments(query)
+    
+    // Execute both queries in parallel
+    const [games, totalCount] = await Promise.all([gamesPromise, countPromise])
+    
+    // Calculate pagination metadata
+    const totalPages = Math.ceil(totalCount / limit)
+    const hasNextPage = page < totalPages
+    const hasPrevPage = page > 1
+    
+    // Return paginated response
+    return NextResponse.json({
+      success: true,
+      data: games,
+      message: `Retrieved ${games.length} games`,
+      pagination: {
+        page,
+        limit,
+        total: totalCount,
+        totalPages,
+        hasNextPage,
+        hasPrevPage
+      }
+    })
+    
+  } catch (error) {
+    console.error('Get games error:', error)
+    
+    // Handle invalid date errors
+    if (error instanceof Error && error.message.includes('Invalid Date')) {
+      return NextResponse.json({
+        success: false,
+        message: 'Invalid date format provided',
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Please use ISO date format (YYYY-MM-DD)'
+        }
+      }, { status: 400 })
+    }
+    
+    // Handle general errors
+    return NextResponse.json({
+      success: false,
+      message: 'Failed to retrieve games',
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: error instanceof Error ? error.message : 'Unknown error occurred'
+      }
+    }, { status: 500 })
+  }
+}
+
+/**
+ * Handle OPTIONS requests for CORS preflight
+ * 
+ * This allows the games endpoint to be called from browser-based admin tools
+ */
+export async function OPTIONS(request: NextRequest): Promise<NextResponse> {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Max-Age': '86400'
+    }
+  })
+}

@@ -1,36 +1,154 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PlayMass - Interactive Game Platform
 
-## Getting Started
+A Next.js-based platform for creating and distributing interactive games like Lucky Wheel with comprehensive rewards management.
 
-First, run the development server:
+## 🎮 Features
 
+- **Lucky Wheel Games**: Interactive spinning wheel games with customizable segments
+- **Rewards Management**: Complete reward system with points, coupons, physical prizes, and custom rewards
+- **Participant Management**: Track players across multiple games and sessions
+- **Target Groups**: Organize participants into groups for targeted campaigns
+- **Analytics & Tracking**: Monitor game performance, participant engagement, and reward distribution
+- **MongoDB Integration**: Robust data persistence with Mongoose ODM
+
+## 🛠️ Tech Stack
+
+- **Framework**: Next.js 15.5.2 (App Router)
+- **Database**: MongoDB Atlas with Mongoose ODM
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **Animation**: Framer Motion
+- **Validation**: Built-in Mongoose validation
+- **Linting**: ESLint with TypeScript support
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 18+ 
+- MongoDB Atlas account (database connection configured)
+
+### Installation
+
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/moldovancsaba/playmass.git
+cd playmass
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Environment variables are already configured for MongoDB Atlas connection.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Run the development server:
+```bash
+npm run dev
+```
 
-## Learn More
+5. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-To learn more about Next.js, take a look at the following resources:
+## 📁 Project Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+app/
+├── admin/                 # Admin interface for game creation
+├── api/                   # API routes
+│   ├── games/            # Game management endpoints
+│   ├── participants/     # Participant management  
+│   └── health/           # Health check endpoint
+├── components/           # Reusable React components
+├── lib/                  # Utility functions and database models
+│   ├── models/          # Mongoose schemas
+│   └── mongodb.ts       # Database connection
+├── play/                # Game play interface
+├── types/               # TypeScript type definitions
+└── globals.css          # Global styles
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🎯 API Endpoints
 
-## Deploy on Vercel
+- `GET /api/games` - List all games
+- `POST /api/games` - Create a new game
+- `GET /api/games/[id]` - Get specific game
+- `POST /api/games/[id]/play` - Play a game
+- `POST /api/participants` - Register participant
+- `GET /api/health` - System health check
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🎲 Game Types
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Lucky Wheel
+- Customizable segments with labels, values, and probabilities
+- Visual themes (default, colorful, minimal)
+- Configurable spin duration and rotations
+- Multiple attempts support
+
+## 🏆 Reward System
+
+- **Points**: Configurable point values with custom currencies
+- **Coupons**: Percentage or fixed amount discounts with expiration
+- **Physical Prizes**: Real-world items with shipping management
+- **Custom Rewards**: Flexible reward types with metadata
+
+## 💾 Database Schema
+
+The system uses MongoDB with the following main collections:
+- `games` - Game configurations and settings
+- `participants` - Player information and history
+- `rewards` - Available rewards and configurations
+- `rewardclaims` - Individual reward claims and status
+- `gameresults` - Game play results and outcomes
+- `targetgroups` - Participant group management
+
+## 🔧 Development
+
+### Build for Production
+```bash
+npm run build
+```
+
+### Start Production Server
+```bash
+npm start
+```
+
+### Linting
+```bash
+npm run lint
+```
+
+## 🌟 Key Features
+
+- **Real-time Game Play**: Interactive spinning wheel with smooth animations
+- **Anti-cheat Protection**: Session tracking, IP monitoring, and validation
+- **Scalable Architecture**: Designed for high-volume game participation
+- **Responsive Design**: Works on desktop, tablet, and mobile devices
+- **Type Safety**: Full TypeScript implementation with strict typing
+- **Error Handling**: Comprehensive error handling and user feedback
+
+## 📊 Analytics
+
+The platform provides detailed analytics including:
+- Game participation rates
+- Reward distribution statistics  
+- Player engagement metrics
+- Performance monitoring
+- Anti-cheat detection
+
+## 🔐 Security
+
+- Input validation and sanitization
+- Rate limiting and abuse prevention
+- Session management
+- Secure reward code generation
+- IP-based anti-cheat measures
+
+## 📝 License
+
+This project is private and proprietary.
+
+## 👥 Contributing
+
+This is a private project. Contact the maintainer for collaboration opportunities.
