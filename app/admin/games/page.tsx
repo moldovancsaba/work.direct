@@ -210,7 +210,7 @@ export default function GamesManagementPage() {
             {/* Games List */}
             <div className="divide-y divide-gray-200">
               {games.map((game) => (
-                <div key={game._id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
+                <div key={game._id.toString()} className="px-6 py-4 hover:bg-gray-50 transition-colors">
                   <div className="grid grid-cols-12 gap-4 items-center">
                     {/* Game Info */}
                     <div className="col-span-3">
@@ -224,7 +224,7 @@ export default function GamesManagementPage() {
                           </p>
                         )}
                         <div className="text-xs text-gray-500 mt-1">
-                          ID: {game._id}
+                          ID: {game._id.toString()}
                         </div>
                       </div>
                     </div>
@@ -282,7 +282,7 @@ export default function GamesManagementPage() {
                         {/* Play Game */}
                         <button
                           onClick={() => {
-                            const gameUrl = `/play/${game._id}`
+                            const gameUrl = `/play/${game._id.toString()}`
                             const fullUrl = `${window.location.origin}${gameUrl}`
                             window.open(fullUrl, '_blank')
                           }}
@@ -294,7 +294,7 @@ export default function GamesManagementPage() {
 
                         {/* Edit Game */}
                         <Link
-                          href={`/admin/games/${game._id}/edit`}
+                          href={`/admin/games/${game._id.toString()}/edit`}
                           className="text-purple-600 hover:text-purple-800 text-sm font-medium"
                           title="Edit Game"
                         >
