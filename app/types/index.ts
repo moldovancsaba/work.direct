@@ -11,7 +11,7 @@ export interface BaseDocument {
 // Game Types and Interfaces
 // These define the structure for different game types and their configurations
 
-export type GameType = 'STARS_HEXA' | 'SCRATCH_CARD' | 'QUIZ' | 'POLL'
+export type GameType = 'STARS_HEXA' | 'WHEEL_OF_FORTUNE' | 'SCRATCH_CARD' | 'QUIZ' | 'POLL'
 
 export type GameStatus = 'DRAFT' | 'ACTIVE' | 'PAUSED' | 'COMPLETED' | 'ARCHIVED'
 
@@ -26,6 +26,16 @@ export interface HexagonCard {
   rewardId?: string // If this hexagon contains a reward
 }
 
+// Wheel of Fortune specific interfaces
+export interface WheelSegment {
+  id: string
+  label: string
+  color: string
+  probability?: number // Optional weight for non-equal probability
+  rewardId?: string // If this segment contains a reward
+  isActive: boolean
+}
+
 export interface GameConfiguration {
   // Stars Hexa specific configuration
   starsHexa?: {
@@ -33,6 +43,17 @@ export interface GameConfiguration {
     totalStars: number // Number of hidden stars (1-3)
     maxFlipsPerAttempt: number // Maximum flips allowed per attempt
     theme: 'default' | 'colorful' | 'minimal'
+  }
+  
+  // Wheel of Fortune specific configuration
+  wheelOfFortune?: {
+    segments: WheelSegment[]
+    spins: number // Base number of full rotations before stopping
+    durationMs: number // Spin animation duration in milliseconds
+    pointerAt: 'top' | 'right' // Pointer position
+    size: number // SVG size in pixels
+    theme: 'default' | 'colorful' | 'minimal'
+    allowImmediateReplay: boolean // Whether user can spin again immediately
   }
   
   // General game settings
@@ -114,10 +135,15 @@ export type GameOutcomeType = 'WIN' | 'LOSE' | 'NO_REWARD'
 
 export interface GameOutcome {
   type: GameOutcomeType
+  // Stars Hexa specific fields
   hexagonId?: string // For Stars Hexa games - which hexagon was revealed
   starsFound: number // Number of stars discovered in this attempt
   totalStarsInGame: number // Total stars hidden in the game
   foundAllStars: boolean // Whether player found all stars
+  // Wheel of Fortune specific fields
+  segmentId?: string // For Wheel of Fortune games - which segment was landed on
+  segmentLabel?: string // The label of the winning segment
+  // Common fields
   value?: string | number
   rewardIds: string[] // Multiple rewards can be won
   message?: string // Custom message to show user

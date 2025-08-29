@@ -2,8 +2,8 @@
 
 This document captures implementation insights, technical decisions, and solutions to issues encountered during PlayMass development.
 
-**Current Version**: 1.5.0  
-**Last Updated**: 2025-08-29T17:27:10.000Z
+**Current Version**: 1.6.0  
+**Last Updated**: 2025-08-29T19:13:26.000Z
 
 ## Development Learnings
 
@@ -239,3 +239,149 @@ router.push(`/play/${targetGameId}/result?${resultParams.toString()}`)
 - **Smooth animations**: Consistent 60fps performance across devices
 
 This optimization showcases advanced React performance techniques for gaming applications where millisecond response times are critical for user engagement.
+
+---
+
+### SVG Game Components: Wheel of Fortune Mathematical Implementation (v1.6.0)
+
+**Challenge**: Integrate a pure React + SVG spinning wheel component with precise mathematical calculations for segment positioning and fair random selection.
+
+**Technical Requirements**:
+1. **Pure SVG Implementation** - No external graphics libraries or canvas
+2. **Mathematical Precision** - Accurate polar coordinate conversion and arc geometry
+3. **Fair Randomization** - Precise landing calculation with configurable probability weights
+4. **Smooth Animations** - Hardware-accelerated CSS transitions
+5. **Responsive Design** - Scalable across different screen sizes
+6. **Integration Ready** - Compatible with existing PlayMass game architecture
+
+#### Advanced SVG and Mathematical Techniques:
+
+#### 1. Polar Coordinate System Implementation
+- **Problem**: Positioning segments and labels around a circular wheel
+- **Solution**: Mathematical conversion from polar (angle, radius) to cartesian (x, y)
+- **Result**: Precise positioning of all wheel elements
+```typescript
+function polarToCartesian(cx: number, cy: number, r: number, deg: number) {
+  const rad = (deg * Math.PI) / 180;
+  return {
+    x: cx + r * Math.cos(rad),
+    y: cy + r * Math.sin(rad),
+  };
+}
+```
+
+#### 2. Dynamic SVG Path Generation
+- **Problem**: Creating perfect pie slice geometries for varying segment counts
+- **Solution**: SVG path commands with arc calculations
+- **Result**: Clean, scalable segments regardless of wheel size
+```typescript
+function describeSlice(cx: number, cy: number, r: number, startDeg: number, endDeg: number) {
+  const start = polarToCartesian(cx, cy, r, endDeg);
+  const end = polarToCartesian(cx, cy, r, startDeg);
+  const largeArcFlag = endDeg - startDeg <= 180 ? 0 : 1;
+
+  return [
+    `M ${cx} ${cy}`,
+    `L ${start.x} ${start.y}`,
+    `A ${r} ${r} 0 ${largeArcFlag} 0 ${end.x} ${end.y}`,
+    "Z",
+  ].join(" ");
+}
+```
+
+#### 3. Precise Landing Algorithm
+- **Problem**: Ensuring the wheel stops exactly on the intended segment
+- **Solution**: Reverse calculation from target segment to required rotation
+- **Result**: Perfect alignment between visual result and logical outcome
+```typescript
+// Calculate exact rotation needed for target segment to land under pointer
+const targetMid = slices[targetIndex].mid;
+const base = spins * 360;
+let offset = pointerDeg - targetMid;
+offset = ((offset % 360) + 360) % 360; // Normalize to [0, 360)
+const finalRotation = base + offset;
+```
+
+#### 4. Text Orientation Along Radius
+- **Problem**: Labels need to face toward the center for readability
+- **Solution**: Individual text rotation based on segment mid-angle
+- **Result**: All text is properly oriented regardless of segment position
+```typescript
+const textRotate = mid; // Segment mid-angle
+<text
+  transform={`rotate(${textRotate}, ${labelPos.x}, ${labelPos.y})`}
+  // ... other props
+>
+  {seg.label}
+</text>
+```
+
+#### 5. Hardware-Accelerated Spinning Animation
+- **Problem**: Smooth rotation animation across multiple full spins
+- **Solution**: CSS transforms with will-change optimization
+- **Result**: Consistent 60fps animation performance
+```typescript
+style={{
+  transition: `transform ${durationMs}ms cubic-bezier(0.12, 0.65, 0, 1)`,
+  transform: `rotate(${rotation}deg)`,
+  willChange: spinning ? 'transform' : 'auto'
+}}
+```
+
+#### 6. Component Architecture for Game Integration
+- **Problem**: Creating a reusable component that integrates with PlayMass architecture
+- **Solution**: Callback-based result handling with comprehensive type definitions
+- **Result**: Seamless integration with existing game and reward systems
+```typescript
+interface WheelSegment {
+  id: string
+  label: string
+  color: string
+  probability?: number // Optional weight for non-equal probability
+  rewardId?: string // Integration with reward system
+  isActive: boolean
+}
+```
+
+**Mathematical Insights Gained**:
+1. **SVG Coordinate System**: Y-axis increases downward, requiring angle adjustments (-90°) for visual alignment
+2. **Arc Flag Calculation**: Large arc flag depends on angle span (>180° = 1, <=180° = 0)
+3. **Rotation Normalization**: Prevent floating point precision issues by normalizing rotation after each spin
+4. **Angle Interpolation**: Smooth transitions require careful handling of 0°/360° boundary conditions
+5. **Responsive Scaling**: SVG viewBox approach allows perfect scaling without layout recalculation
+
+**Performance Optimizations Applied**:
+- **useMemo for slice calculations**: Prevent recalculation on every render
+- **Hardware acceleration**: will-change CSS property during animations
+- **Event delegation**: Single click handler for entire wheel area
+- **RAF for state updates**: requestAnimationFrame ensures smooth visual updates
+- **Timer cleanup**: Proper cleanup prevents memory leaks in component unmount
+
+**React Integration Patterns**:
+- **Ref management**: Stable references for DOM elements and timers
+- **State normalization**: Keeping rotation values within reasonable bounds
+- **Effect cleanup**: Comprehensive cleanup of timeouts and event listeners
+- **Callback optimization**: Stable onResult callbacks prevent unnecessary re-renders
+- **Type safety**: Full TypeScript coverage for mathematical functions and state
+
+**PlayMass Architecture Compatibility**:
+- **Game type system**: Added WHEEL_OF_FORTUNE to existing GameType enum
+- **Configuration structure**: Extended GameConfiguration with wheel-specific settings
+- **Result tracking**: Enhanced GameOutcome interface for segment results
+- **Component reusability**: Designed for admin interface and player game integration
+
+**User Experience Considerations**:
+- **Visual feedback**: Immediate hover states and click responsiveness
+- **Accessibility**: Proper ARIA attributes and keyboard support
+- **Mobile optimization**: Touch-friendly interactions and responsive sizing
+- **Error handling**: Graceful fallbacks for edge cases and invalid configurations
+
+**Key Takeaways**:
+1. **Mathematical Precision is Critical**: Small calculation errors compound in rotational systems
+2. **SVG Path Mastery**: Understanding arc commands enables complex geometric shapes
+3. **Animation State Management**: Careful coordination between CSS transitions and React state
+4. **Polar Coordinate Systems**: Essential for circular UI components
+5. **Hardware Acceleration**: CSS will-change property significantly improves animation performance
+6. **Component Design**: Balancing flexibility with integration requirements
+
+This implementation demonstrates advanced SVG manipulation, mathematical precision, and React optimization techniques for creating engaging game components.
