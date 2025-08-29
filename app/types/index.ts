@@ -11,26 +11,27 @@ export interface BaseDocument {
 // Game Types and Interfaces
 // These define the structure for different game types and their configurations
 
-export type GameType = 'LUCKY_WHEEL' | 'SCRATCH_CARD' | 'QUIZ' | 'POLL'
+export type GameType = 'STARS_HEXA' | 'SCRATCH_CARD' | 'QUIZ' | 'POLL'
 
 export type GameStatus = 'DRAFT' | 'ACTIVE' | 'PAUSED' | 'COMPLETED' | 'ARCHIVED'
 
-export interface WheelSegment {
+export interface HexagonCard {
   id: string
-  label: string
-  value: string | number
-  probability: number // Weight for random selection (0-100)
+  text: string
+  hasHiddenStar: boolean
+  isRevealed: boolean
+  position: number // 0-6 for the 7 hexagons in 2-3-2 layout
   color?: string
   backgroundColor?: string
-  rewardId?: string
+  rewardId?: string // If this hexagon contains a reward
 }
 
 export interface GameConfiguration {
-  // Lucky Wheel specific configuration
-  wheel?: {
-    segments: WheelSegment[]
-    spinDuration: number // Animation duration in milliseconds
-    rotations: number // Number of full rotations during spin
+  // Stars Hexa specific configuration
+  starsHexa?: {
+    hexagons: HexagonCard[]
+    totalStars: number // Number of hidden stars (1-3)
+    maxFlipsPerAttempt: number // Maximum flips allowed per attempt
     theme: 'default' | 'colorful' | 'minimal'
   }
   
@@ -113,7 +114,10 @@ export type GameOutcomeType = 'WIN' | 'LOSE' | 'NO_REWARD'
 
 export interface GameOutcome {
   type: GameOutcomeType
-  segmentId?: string // For wheel games - which segment was landed on
+  hexagonId?: string // For Stars Hexa games - which hexagon was revealed
+  starsFound: number // Number of stars discovered in this attempt
+  totalStarsInGame: number // Total stars hidden in the game
+  foundAllStars: boolean // Whether player found all stars
   value?: string | number
   rewardIds: string[] // Multiple rewards can be won
   message?: string // Custom message to show user

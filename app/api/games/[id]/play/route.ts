@@ -13,10 +13,10 @@ import { v4 as uuidv4 } from 'uuid'
  * Game Play API Route Handler
  * 
  * This endpoint handles the actual game play mechanics:
- * - POST: Play the Lucky Wheel game and return results
+ * - POST: Play the Stars Hexa game and return results
  * 
  * Features:
- * - Probability-based result calculation
+ * - Hexagon flipping and star discovery logic
  * - Anti-cheat validation (IP tracking, attempt limits)
  * - Automatic reward distribution
  * - Comprehensive result tracking
@@ -47,7 +47,7 @@ export async function POST(
     }
     
     // Parse request body
-    const playRequest: PlayGameRequest = await request.json()
+    const playRequest: PlayGameRequest & { hexagonId?: string } = await request.json()
     
     // Validate required fields
     if (!playRequest.participant?.name) {
@@ -116,10 +116,10 @@ export async function POST(
     }
     
     // Validate game type
-    if (game.type !== 'LUCKY_WHEEL') {
+    if (game.type !== 'STARS_HEXA') {
       return NextResponse.json({
         success: false,
-        message: 'This endpoint only supports Lucky Wheel games',
+        message: 'This endpoint only supports Stars Hexa games',
         error: {
           code: 'UNSUPPORTED_GAME_TYPE',
           message: `Game type: ${game.type}`
@@ -127,16 +127,28 @@ export async function POST(
       }, { status: 400 })
     }
     
-    // Validate wheel configuration
-    if (!game.configuration.wheel?.segments || game.configuration.wheel.segments.length === 0) {
+    // Validate Stars Hexa configuration
+    if (!game.configuration.starsHexa?.hexagons || game.configuration.starsHexa.hexagons.length !== 7) {
       return NextResponse.json({
         success: false,
         message: 'Game configuration is invalid',
         error: {
           code: 'INVALID_CONFIGURATION',
-          message: 'Wheel segments are missing or empty'
+          message: 'Stars Hexa hexagons are missing or invalid'
         }
       }, { status: 500 })
+    }
+    
+    // Validate hexagon ID is provided
+    if (!playRequest.hexagonId) {
+      return NextResponse.json({
+        success: false,
+        message: 'Hexagon ID is required for Stars Hexa games',
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Missing hexagonId in request'
+        }
+      }, { status: 400 })
     }
     
     // Find or create participant
@@ -172,7 +184,7 @@ export async function POST(
       if (existingResult) {
         return NextResponse.json({
           success: false,
-          message: 'You have already played this game',
+          message: '🎯 You\'ve already completed this game! Each player gets only one chance.',
           error: {
             code: 'ATTEMPT_LIMIT_EXCEEDED',
             message: 'This game allows only one attempt per participant'
@@ -190,7 +202,7 @@ export async function POST(
       if (attemptCount >= game.configuration.maxAttemptsPerUser) {
         return NextResponse.json({
           success: false,
-          message: 'Maximum attempts reached for this game',
+          message: `🎮 You've used all ${game.configuration.maxAttemptsPerUser} attempts for this game. Thanks for playing!`,
           error: {
             code: 'ATTEMPT_LIMIT_EXCEEDED',
             message: `Maximum ${game.configuration.maxAttemptsPerUser} attempts allowed`
@@ -202,33 +214,54 @@ export async function POST(
     // Note: IP-based rate limiting removed to support hostess/event use cases
     // where multiple participants may play from the same location
     
-    // Calculate Lucky Wheel result using probability-based selection
-    const wheelResult = calculateWheelResult(game.configuration.wheel.segments)
+    // Find the hexagon being flipped
+    const flippedHexagon = game.configuration.starsHexa.hexagons.find(h => h.id === playRequest.hexagonId)
     
-    if (!wheelResult) {
+    if (!flippedHexagon) {
       return NextResponse.json({
         success: false,
-        message: 'Failed to calculate game result',
+        message: 'Hexagon not found',
         error: {
-          code: 'CALCULATION_ERROR',
-          message: 'Wheel result calculation failed'
+          code: 'NOT_FOUND',
+          message: `No hexagon found with ID: ${playRequest.hexagonId}`
         }
-      }, { status: 500 })
+      }, { status: 404 })
     }
     
-    // Determine outcome type and rewards
-    // A segment is considered a win if it has a rewardId OR if its value is not 'try-again'
-    const isWinningSegment = wheelResult.rewardId || (wheelResult.value !== 'try-again' && wheelResult.label !== 'Try Again')
+    // Check if hexagon is already revealed in this session
+    const existingFlip = await GameResultModel.findOne({
+      gameId: game._id,
+      participantId: participant._id,
+      'outcome.hexagonId': playRequest.hexagonId,
+      sessionId: sessionId
+    })
     
-    const outcome: GameOutcome = {
-      type: isWinningSegment ? 'WIN' : 'NO_REWARD',
-      segmentId: wheelResult.id,
-      value: wheelResult.value,
-      rewardIds: wheelResult.rewardId ? [wheelResult.rewardId] : [],
-      message: isWinningSegment ? 
-        `Congratulations! You won: ${wheelResult.label}` : 
-        `You landed on: ${wheelResult.label}. Better luck next time!`
+    if (existingFlip) {
+      return NextResponse.json({
+        success: false,
+        message: '🔄 You\'ve already flipped that card! Try another one.',
+        error: {
+          code: 'ALREADY_REVEALED',
+          message: 'This hexagon has already been revealed in this session'
+        }
+      }, { status: 400 })
     }
+    
+    // Calculate Stars Hexa result
+    const hexaResult = calculateHexaResult(flippedHexagon, game.configuration.starsHexa.hexagons, participant._id.toString(), sessionId)
+    
+    // Log the flipped hexagon for debugging
+    console.log('Flipped hexagon:', {
+      id: flippedHexagon.id,
+      text: flippedHexagon.text,
+      hasHiddenStar: flippedHexagon.hasHiddenStar,
+      position: flippedHexagon.position,
+      starsFound: hexaResult.starsFound,
+      totalStars: hexaResult.totalStarsInGame,
+      foundAllStars: hexaResult.foundAllStars
+    })
+    
+    const outcome: GameOutcome = hexaResult
     
     // Create game result record
     const gameResult = new GameResultModel({
@@ -252,7 +285,8 @@ export async function POST(
       await gameResult.save()
       
       // Update participant stats
-      ;(participant as any).recordGameResult(gameResult._id.toString())
+      participant.gameResults.push(gameResult._id)
+      participant.totalGamesPlayed += 1
       await participant.save()
       
       // Update game stats
@@ -283,7 +317,8 @@ export async function POST(
               expiresAt: reward.expiresAt || null,
               metadata: {
                 gameTitle: game.title,
-                segmentLabel: wheelResult.label
+                hexagonText: flippedHexagon.text,
+                sessionId: sessionId
               }
             })
             
@@ -295,11 +330,10 @@ export async function POST(
             }
             
             // Update participant reward count
-            ;(participant as any).addReward()
+            participant.totalRewardsEarned += 1
             await participant.save()
-            
-            // Add reward info to response
-            rewards.push((reward as any).getDisplayInfo())
+                       // Add reward info to response
+            rewards.push(reward)
           }
         } catch (rewardError) {
           console.error('Reward distribution error:', rewardError)
@@ -350,33 +384,65 @@ export async function POST(
 }
 
 /**
- * Calculate Lucky Wheel result based on segment probabilities
- * Uses weighted random selection to ensure fair probability distribution
+ * Calculate Stars Hexa result for hexagon flip
+ * Determines if a star was found and calculates game progress
  */
-function calculateWheelResult(segments: any[]) {
+function calculateHexaResult(
+  flippedHexagon: any, 
+  allHexagons: any[], 
+  participantId: string, 
+  sessionId: string
+): GameOutcome {
   try {
-    // Create weighted array based on probabilities
-    const weightedSegments: any[] = []
+    // Determine if this hexagon has a star
+    const foundStar = flippedHexagon.hasHiddenStar
     
-    segments.forEach(segment => {
-      // Add segment multiple times based on its probability
-      const weight = Math.round(segment.probability * 100) // Convert to integer weight
-      for (let i = 0; i < weight; i++) {
-        weightedSegments.push(segment)
+    // Count total stars in the game
+    const totalStarsInGame = allHexagons.filter(h => h.hasHiddenStar).length
+    
+    // For now, we'll say they found 1 star if this hexagon has a star
+    // In a more complex implementation, you'd track stars found across the session
+    const starsFound = foundStar ? 1 : 0
+    
+    // Determine if all stars have been found (simplified for single flip)
+    const foundAllStars = foundStar && totalStarsInGame === 1
+    
+    // Determine outcome type
+    let outcomeType: GameOutcomeType = 'NO_REWARD'
+    let message = `You revealed: ${flippedHexagon.text}`
+    
+    if (foundStar) {
+      if (foundAllStars) {
+        outcomeType = 'WIN'
+        message = `🎉 Congratulations! You found the star and revealed: ${flippedHexagon.text}!`
+      } else {
+        outcomeType = 'WIN'
+        message = `⭐ Great! You found a star! ${flippedHexagon.text}`
       }
-    })
-    
-    if (weightedSegments.length === 0) {
-      throw new Error('No valid segments for selection')
     }
     
-    // Select random segment from weighted array
-    const randomIndex = Math.floor(Math.random() * weightedSegments.length)
-    return weightedSegments[randomIndex]
+    return {
+      type: outcomeType,
+      hexagonId: flippedHexagon.id,
+      starsFound: starsFound,
+      totalStarsInGame: totalStarsInGame,
+      foundAllStars: foundAllStars,
+      value: flippedHexagon.text,
+      rewardIds: flippedHexagon.rewardId ? [flippedHexagon.rewardId] : [],
+      message: message
+    }
     
   } catch (error) {
-    console.error('Wheel calculation error:', error)
-    return null
+    console.error('Hexa calculation error:', error)
+    return {
+      type: 'NO_REWARD',
+      hexagonId: flippedHexagon.id,
+      starsFound: 0,
+      totalStarsInGame: 0,
+      foundAllStars: false,
+      rewardIds: [],
+      message: 'Error calculating result'
+    }
   }
 }
 
@@ -386,16 +452,23 @@ function calculateWheelResult(segments: any[]) {
  */
 async function validateGameResult(gameResult: any): Promise<boolean> {
   try {
-    // Check for suspicious patterns
-    const isSuspicious = await (gameResult as any).isSuspicious()
+    // Basic validation - check if result timing is reasonable
+    const now = new Date()
+    const playTime = now.getTime() - gameResult.playedAt.getTime()
     
-    if (isSuspicious) {
-      console.warn(`Suspicious game result detected: ${gameResult._id}`)
+    // Reject if result was generated too quickly (less than 1 second)
+    if (playTime < 1000) {
+      console.warn(`Suspiciously fast game result: ${gameResult._id}, time: ${playTime}ms`)
+      return false
+    }
+    
+    // Reject if result was generated too slowly (more than 10 minutes)
+    if (playTime > 10 * 60 * 1000) {
+      console.warn(`Suspiciously slow game result: ${gameResult._id}, time: ${playTime}ms`)
       return false
     }
     
     // Add more validation logic here as needed
-    // - Time-based validations
     // - Pattern analysis
     // - Device fingerprinting
     // - Behavioral analysis

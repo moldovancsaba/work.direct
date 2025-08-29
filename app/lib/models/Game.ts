@@ -1,29 +1,34 @@
 import mongoose, { Schema, Model } from 'mongoose'
-import { Game, GameType, GameStatus, WheelSegment, ShareLink } from '../../types'
+import { Game, GameType, GameStatus, HexagonCard, ShareLink } from '../../types'
 
-// WheelSegment subdocument schema
-// This defines the structure for individual wheel segments in Lucky Wheel games
-const wheelSegmentSchema = new Schema<WheelSegment>({
+// HexagonCard subdocument schema
+// This defines the structure for individual hexagon cards in Stars Hexa games
+const hexagonCardSchema = new Schema<HexagonCard>({
   id: {
     type: String,
-    required: [true, 'Segment ID is required'],
+    required: [true, 'Hexagon ID is required'],
     trim: true
   },
-  label: {
+  text: {
     type: String,
-    required: [true, 'Segment label is required'],
+    required: [true, 'Hexagon text is required'],
     trim: true,
-    maxlength: [100, 'Segment label cannot exceed 100 characters']
+    maxlength: [50, 'Hexagon text cannot exceed 50 characters']
   },
-  value: {
-    type: Schema.Types.Mixed, // Can be string or number
-    required: [true, 'Segment value is required']
+  hasHiddenStar: {
+    type: Boolean,
+    required: [true, 'Hidden star flag is required'],
+    default: false
   },
-  probability: {
+  isRevealed: {
+    type: Boolean,
+    default: false
+  },
+  position: {
     type: Number,
-    required: [true, 'Segment probability is required'],
-    min: [0, 'Probability must be at least 0'],
-    max: [100, 'Probability cannot exceed 100']
+    required: [true, 'Hexagon position is required'],
+    min: [0, 'Position must be at least 0'],
+    max: [6, 'Position cannot exceed 6 (for 7 hexagons: 0-6)']
   },
   color: {
     type: String,
@@ -106,8 +111,8 @@ const gameSchema = new Schema<Game>({
     type: String,
     required: [true, 'Game type is required'],
     enum: {
-      values: ['LUCKY_WHEEL', 'SCRATCH_CARD', 'QUIZ', 'POLL'] as GameType[],
-      message: 'Game type must be one of: LUCKY_WHEEL, SCRATCH_CARD, QUIZ, POLL'
+      values: ['STARS_HEXA', 'SCRATCH_CARD', 'QUIZ', 'POLL'] as GameType[],
+      message: 'Game type must be one of: STARS_HEXA, SCRATCH_CARD, QUIZ, POLL'
     }
   },
   
@@ -123,30 +128,42 @@ const gameSchema = new Schema<Game>({
   
   // Game configuration object with type-specific settings
   configuration: {
-    // Lucky Wheel specific configuration
-    wheel: {
-      segments: {
-        type: [wheelSegmentSchema],
+    // Stars Hexa specific configuration
+    starsHexa: {
+      hexagons: {
+        type: [hexagonCardSchema],
         validate: {
-          validator: function(segments: WheelSegment[]) {
-            // Validate that total probability adds up to 100
-            const totalProbability = segments.reduce((sum, segment) => sum + segment.probability, 0)
-            return Math.abs(totalProbability - 100) < 0.01 // Allow for floating point precision
+          validator: function(hexagons: HexagonCard[]) {
+            // Validate exactly 7 hexagons for 2-3-2 layout
+            if (hexagons.length !== 7) {
+              return false
+            }
+            
+            // Validate positions are 0-6 and unique
+            const positions = hexagons.map(h => h.position).sort()
+            const expectedPositions = [0, 1, 2, 3, 4, 5, 6]
+            if (!positions.every((pos, index) => pos === expectedPositions[index])) {
+              return false
+            }
+            
+            // Validate star count is between 1-3
+            const starsCount = hexagons.filter(h => h.hasHiddenStar).length
+            return starsCount >= 1 && starsCount <= 3
           },
-          message: 'Wheel segments probabilities must add up to 100'
+          message: 'Stars Hexa must have exactly 7 hexagons in positions 0-6 with 1-3 hidden stars'
         }
       },
-      spinDuration: {
+      totalStars: {
         type: Number,
-        default: 3000, // 3 seconds
-        min: [1000, 'Spin duration must be at least 1000ms'],
-        max: [10000, 'Spin duration cannot exceed 10000ms']
+        required: [true, 'Total stars count is required'],
+        min: [1, 'Must have at least 1 star'],
+        max: [3, 'Cannot have more than 3 stars']
       },
-      rotations: {
+      maxFlipsPerAttempt: {
         type: Number,
-        default: 4,
-        min: [2, 'Must have at least 2 rotations'],
-        max: [10, 'Cannot exceed 10 rotations']
+        default: 9, // Allow up to 9 flips per attempt
+        min: [3, 'Must allow at least 3 flips per attempt'],
+        max: [7, 'Cannot exceed 7 flips per attempt (one per hexagon)']
       },
       theme: {
         type: String,
@@ -387,16 +404,22 @@ gameSchema.pre('save', function(next) {
     ;(this as any).generateShareLink()
   }
   
-  // Validate wheel configuration for Lucky Wheel games
-  if (this.type === 'LUCKY_WHEEL') {
-    if (!this.configuration.wheel || !this.configuration.wheel.segments || this.configuration.wheel.segments.length === 0) {
-      return next(new Error('Lucky Wheel games must have at least one wheel segment'))
+    // Validate Stars Hexa configuration for Stars Hexa games
+    if (this.type === 'STARS_HEXA') {
+      if (!this.configuration.starsHexa || !this.configuration.starsHexa.hexagons || this.configuration.starsHexa.hexagons.length !== 7) {
+        return next(new Error('Stars Hexa games must have exactly 7 hexagons'))
+      }
+      
+      const starsCount = this.configuration.starsHexa.hexagons.filter(h => h.hasHiddenStar).length
+      if (starsCount < 1 || starsCount > 3) {
+        return next(new Error('Stars Hexa games must have between 1-3 hidden stars'))
+      }
+      
+      // Ensure totalStars matches actual hidden stars
+      if (this.configuration.starsHexa.totalStars !== starsCount) {
+        this.configuration.starsHexa.totalStars = starsCount
+      }
     }
-    
-    if (this.configuration.wheel.segments.length > 12) {
-      return next(new Error('Lucky Wheel games cannot have more than 12 segments'))
-    }
-  }
   
   next()
 })

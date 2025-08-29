@@ -42,7 +42,7 @@ export default function HomePage() {
             Create Engaging Interactive Games
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-            Build and distribute Lucky Wheel games to your target audience with comprehensive 
+            Build and distribute Stars Hexa games to your target audience with comprehensive 
             rewards management, participant tracking, and detailed analytics.
           </p>
           
@@ -67,10 +67,10 @@ export default function HomePage() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
           <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
             <div className="text-4xl mb-4">🎡</div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-3">Lucky Wheel Games</h3>
+            <h3 className="text-xl font-semibold text-gray-900 mb-3">Stars Hexa Games</h3>
             <p className="text-gray-600">
-              Create customizable spinning wheel games with multiple segments, 
-              themes, and reward configurations.
+              Create interactive hexagonal star-finding games with customizable text,
+              hidden stars, and reward configurations.
             </p>
           </div>
           
@@ -148,7 +148,7 @@ export default function HomePage() {
             <div>
               <h4 className="font-semibold text-white mb-4">Features</h4>
               <ul className="space-y-2 text-gray-400">
-                <li>Lucky Wheel Games</li>
+                <li>Stars Hexa Games</li>
                 <li>Rewards Management</li>
                 <li>Participant Tracking</li>
                 <li>Analytics & Insights</li>

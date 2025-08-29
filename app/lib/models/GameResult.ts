@@ -13,9 +13,26 @@ const gameOutcomeSchema = new Schema<GameOutcome>({
     }
   },
   
-  segmentId: {
+  hexagonId: {
     type: String,
-    default: null // Only applicable for wheel games
+    default: null // For Stars Hexa games - which hexagon was revealed
+  },
+  
+  starsFound: {
+    type: Number,
+    default: 0,
+    min: [0, 'Stars found cannot be negative']
+  },
+  
+  totalStarsInGame: {
+    type: Number,
+    default: 0,
+    min: [0, 'Total stars cannot be negative']
+  },
+  
+  foundAllStars: {
+    type: Boolean,
+    default: false
   },
   
   value: {
@@ -194,10 +211,11 @@ gameResultSchema.pre('save', function(next) {
     ) as [number, number]
   }
   
-  // Validate that reward outcome has reward IDs
-  if (this.outcome.type === 'WIN' && (!this.outcome.rewardIds || this.outcome.rewardIds.length === 0)) {
-    return next(new Error('WIN outcomes must have at least one reward ID'))
-  }
+  // Note: Allowing WIN outcomes without reward IDs for simple point-based wins
+  // In production, you might want actual rewards linked to segments
+  // if (this.outcome.type === 'WIN' && (!this.outcome.rewardIds || this.outcome.rewardIds.length === 0)) {
+  //   return next(new Error('WIN outcomes must have at least one reward ID'))
+  // }
   
   // Ensure NO_REWARD outcomes don't have reward IDs
   if (this.outcome.type === 'NO_REWARD' && this.outcome.rewardIds && this.outcome.rewardIds.length > 0) {

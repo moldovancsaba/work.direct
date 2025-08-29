@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from 'uuid'
  * Games API Route Handler
  * 
  * This endpoint handles CRUD operations for games:
- * - POST: Create new Lucky Wheel games
+ * - POST: Create new Stars Hexa games
  * - GET: Retrieve games with filtering and pagination
  * 
  * Used by admin interfaces for game management and public interfaces for game discovery
@@ -34,56 +34,69 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       }, { status: 400 })
     }
     
-    // Validate Lucky Wheel specific configuration
-    if (gameData.type === 'LUCKY_WHEEL') {
-      if (!gameData.configuration.wheel?.segments || gameData.configuration.wheel.segments.length === 0) {
+    // Validate Stars Hexa specific configuration
+    if (gameData.type === 'STARS_HEXA') {
+      if (!gameData.configuration.starsHexa?.hexagons || gameData.configuration.starsHexa.hexagons.length !== 7) {
         return NextResponse.json({
           success: false,
-          message: 'Lucky Wheel games must have at least one wheel segment',
+          message: 'Stars Hexa games must have exactly 7 hexagons',
           error: {
             code: 'VALIDATION_ERROR',
-            message: 'Invalid wheel configuration'
+            message: 'Invalid hexagon configuration - must have exactly 7 hexagons'
           }
         }, { status: 400 })
       }
       
-      // Validate probability total
-      const totalProbability = gameData.configuration.wheel.segments.reduce(
-        (sum, segment) => sum + segment.probability, 
-        0
-      )
-      
-      if (Math.abs(totalProbability - 100) > 0.01) {
+      // Validate star count (1-3 stars)
+      const starsCount = gameData.configuration.starsHexa.hexagons.filter(h => h.hasHiddenStar).length
+      if (starsCount < 1 || starsCount > 3) {
         return NextResponse.json({
           success: false,
-          message: 'Wheel segment probabilities must add up to 100%',
+          message: 'Stars Hexa games must have between 1-3 hidden stars',
           error: {
             code: 'VALIDATION_ERROR',
-            message: `Current total probability: ${totalProbability}%`
+            message: `Current star count: ${starsCount}. Must be 1-3 stars.`
           }
         }, { status: 400 })
       }
       
-      // Ensure each segment has a unique ID
-      const segmentIds = gameData.configuration.wheel.segments.map(s => s.id)
-      const uniqueSegmentIds = new Set(segmentIds)
-      if (segmentIds.length !== uniqueSegmentIds.size) {
+      // Validate positions are 0-6 and unique
+      const positions = gameData.configuration.starsHexa.hexagons.map(h => h.position).sort()
+      const expectedPositions = [0, 1, 2, 3, 4, 5, 6]
+      if (!positions.every((pos, index) => pos === expectedPositions[index])) {
         return NextResponse.json({
           success: false,
-          message: 'All wheel segments must have unique IDs',
+          message: 'Hexagon positions must be 0-6 and unique',
           error: {
             code: 'VALIDATION_ERROR',
-            message: 'Duplicate segment IDs found'
+            message: 'Invalid hexagon position configuration'
           }
         }, { status: 400 })
       }
       
-      // Generate unique IDs for segments that don't have them
-      gameData.configuration.wheel.segments.forEach(segment => {
-        if (!segment.id) {
-          segment.id = uuidv4()
+      // Ensure each hexagon has a unique ID
+      const hexagonIds = gameData.configuration.starsHexa.hexagons.map(h => h.id)
+      const uniqueHexagonIds = new Set(hexagonIds)
+      if (hexagonIds.length !== uniqueHexagonIds.size) {
+        return NextResponse.json({
+          success: false,
+          message: 'All hexagons must have unique IDs',
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Duplicate hexagon IDs found'
+          }
+        }, { status: 400 })
+      }
+      
+      // Generate unique IDs for hexagons that don't have them
+      gameData.configuration.starsHexa.hexagons.forEach(hexagon => {
+        if (!hexagon.id) {
+          hexagon.id = uuidv4()
         }
       })
+      
+      // Ensure totalStars matches actual hidden stars
+      gameData.configuration.starsHexa.totalStars = starsCount
     }
     
     // Create new game document

@@ -2,54 +2,85 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { WheelSegment, CreateGameRequest } from '../types'
+import { HexagonCard, CreateGameRequest } from '../types'
 import { v4 as uuidv4 } from 'uuid'
 
 /**
  * Admin Interface for Game Creation
  * 
- * This is a simple interface for creating Lucky Wheel games for testing purposes.
+ * This is a simple interface for creating Stars Hexa games for testing purposes.
  * In a full production version, this would be more sophisticated with authentication,
  * better validation, and more features.
  */
 export default function AdminPage() {
   const [gameTitle, setGameTitle] = useState('')
   const [gameDescription, setGameDescription] = useState('')
-  const [segments, setSegments] = useState<WheelSegment[]>([
-    { id: uuidv4(), label: 'Try Again', value: 'try-again', probability: 40, color: '#EF4444' },
-    { id: uuidv4(), label: '10 Points', value: 10, probability: 30, color: '#3B82F6' },
-    { id: uuidv4(), label: '25 Points', value: 25, probability: 20, color: '#10B981' },
-    { id: uuidv4(), label: '50 Points', value: 50, probability: 8, color: '#F59E0B' },
-    { id: uuidv4(), label: 'JACKPOT!', value: 100, probability: 2, color: '#8B5CF6' }
+  const [texts, setTexts] = useState<string[]>([
+    'Prize A',
+    'Prize B', 
+    'Prize C',
+    'Prize D',
+    'Prize E',
+    'Prize F',
+    'Prize G'
   ])
+  const [selectedStars, setSelectedStars] = useState<number>(2) // Number of stars to place
   const [creating, setCreating] = useState(false)
   const [createdGame, setCreatedGame] = useState<any>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const addSegment = () => {
-    setSegments([...segments, {
-      id: uuidv4(),
-      label: 'New Segment',
-      value: 'new',
-      probability: 10,
-      color: '#6B7280'
-    }])
+  const updateText = (index: number, newText: string) => {
+    const newTexts = [...texts]
+    newTexts[index] = newText
+    setTexts(newTexts)
   }
 
-  const updateSegment = (index: number, updates: Partial<WheelSegment>) => {
-    const newSegments = [...segments]
-    newSegments[index] = { ...newSegments[index], ...updates }
-    setSegments(newSegments)
-  }
-
-  const removeSegment = (index: number) => {
-    if (segments.length > 2) { // Keep at least 2 segments
-      setSegments(segments.filter((_, i) => i !== index))
+  const addText = () => {
+    if (texts.length < 7) {
+      setTexts([...texts, `Text ${texts.length + 1}`])
     }
   }
 
-  const getTotalProbability = () => {
-    return segments.reduce((sum, segment) => sum + segment.probability, 0)
+  const removeText = (index: number) => {
+    if (texts.length > 1) {
+      setTexts(texts.filter((_, i) => i !== index))
+    }
+  }
+
+  // Function to create hexagons with random star placement
+  const createRandomHexagons = (): HexagonCard[] => {
+    // Ensure we have exactly 7 texts, pad or trim if needed
+    const finalTexts = [...texts]
+    while (finalTexts.length < 7) {
+      finalTexts.push(`Text ${finalTexts.length + 1}`)
+    }
+    if (finalTexts.length > 7) {
+      finalTexts.splice(7)
+    }
+
+    // Create hexagons with positions 0-6
+    const hexagons: HexagonCard[] = finalTexts.map((text, index) => ({
+      id: uuidv4(),
+      text: text,
+      hasHiddenStar: false,
+      isRevealed: false,
+      position: index,
+      color: '#3B82F6'
+    }))
+
+    // Randomly select positions for stars
+    const starPositions = new Set<number>()
+    while (starPositions.size < Math.min(selectedStars, 7)) {
+      const randomPosition = Math.floor(Math.random() * 7)
+      starPositions.add(randomPosition)
+    }
+
+    // Apply stars to selected positions
+    starPositions.forEach(position => {
+      hexagons[position].hasHiddenStar = true
+    })
+
+    return hexagons
   }
 
   const createGame = async () => {
@@ -58,9 +89,13 @@ export default function AdminPage() {
       return
     }
 
-    const totalProbability = getTotalProbability()
-    if (Math.abs(totalProbability - 100) > 0.01) {
-      setError(`Probabilities must add up to 100%. Current total: ${totalProbability}%`)
+    if (selectedStars < 1 || selectedStars > 3) {
+      setError(`You must select between 1-3 hidden stars. Currently selected: ${selectedStars}`)
+      return
+    }
+
+    if (texts.length === 0) {
+      setError('You must have at least one text entry')
       return
     }
 
@@ -71,13 +106,13 @@ export default function AdminPage() {
       const gameData: CreateGameRequest = {
         title: gameTitle,
         description: gameDescription || undefined,
-        type: 'LUCKY_WHEEL',
+        type: 'STARS_HEXA',
         status: 'ACTIVE',
         configuration: {
-          wheel: {
-            segments: segments,
-            spinDuration: 3000,
-            rotations: 4,
+          starsHexa: {
+            hexagons: createRandomHexagons(),
+            totalStars: selectedStars,
+            maxFlipsPerAttempt: 7, // Allow flipping all hexagons
             theme: 'colorful'
           },
           allowMultipleAttempts: true,
@@ -127,7 +162,7 @@ export default function AdminPage() {
               Game Created Successfully!
             </h1>
             <p className="text-gray-600 mb-6">
-              Your Lucky Wheel game "{createdGame.title}" is now live and ready to play.
+              Your Stars Hexa game "{createdGame.title}" is now live and ready to play.
             </p>
             
             <div className="bg-gray-50 rounded-lg p-4 mb-6">
@@ -176,10 +211,10 @@ export default function AdminPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Create Lucky Wheel Game
+            Create Stars Hexa Game
           </h1>
           <p className="text-gray-600">
-            Set up a new interactive game for your audience
+            Set up a new hexagonal star-finding game for your audience
           </p>
         </div>
 
@@ -218,69 +253,98 @@ export default function AdminPage() {
             </div>
           </div>
 
-          {/* Wheel Segments */}
+          {/* Text Configuration */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-900">Wheel Segments</h2>
-              <button
-                onClick={addSegment}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
-              >
-                Add Segment
-              </button>
+              <h2 className="text-xl font-semibold text-gray-900">Game Texts</h2>
+              <div className="text-sm text-gray-500">
+                Enter the texts that will be randomly placed on the hexagonal board
+              </div>
             </div>
             
-            <div className="space-y-3">
-              {segments.map((segment, index) => (
-                <div key={segment.id} className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg">
-                  <div className="flex-1">
-                    <input
-                      type="text"
-                      value={segment.label}
-                      onChange={(e) => updateSegment(index, { label: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-                      placeholder="Segment label"
-                    />
-                  </div>
-                  <div className="w-20">
-                    <input
-                      type="number"
-                      value={segment.probability}
-                      onChange={(e) => updateSegment(index, { probability: parseInt(e.target.value) || 0 })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-                      placeholder="%"
-                      min="1"
-                      max="100"
-                    />
-                  </div>
-                  <div className="w-16">
-                    <input
-                      type="color"
-                      value={segment.color || '#3B82F6'}
-                      onChange={(e) => updateSegment(index, { color: e.target.value })}
-                      className="w-full h-10 border border-gray-300 rounded"
-                    />
-                  </div>
-                  {segments.length > 2 && (
-                    <button
-                      onClick={() => removeSegment(index)}
-                      className="text-red-600 hover:text-red-800 p-2"
-                    >
-                      🗑️
-                    </button>
-                  )}
+            <div className="space-y-4">
+              {/* Number of Stars Selector */}
+              <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Number of Hidden Stars (1-3):
+                </label>
+                <div className="flex space-x-4">
+                  {[1, 2, 3].map(num => (
+                    <label key={num} className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="stars"
+                        value={num}
+                        checked={selectedStars === num}
+                        onChange={() => setSelectedStars(num)}
+                        className="w-4 h-4 text-yellow-600 bg-gray-100 border-gray-300 focus:ring-yellow-500"
+                      />
+                      <span className="text-sm font-medium">{num} Star{num > 1 ? 's' : ''}</span>
+                    </label>
+                  ))}
                 </div>
-              ))}
-            </div>
-            
-            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-              <div className="text-sm text-gray-600">
-                Total Probability: <span className={`font-semibold ${Math.abs(getTotalProbability() - 100) < 0.01 ? 'text-green-600' : 'text-red-600'}`}>
-                  {getTotalProbability()}%
-                </span>
-                {Math.abs(getTotalProbability() - 100) > 0.01 && (
-                  <span className="text-red-600 ml-2">(Must equal 100%)</span>
-                )}
+                <p className="text-xs text-yellow-700 mt-2">
+                  ⭐ Stars will be randomly placed among your texts when the game is created
+                </p>
+              </div>
+              
+              {/* Text Entries */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-md font-medium text-gray-900">Text Entries</h3>
+                  <button
+                    onClick={addText}
+                    disabled={texts.length >= 7}
+                    className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  >
+                    Add Text
+                  </button>
+                </div>
+                
+                <div className="space-y-2">
+                  {texts.map((text, index) => (
+                    <div key={index} className="flex items-center space-x-3 p-3 bg-white rounded border">
+                      <div className="w-8 text-center">
+                        <span className="text-sm font-medium text-gray-500">#{index + 1}</span>
+                      </div>
+                      <div className="flex-1">
+                        <input
+                          type="text"
+                          value={text}
+                          onChange={(e) => updateText(index, e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Enter text for hexagon"
+                          maxLength={15}
+                        />
+                      </div>
+                      {texts.length > 1 && (
+                        <button
+                          onClick={() => removeText(index)}
+                          className="text-red-600 hover:text-red-800 p-1"
+                          title="Remove text"
+                        >
+                          🗑️
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="mt-3 text-xs text-gray-600">
+                  📝 You have {texts.length} text{texts.length !== 1 ? 's' : ''} 
+                  {texts.length < 7 && ` (${7 - texts.length} more needed for full board)`}
+                  {texts.length > 7 && ` (only first 7 will be used)`}
+                </div>
+              </div>
+              
+              {/* Preview */}
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <h3 className="text-md font-medium text-gray-900 mb-3">Game Preview</h3>
+                <div className="text-sm text-gray-700 space-y-1">
+                  <div>🎲 <strong>Randomization:</strong> Texts will be randomly placed on the hexagonal board</div>
+                  <div>⭐ <strong>Star Placement:</strong> {selectedStars} star{selectedStars > 1 ? 's' : ''} will be randomly hidden among the texts</div>
+                  <div>🎯 <strong>Layout:</strong> 2-3-2 hexagonal formation (7 total positions)</div>
+                </div>
               </div>
             </div>
           </div>

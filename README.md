@@ -1,10 +1,10 @@
 # PlayMass - Interactive Game Platform
 
-A Next.js-based platform for creating and distributing interactive games like Lucky Wheel with comprehensive rewards management.
+A Next.js-based platform for creating and distributing interactive games like Stars Hexa with comprehensive rewards management.
 
 ## 🎮 Features
 
-- **Lucky Wheel Games**: Interactive spinning wheel games with customizable segments
+- **Stars Hexa Games**: Interactive hexagonal star-finding games with customizable text and hidden stars
 - **Rewards Management**: Complete reward system with points, coupons, physical prizes, and custom rewards
 - **Participant Management**: Track players across multiple games and sessions
 - **Target Groups**: Organize participants into groups for targeted campaigns
@@ -79,11 +79,12 @@ app/
 
 ## 🎲 Game Types
 
-### Lucky Wheel
-- Customizable segments with labels, values, and probabilities
+### Stars Hexa
+- 7 hexagonal cards in 2-3-2 formation layout
+- Customizable text for each hexagon
+- Hidden stars (1-3 per game) for discovery gameplay
 - Visual themes (default, colorful, minimal)
-- Configurable spin duration and rotations
-- Multiple attempts support
+- Limited attempts and flip mechanics
 
 ## 🏆 Reward System
 
@@ -121,7 +122,7 @@ npm run lint
 
 ## 🌟 Key Features
 
-- **Real-time Game Play**: Interactive spinning wheel with smooth animations
+- **Real-time Game Play**: Interactive hexagonal star-finding with smooth flip animations
 - **Anti-cheat Protection**: Session tracking, IP monitoring, and validation
 - **Scalable Architecture**: Designed for high-volume game participation
 - **Responsive Design**: Works on desktop, tablet, and mobile devices

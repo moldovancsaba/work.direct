@@ -124,35 +124,43 @@ export async function PUT(
       }, { status: 404 })
     }
     
-    // Validate Lucky Wheel configuration if updating wheel data
-    if (updateData.configuration?.wheel?.segments) {
-      // Validate probability total
-      const totalProbability = updateData.configuration.wheel.segments.reduce(
-        (sum, segment) => sum + segment.probability, 
-        0
-      )
-      
-      if (Math.abs(totalProbability - 100) > 0.01) {
+    // Validate Stars Hexa configuration if updating hexagon data
+    if (updateData.configuration?.starsHexa?.hexagons) {
+      // Validate hexagon count
+      if (updateData.configuration.starsHexa.hexagons.length !== 7) {
         return NextResponse.json({
           success: false,
-          message: 'Wheel segment probabilities must add up to 100%',
+          message: 'Stars Hexa games must have exactly 7 hexagons',
           error: {
             code: 'VALIDATION_ERROR',
-            message: `Current total probability: ${totalProbability}%`
+            message: 'Invalid hexagon count'
           }
         }, { status: 400 })
       }
       
-      // Ensure unique segment IDs
-      const segmentIds = updateData.configuration.wheel.segments.map(s => s.id)
-      const uniqueSegmentIds = new Set(segmentIds)
-      if (segmentIds.length !== uniqueSegmentIds.size) {
+      // Validate star count (1-3 stars)
+      const starsCount = updateData.configuration.starsHexa.hexagons.filter(h => h.hasHiddenStar).length
+      if (starsCount < 1 || starsCount > 3) {
         return NextResponse.json({
           success: false,
-          message: 'All wheel segments must have unique IDs',
+          message: 'Stars Hexa games must have between 1-3 hidden stars',
           error: {
             code: 'VALIDATION_ERROR',
-            message: 'Duplicate segment IDs found'
+            message: `Current star count: ${starsCount}. Must be 1-3 stars.`
+          }
+        }, { status: 400 })
+      }
+      
+      // Ensure unique hexagon IDs
+      const hexagonIds = updateData.configuration.starsHexa.hexagons.map(h => h.id)
+      const uniqueHexagonIds = new Set(hexagonIds)
+      if (hexagonIds.length !== uniqueHexagonIds.size) {
+        return NextResponse.json({
+          success: false,
+          message: 'All hexagons must have unique IDs',
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Duplicate hexagon IDs found'
           }
         }, { status: 400 })
       }
@@ -160,7 +168,7 @@ export async function PUT(
     
     // Prevent certain fields from being updated after game is active
     if (existingGame.status === 'ACTIVE') {
-      const restrictedFields = ['type', 'configuration.wheel.segments']
+      const restrictedFields = ['type', 'configuration.starsHexa.hexagons']
       
       // Check if trying to update restricted fields
       if (updateData.type && updateData.type !== existingGame.type) {
@@ -174,17 +182,17 @@ export async function PUT(
         }, { status: 400 })
       }
       
-      // Allow minor configuration updates but prevent major wheel changes
-      if (updateData.configuration?.wheel?.segments && 
-          JSON.stringify(updateData.configuration.wheel.segments) !== 
-          JSON.stringify(existingGame.configuration.wheel?.segments)) {
+      // Allow minor configuration updates but prevent major hexagon changes
+      if (updateData.configuration?.starsHexa?.hexagons && 
+          JSON.stringify(updateData.configuration.starsHexa.hexagons) !== 
+          JSON.stringify(existingGame.configuration.starsHexa?.hexagons)) {
         
         return NextResponse.json({
           success: false,
-          message: 'Cannot modify wheel segments for active games',
+          message: 'Cannot modify hexagons for active games',
           error: {
             code: 'VALIDATION_ERROR',
-            message: 'Wheel configuration cannot be changed once the game is active'
+            message: 'Stars Hexa configuration cannot be changed once the game is active'
           }
         }, { status: 400 })
       }
