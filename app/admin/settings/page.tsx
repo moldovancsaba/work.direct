@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useTheme } from '../../contexts/ThemeContext'
+import { Input, Select, Textarea, NumberInput } from '../../components/ui/FormControls'
 
 interface Settings {
   siteName: string
@@ -296,39 +297,30 @@ export default function SettingsPage() {
                   <div>
                     <h2 className="text-lg font-semibold text-gray-900 mb-6">General Settings</h2>
                     <div className="space-y-6">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Site Name
-                        </label>
-                        <input
+                      <div className="max-w-md">
+                        <Input
+                          label="Site Name"
                           type="text"
                           value={settings.siteName}
                           onChange={(e) => handleInputChange('siteName', e.target.value)}
-                          className="w-full max-w-md px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Site Description
-                        </label>
-                        <textarea
+                      <div className="max-w-md">
+                        <Textarea
+                          label="Site Description"
                           value={settings.siteDescription}
                           onChange={(e) => handleInputChange('siteDescription', e.target.value)}
                           rows={3}
-                          className="w-full max-w-md px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Contact Email
-                        </label>
-                        <input
+                      <div className="max-w-md">
+                        <Input
+                          label="Contact Email"
                           type="email"
                           value={settings.contactEmail}
                           onChange={(e) => handleInputChange('contactEmail', e.target.value)}
-                          className="w-full max-w-md px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
                     </div>
@@ -340,31 +332,23 @@ export default function SettingsPage() {
                   <div>
                     <h2 className="text-lg font-semibold text-gray-900 mb-6">Game Settings</h2>
                     <div className="space-y-6">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Default Max Attempts per User
-                        </label>
-                        <input
-                          type="number"
-                          min="1"
-                          max="10"
+                      <div className="max-w-xs">
+                        <NumberInput
+                          label="Default Max Attempts per User"
+                          min={1}
+                          max={10}
                           value={settings.defaultMaxAttempts}
                           onChange={(e) => handleInputChange('defaultMaxAttempts', parseInt(e.target.value))}
-                          className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Default Max Flips per Attempt
-                        </label>
-                        <input
-                          type="number"
-                          min="1"
-                          max="7"
+                      <div className="max-w-xs">
+                        <NumberInput
+                          label="Default Max Flips per Attempt"
+                          min={1}
+                          max={7}
                           value={settings.defaultMaxFlips}
                           onChange={(e) => handleInputChange('defaultMaxFlips', parseInt(e.target.value))}
-                          className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
 
@@ -431,32 +415,24 @@ export default function SettingsPage() {
                       </div>
 
                       {settings.enableRateLimit && (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Max Requests per Minute
-                          </label>
-                          <input
-                            type="number"
-                            min="10"
-                            max="1000"
+                        <div className="max-w-xs">
+                          <NumberInput
+                            label="Max Requests per Minute"
+                            min={10}
+                            max={1000}
                             value={settings.maxRequestsPerMinute}
                             onChange={(e) => handleInputChange('maxRequestsPerMinute', parseInt(e.target.value))}
-                            className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           />
                         </div>
                       )}
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Session Timeout (minutes)
-                        </label>
-                        <input
-                          type="number"
-                          min="5"
-                          max="120"
+                      <div className="max-w-xs">
+                        <NumberInput
+                          label="Session Timeout (minutes)"
+                          min={5}
+                          max={120}
                           value={settings.sessionTimeout}
                           onChange={(e) => handleInputChange('sessionTimeout', parseInt(e.target.value))}
-                          className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
                     </div>

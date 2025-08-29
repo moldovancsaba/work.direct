@@ -12,12 +12,6 @@ export default function AdminLayout({
 
   const navigation = [
     {
-      name: 'Dashboard',
-      href: '/admin',
-      icon: '📊',
-      current: pathname === '/admin'
-    },
-    {
       name: 'Games',
       href: '/admin/games',
       icon: '🎮',
