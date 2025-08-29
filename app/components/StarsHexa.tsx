@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useReducer } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { HexagonCard, GameOutcome } from '../types'
 
@@ -18,17 +18,116 @@ interface StarsHexaProps {
   isTrialMode?: boolean
 }
 
+// Game state interface for useReducer
+interface GameState {
+  hexagons: HexagonCard[]
+  flipsUsed: number
+  starsFound: number
+  totalStars: number
+  currentRound: number
+  isGameComplete: boolean
+  gameResult: GameOutcome | null
+}
+
+// Action types for game state management
+type GameAction = 
+  | { type: 'INITIALIZE_GAME'; payload: { hexagons: HexagonCard[]; totalStars: number } }
+  | { type: 'FLIP_HEXAGON'; payload: { hexagonId: string } }
+  | { type: 'FLIP_BACK_HEXAGONS'; payload: { hexagonIds: string[] } }
+  | { type: 'START_NEW_ROUND' }
+  | { type: 'COMPLETE_GAME'; payload: { result: GameOutcome } }
+  | { type: 'RESET_GAME' }
+
+// Ultra-fast game state reducer - no blocking operations
+const gameReducer = (state: GameState, action: GameAction): GameState => {
+  switch (action.type) {
+    case 'INITIALIZE_GAME':
+      return {
+        ...state,
+        hexagons: action.payload.hexagons,
+        totalStars: action.payload.totalStars,
+        flipsUsed: 0,
+        starsFound: 0,
+        currentRound: 1,
+        isGameComplete: false,
+        gameResult: null
+      }
+      
+    case 'FLIP_HEXAGON':
+      const { hexagonId } = action.payload
+      const hexagon = state.hexagons.find(h => h.id === hexagonId)
+      if (!hexagon || hexagon.isRevealed) return state
+      
+      const updatedHexagons = state.hexagons.map(h => 
+        h.id === hexagonId ? { ...h, isRevealed: true } : h
+      )
+      const newStarsFound = hexagon.hasHiddenStar ? state.starsFound + 1 : state.starsFound
+      
+      return {
+        ...state,
+        hexagons: updatedHexagons,
+        flipsUsed: state.flipsUsed + 1,
+        starsFound: newStarsFound
+      }
+      
+    case 'FLIP_BACK_HEXAGONS':
+      const { hexagonIds } = action.payload
+      return {
+        ...state,
+        hexagons: state.hexagons.map(h => 
+          hexagonIds.includes(h.id) ? { ...h, isRevealed: false } : h
+        )
+      }
+      
+    case 'START_NEW_ROUND':
+      return {
+        ...state,
+        hexagons: state.hexagons.map(h => ({ ...h, isRevealed: false })),
+        flipsUsed: 0,
+        starsFound: 0,
+        currentRound: state.currentRound + 1
+      }
+      
+    case 'COMPLETE_GAME':
+      return {
+        ...state,
+        isGameComplete: true,
+        gameResult: action.payload.result
+      }
+      
+    case 'RESET_GAME':
+      return {
+        ...state,
+        hexagons: state.hexagons.map(h => ({ ...h, isRevealed: false })),
+        flipsUsed: 0,
+        starsFound: 0,
+        currentRound: 1,
+        isGameComplete: false,
+        gameResult: null
+      }
+      
+    default:
+      return state
+  }
+}
+
 /**
- * StarsHexa Component - EXACTLY matching hexagon.html structure
+ * StarsHexa Component - ULTRA-FAST FLASH GAMING OPTIMIZED
+ * 
+ * PERFORMANCE FEATURES:
+ * - Pre-generated hexagon cards (all DOM elements ready on mount)
+ * - Parallel click support (no debouncing or blocking)
+ * - Lightning-fast 200ms animations
+ * - Auto-flip back mechanism (1 second delay for non-matching cards)
+ * - Hardware-accelerated CSS transforms
+ * - Optimized state management with useReducer
+ * - No network calls blocking UI updates
  * 
  * GAME RULES:
  * - 3 flips per round, 3 rounds total (3 attempts)
  * - Player must find ALL stars in a single round to win
- * - If can't find all stars after 3 attempts, player loses
- * - Between rounds: NO shuffle (helps player learn)
+ * - Cards auto-flip back after 1 second if not all stars
  * - Every NEW game starts with shuffle
- * - Front of cards: TEXT
- * - Back of cards: ⭐ (stars) vs 🍄 (mushrooms)
  */
 export default function StarsHexa({
   hexagons,
@@ -46,26 +145,30 @@ export default function StarsHexa({
   const router = useRouter()
   const params = useParams()
   
-  // Use configuration values - admin can set these
+  // Configuration values
   const flipsPerRound = maxFlipsPerAttempt || maxFlipsPerRound
   const totalRounds = attemptsRemaining || maxRounds
-  // Game state
-  const [gameState, setGameState] = useState<HexagonCard[]>([])
-  const [flipsUsed, setFlipsUsed] = useState(0)
-  const [starsFound, setStarsFound] = useState(0)
-  const [totalStars, setTotalStars] = useState(0)
-  const [currentRound, setCurrentRound] = useState(1)
-  const [isFlipping, setIsFlipping] = useState(false)
-  const [isGameComplete, setIsGameComplete] = useState(false)
-  const [gameResult, setGameResult] = useState<GameOutcome | null>(null)
   
-  // Layout constants (matching hexagon.html exactly)
+  // Optimized game state with useReducer for batched updates
+  const [gameState, dispatch] = useReducer(gameReducer, {
+    hexagons: [],
+    flipsUsed: 0,
+    starsFound: 0,
+    totalStars: 0,
+    currentRound: 1,
+    isGameComplete: false,
+    gameResult: null
+  })
+  
+  // Layout state for hexagon positioning
   const stageRef = useRef<HTMLDivElement>(null)
-  const flowerWrapRef = useRef<HTMLDivElement>(null)
   const [hexWidth, setHexWidth] = useState(120)
   const [scale, setScale] = useState(1)
 
-  // Shuffle function
+  // Auto-flip back timer for non-matching cards
+  const autoFlipTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Shuffle utility - used only at game start
   const shuffleArray = <T,>(array: T[]): T[] => {
     const shuffled = [...array]
     for (let i = shuffled.length - 1; i > 0; i--) {
@@ -75,53 +178,40 @@ export default function StarsHexa({
     return shuffled
   }
 
-  // Initialize game - shuffle ONLY at start
+  // Initialize game - shuffle positions and texts
   const initializeGame = (originalHexagons: HexagonCard[]) => {
     const allTexts = originalHexagons.map(h => h.text)
     const shuffledTexts = shuffleArray(allTexts)
     const starsCount = originalHexagons.filter(h => h.hasHiddenStar).length
     const starPositions = shuffleArray([0, 1, 2, 3, 4, 5, 6]).slice(0, starsCount)
     
+    // Pre-generate all cards immediately - no lazy loading
     return originalHexagons.map((originalHex, index) => ({
       id: originalHex.id,
       text: shuffledTexts[index],
       hasHiddenStar: starPositions.includes(index),
-      isRevealed: false,
+      isRevealed: false, // All cards start face-down but are fully generated
       position: index,
       color: originalHex.color || '#4a90e2'
     }))
   }
 
-  // Start new round (reset revealed cards, keep positions)
-  const startNewRound = () => {
-    if (currentRound >= totalRounds) {
-      setIsGameComplete(true)
-      return
-    }
-    
-    setGameState(prev => prev.map(h => ({ ...h, isRevealed: false })))
-    setFlipsUsed(0)
-    setStarsFound(0)
-    setCurrentRound(prev => prev + 1)
-  }
-
-  // Initialize game when hexagons change
+  // Initialize game when hexagons change - immediate full generation
   useEffect(() => {
     if (hexagons.length > 0) {
       const initialState = initializeGame(hexagons)
-      setGameState(initialState)
-      setTotalStars(hexagons.filter(h => h.hasHiddenStar).length)
-      setFlipsUsed(0)
-      setStarsFound(0)
-      setCurrentRound(1)
-      setIsGameComplete(false)
-      setGameResult(null)
+      dispatch({
+        type: 'INITIALIZE_GAME',
+        payload: {
+          hexagons: initialState,
+          totalStars: hexagons.filter(h => h.hasHiddenStar).length
+        }
+      })
     }
   }, [hexagons])
 
-  // Layout positioning (matching hexagon.html axial coordinates)
+  // Layout positioning using axial coordinates
   const getHexagonPosition = (position: number) => {
-    // Axial coordinates from hexagon.html
     const axialCoords = [
       { q: 0, r: -1 },   // Position 0 (top left)
       { q: 1, r: -1 },   // Position 1 (top right)
@@ -135,171 +225,112 @@ export default function StarsHexa({
     const coord = axialCoords[position] || { q: 0, r: 0 }
     const W = hexWidth
     
-    // Flat-top axial to pixel conversion (from hexagon.html)
+    // Flat-top axial to pixel conversion
     const x = 0.75 * W * coord.q
     const y = (Math.sqrt(3) / 4 * W) * coord.q + (Math.sqrt(3) / 2 * W) * coord.r
     
     return { x, y }
   }
 
-  // Debounce ref for preventing rapid clicks
-  // This ensures smooth UI performance and prevents double-clicks from causing issues
-  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const [clickedHexagons, setClickedHexagons] = useState<Set<string>>(new Set())
-
-  // Optimized hexagon flip handler with immediate visual feedback
-  // Separates UI updates from network calls for better perceived performance
-  const handleHexagonFlip = useCallback(async (hexagonId: string) => {
-    // Early validation - prevent multiple rapid clicks
-    if (isFlipping || disabled || isGameComplete || flipsUsed >= flipsPerRound) return
-    if (clickedHexagons.has(hexagonId)) return // Already processing this hexagon
-
-    const hexagon = gameState.find(h => h.id === hexagonId)
+  // ULTRA-FAST hexagon flip handler - NO BLOCKING, NO DEBOUNCING
+  const handleHexagonFlip = useCallback((hexagonId: string) => {
+    // Minimal validation only - allow rapid parallel clicks
+    if (disabled || gameState.isGameComplete || gameState.flipsUsed >= flipsPerRound) return
+    
+    const hexagon = gameState.hexagons.find(h => h.id === hexagonId)
     if (!hexagon || hexagon.isRevealed) return
 
-    // Clear any pending debounce timeout
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current)
-    }
+    // INSTANT UI UPDATE - no waiting, pure speed
+    dispatch({ type: 'FLIP_HEXAGON', payload: { hexagonId } })
 
-    // Add to clicked hexagons set immediately for instant feedback
-    setClickedHexagons(prev => new Set([...prev, hexagonId]))
-    
-    // Set debounce timeout to prevent rapid successive clicks
-    debounceTimeoutRef.current = setTimeout(() => {
-      setClickedHexagons(prev => {
-        const newSet = new Set(prev)
-        newSet.delete(hexagonId)
-        return newSet
-      })
-    }, 300)
-
-    setIsFlipping(true)
-
-    try {
-      // IMMEDIATE UI UPDATE - Don't wait for network call
-      // This provides instant visual feedback to user clicks
-      const newFlipsUsed = flipsUsed + 1
-      const newStarsFound = hexagon.hasHiddenStar ? starsFound + 1 : starsFound
-      const allStarsFound = newStarsFound >= totalStars
-      const flipsRemaining = flipsPerRound - newFlipsUsed
-      const roundOver = flipsRemaining === 0 || allStarsFound
-
-      // Batch state updates for better performance
-      // React will batch these updates automatically in React 18
-      setGameState(prev => prev.map(h => 
+    // Calculate game logic in parallel with animation
+    setTimeout(() => {
+      const updatedHexagons = gameState.hexagons.map(h => 
         h.id === hexagonId ? { ...h, isRevealed: true } : h
-      ))
-      setFlipsUsed(newFlipsUsed)
-      setStarsFound(newStarsFound)
-
-      // Handle game completion logic
-      if (allStarsFound) {
-        setIsGameComplete(true)
-      } else if (roundOver && currentRound >= totalRounds) {
-        setIsGameComplete(true)
-      } else if (roundOver) {
-        // Start next round after a delay
-        setTimeout(() => startNewRound(), 1000)
-      }
-
-      // ASYNC NETWORK CALL - Happens after UI update for better UX
-      // User sees immediate flip animation while backend processes
-      let result: GameOutcome
+      )
+      const revealedCards = updatedHexagons.filter(h => h.isRevealed)
+      const newFlipsUsed = gameState.flipsUsed + 1
+      const newStarsFound = hexagon.hasHiddenStar ? gameState.starsFound + 1 : gameState.starsFound
+      const allStarsFound = newStarsFound >= gameState.totalStars
       
-      if (onFlip) {
-        try {
-          result = await onFlip(hexagonId)
-        } catch (networkError) {
-          console.error('Network error during flip:', networkError)
-          // Fallback result if network fails - game continues to work
-          result = {
-            type: hexagon.hasHiddenStar ? 'WIN' as const : 'NO_REWARD' as const,
-            hexagonId,
-            starsFound: hexagon.hasHiddenStar ? 1 : 0,
-            totalStarsInGame: totalStars,
-            foundAllStars: allStarsFound,
-            value: hexagon.hasHiddenStar ? 'Hidden Star!' : hexagon.text,
-            rewardIds: [],
-            message: hexagon.hasHiddenStar ? `Found a star in ${hexagon.text}!` : `No star in ${hexagon.text}`
-          }
+      // Auto-flip back mechanism - 3 cards revealed but not all stars
+      if (revealedCards.length === 3 && !allStarsFound) {
+        // Clear any existing timer
+        if (autoFlipTimerRef.current) {
+          clearTimeout(autoFlipTimerRef.current)
         }
-      } else {
-        // Default result for offline/trial mode
-        result = {
-          type: hexagon.hasHiddenStar ? 'WIN' as const : 'NO_REWARD' as const,
-          hexagonId,
-          starsFound: hexagon.hasHiddenStar ? 1 : 0,
-          totalStarsInGame: totalStars,
-          foundAllStars: allStarsFound,
-          value: hexagon.hasHiddenStar ? 'Hidden Star!' : hexagon.text,
-          rewardIds: [],
-          message: hexagon.hasHiddenStar ? `Found a star in ${hexagon.text}!` : `No star in ${hexagon.text}`
-        }
-      }
-
-      setGameResult(result)
-      
-      if (onResult) {
-        onResult(result)
-      }
-
-    } catch (error) {
-      console.error('Flip error:', error)
-      // Revert UI changes if there was a critical error
-      setGameState(prev => prev.map(h => 
-        h.id === hexagonId ? { ...h, isRevealed: false } : h
-      ))
-      setFlipsUsed(prev => Math.max(0, prev - 1))
-      setStarsFound(prev => hexagon.hasHiddenStar ? Math.max(0, prev - 1) : prev)
-    } finally {
-      setIsFlipping(false)
-    }
-  }, [isFlipping, disabled, isGameComplete, flipsUsed, flipsPerRound, clickedHexagons, gameState, starsFound, totalStars, currentRound, totalRounds, onFlip, onResult])
-
-  // Redirect to result page when game completes
-  useEffect(() => {
-    if (isGameComplete) {
-      const targetGameId = gameId || params.gameId as string
-      if (targetGameId) {
-        // Add a delay to show the final result before redirecting
-        const redirectDelay = setTimeout(() => {
-          const resultParams = new URLSearchParams({
-            won: (starsFound >= totalStars).toString(),
-            starsFound: starsFound.toString(),
-            totalStars: totalStars.toString(),
-            flipsUsed: flipsUsed.toString(),
-            roundsUsed: currentRound.toString(),
-            ...(isTrialMode && { trial: 'true' })
-          })
-          
-          router.push(`/play/${targetGameId}/result?${resultParams.toString()}`)
-        }, 2000) // 2 second delay to see the result
         
-        return () => clearTimeout(redirectDelay)
+        // 1-second auto-flip back timer as requested
+        autoFlipTimerRef.current = setTimeout(() => {
+          const revealedIds = revealedCards.map(h => h.id)
+          dispatch({ type: 'FLIP_BACK_HEXAGONS', payload: { hexagonIds: revealedIds } })
+        }, 1000) // Exactly 1 second as requested
       }
-    }
-  }, [isGameComplete, starsFound, totalStars, flipsUsed, currentRound, gameId, params.gameId, isTrialMode, router])
+      
+      // Handle game completion
+      if (allStarsFound || newFlipsUsed >= flipsPerRound) {
+        if (allStarsFound) {
+          const result: GameOutcome = {
+            type: 'WIN',
+            hexagonId,
+            starsFound: newStarsFound,
+            totalStarsInGame: gameState.totalStars,
+            foundAllStars: true,
+            value: 'All stars found!',
+            rewardIds: [],
+            message: 'Congratulations! You found all the stars!'
+          }
+          dispatch({ type: 'COMPLETE_GAME', payload: { result } })
+          if (onResult) onResult(result)
+        } else if (gameState.currentRound >= totalRounds) {
+          const result: GameOutcome = {
+            type: 'NO_REWARD',
+            hexagonId,
+            starsFound: newStarsFound,
+            totalStarsInGame: gameState.totalStars,
+            foundAllStars: false,
+            value: 'Game over',
+            rewardIds: [],
+            message: 'Game over! Try again.'
+          }
+          dispatch({ type: 'COMPLETE_GAME', payload: { result } })
+          if (onResult) onResult(result)
+        } else {
+          // Start next round
+          setTimeout(() => {
+            dispatch({ type: 'START_NEW_ROUND' })
+          }, 1500)
+        }
+      }
+      
+      // Network call runs in background - doesn't block UI
+      if (onFlip) {
+        onFlip(hexagonId).then(result => {
+          if (onResult) onResult(result)
+        }).catch(error => {
+          console.warn('Network error:', error)
+        })
+      }
+    }, 0) // Run immediately but non-blocking
+  }, [disabled, gameState, flipsPerRound, totalRounds, onFlip, onResult])
 
-  // Layout calculation (matching hexagon.html fitAndRender logic)
+  // Layout calculation for responsive hexagons
   useEffect(() => {
-    const fitAndRender = () => {
+    const updateLayout = () => {
       if (!stageRef.current) return
       
       const vw = window.innerWidth
       const vh = window.innerHeight
       const margin = 0.96
       
-      // Calculate hex width
       const W_w = (vw * margin) / 2.5
       const W_h = (vh * margin) / Math.sqrt(3)
       let W = Math.floor(Math.min(W_w, W_h))
-      if (W < 60) W = 60 // minimum size
-      if (W > 150) W = 150 // maximum size
+      if (W < 60) W = 60
+      if (W > 150) W = 150
       
       setHexWidth(W)
       
-      // Calculate scale (simplified)
       const estimatedWidth = W * 2.5
       const estimatedHeight = W * Math.sqrt(3)
       const scaleW = (vw * margin) / estimatedWidth
@@ -309,29 +340,46 @@ export default function StarsHexa({
       setScale(finalScale)
     }
     
-    fitAndRender()
-    window.addEventListener('resize', fitAndRender)
-    return () => window.removeEventListener('resize', fitAndRender)
+    updateLayout()
+    window.addEventListener('resize', updateLayout)
+    return () => window.removeEventListener('resize', updateLayout)
   }, [])
 
-  const flipsRemaining = flipsPerRound - flipsUsed
-  const roundsRemaining = totalRounds - currentRound + 1
+  // Redirect to results IMMEDIATELY when game completes - no delay
+  useEffect(() => {
+    if (gameState.isGameComplete) {
+      const targetGameId = gameId || params.gameId as string
+      if (targetGameId) {
+        const resultParams = new URLSearchParams({
+          won: (gameState.starsFound >= gameState.totalStars).toString(),
+          starsFound: gameState.starsFound.toString(),
+          totalStars: gameState.totalStars.toString(),
+          flipsUsed: gameState.flipsUsed.toString(),
+          roundsUsed: gameState.currentRound.toString(),
+          ...(isTrialMode && { trial: 'true' })
+        })
+        
+        // IMMEDIATE redirect - no delay for flash gaming experience
+        router.push(`/play/${targetGameId}/result?${resultParams.toString()}`)
+      }
+    }
+  }, [gameState.isGameComplete, gameState.starsFound, gameState.totalStars, gameState.flipsUsed, gameState.currentRound, gameId, params.gameId, isTrialMode, router])
 
   return (
     <>
       {/* Game Info */}
       <div className="fixed top-4 left-4 z-10 bg-black/50 text-white p-3 rounded-lg font-mono text-sm">
-        <div>Round: {currentRound}/{totalRounds}</div>
-        <div>Flips: {flipsUsed}/{flipsPerRound}</div>
-        <div>Stars: {starsFound}/{totalStars}</div>
-        {isGameComplete && (
-          <div className={`mt-2 font-bold ${starsFound >= totalStars ? 'text-green-400' : 'text-red-400'}`}>
-            {starsFound >= totalStars ? 'YOU WON! 🎉' : 'GAME OVER 💀'}
+        <div>Round: {gameState.currentRound}/{totalRounds}</div>
+        <div>Flips: {gameState.flipsUsed}/{flipsPerRound}</div>
+        <div>Stars: {gameState.starsFound}/{gameState.totalStars}</div>
+        {gameState.isGameComplete && (
+          <div className={`mt-2 font-bold ${gameState.starsFound >= gameState.totalStars ? 'text-green-400' : 'text-red-400'}`}>
+            {gameState.starsFound >= gameState.totalStars ? 'YOU WON! 🎉' : 'GAME OVER 💀'}
           </div>
         )}
       </div>
 
-      {/* EXACT hexagon.html structure */}
+      {/* Game Area */}
       <main 
         ref={stageRef}
         className="fixed inset-0 grid place-items-center p-8"
@@ -340,34 +388,32 @@ export default function StarsHexa({
         }}
       >
         <div 
-          ref={flowerWrapRef}
           className="relative"
           style={{
             width: 0,
             height: 0,
             transformOrigin: '0 0',
             transform: `rotate(30deg) scale(${scale})`,
-            '--W': `${hexWidth}px`,
-            '--H': `${hexWidth * 0.8660254037844386}px`,
-            '--duration': '520ms',
-            '--easing': 'cubic-bezier(.2,.7,.2,1)'
-          } as any}
+          }}
         >
           <section className="relative" style={{ width: 0, height: 0 }}>
-            {gameState.map((hexagon, index) => {
+            {gameState.hexagons.map((hexagon) => {
               const position = getHexagonPosition(hexagon.position)
               const isRevealed = hexagon.isRevealed
               
-              const isBeingClicked = clickedHexagons.has(hexagon.id)
-              const isClickable = !disabled && !isGameComplete && flipsUsed < flipsPerRound && !hexagon.isRevealed && !isBeingClicked
+              // Ultra-fast clickable state calculation
+              const isClickable = !disabled && !gameState.isGameComplete && 
+                                 gameState.flipsUsed < flipsPerRound && !hexagon.isRevealed
               
               return (
                 <button
                   key={hexagon.id}
                   type="button"
-                  className={`absolute border-none bg-transparent p-0 transition-all duration-100 ${
-                    isClickable ? 'cursor-pointer hover:scale-105' : 'cursor-not-allowed'
-                  } ${isBeingClicked ? 'scale-95' : ''}`}
+                  className={`absolute border-none bg-transparent p-0 ${ 
+                    isClickable 
+                      ? 'cursor-pointer hover:scale-105 active:scale-95 transition-transform duration-75' 
+                      : 'cursor-not-allowed'
+                  }`}
                   style={{
                     width: `${hexWidth}px`,
                     height: `${hexWidth * 0.8660254037844386}px`,
@@ -376,14 +422,13 @@ export default function StarsHexa({
                     transform: 'translate(-50%, -50%)',
                     clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
                     WebkitTapHighlightColor: 'transparent',
-                    // Add hardware acceleration for smoother animations
-                    willChange: isRevealed || isBeingClicked ? 'transform' : 'auto'
+                    // Hardware acceleration for ultra-smooth animations
+                    willChange: 'transform'
                   }}
-                  aria-pressed={isRevealed}
                   onClick={() => handleHexagonFlip(hexagon.id)}
                   disabled={!isClickable}
                 >
-                  {/* Shape container */}
+                  {/* Shape container with 3D perspective */}
                   <div 
                     className="w-full h-full relative"
                     style={{
@@ -391,16 +436,16 @@ export default function StarsHexa({
                       perspective: '1000px'
                     }}
                   >
-                    {/* Flip container */}
+                    {/* Flip container - 200ms ultra-fast animation */}
                     <div 
                       className="w-full h-full"
                       style={{
                         transformStyle: 'preserve-3d',
-                        transition: 'transform 520ms cubic-bezier(.2,.7,.2,1)',
+                        transition: 'transform 200ms ease-out', // LIGHTNING FAST 200ms as requested
                         transform: isRevealed ? 'rotateY(180deg)' : 'rotateY(0deg)'
                       }}
                     >
-                      {/* Front face - TEXT */}
+                      {/* Front face - TEXT (always rendered, never lazy) */}
                       <div 
                         className="absolute inset-0 border-2 border-blue-700 box-border"
                         style={{
@@ -410,16 +455,15 @@ export default function StarsHexa({
                         }}
                       >
                         <div className="absolute inset-0 grid place-items-center p-2">
-                          <div className="text-center text-white font-bold text-sm leading-tight drop-shadow-lg max-w-full overflow-hidden">
+                          <div className="text-center text-white font-bold text-sm leading-tight drop-shadow-lg">
                             {hexagon.text.length > 12 ? 
                               hexagon.text.substring(0, 10) + '...' : 
-                              hexagon.text
-                            }
+                              hexagon.text}
                           </div>
                         </div>
                       </div>
                       
-                      {/* Back face - STAR or MUSHROOM */}
+                      {/* Back face - STAR or MUSHROOM (always rendered, never lazy) */}
                       <div 
                         className="absolute inset-0 border-2 border-pink-400 box-border"
                         style={{
