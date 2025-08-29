@@ -282,16 +282,6 @@ export default function GameResultPage() {
           </div>
         )}
 
-        {/* Back to Home */}
-        <div className="text-center">
-          <Link
-            href="/"
-            className="text-gray-600 hover:text-gray-800 transition-colors inline-flex items-center gap-2"
-          >
-            <span>←</span>
-            <span>Back to Home</span>
-          </Link>
-        </div>
       </div>
     </div>
   )

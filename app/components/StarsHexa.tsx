@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { HexagonCard, GameOutcome } from '../types'
 
@@ -142,57 +142,100 @@ export default function StarsHexa({
     return { x, y }
   }
 
-  // Handle hexagon flip
-  const handleHexagonFlip = async (hexagonId: string) => {
+  // Debounce ref for preventing rapid clicks
+  // This ensures smooth UI performance and prevents double-clicks from causing issues
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const [clickedHexagons, setClickedHexagons] = useState<Set<string>>(new Set())
+
+  // Optimized hexagon flip handler with immediate visual feedback
+  // Separates UI updates from network calls for better perceived performance
+  const handleHexagonFlip = useCallback(async (hexagonId: string) => {
+    // Early validation - prevent multiple rapid clicks
     if (isFlipping || disabled || isGameComplete || flipsUsed >= flipsPerRound) return
+    if (clickedHexagons.has(hexagonId)) return // Already processing this hexagon
 
     const hexagon = gameState.find(h => h.id === hexagonId)
     if (!hexagon || hexagon.isRevealed) return
 
+    // Clear any pending debounce timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current)
+    }
+
+    // Add to clicked hexagons set immediately for instant feedback
+    setClickedHexagons(prev => new Set([...prev, hexagonId]))
+    
+    // Set debounce timeout to prevent rapid successive clicks
+    debounceTimeoutRef.current = setTimeout(() => {
+      setClickedHexagons(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(hexagonId)
+        return newSet
+      })
+    }, 300)
+
     setIsFlipping(true)
 
     try {
-      // Update game state
-      const newGameState = gameState.map(h => 
-        h.id === hexagonId ? { ...h, isRevealed: true } : h
-      )
-      setGameState(newGameState)
-      setFlipsUsed(prev => prev + 1)
-
-      // Count stars found
-      let newStarsFound = starsFound
-      if (hexagon.hasHiddenStar) {
-        newStarsFound = starsFound + 1
-        setStarsFound(newStarsFound)
-      }
-
-      // Check if all stars found (WIN condition)
+      // IMMEDIATE UI UPDATE - Don't wait for network call
+      // This provides instant visual feedback to user clicks
+      const newFlipsUsed = flipsUsed + 1
+      const newStarsFound = hexagon.hasHiddenStar ? starsFound + 1 : starsFound
       const allStarsFound = newStarsFound >= totalStars
-      
-      // Check if round is over
-      const flipsRemaining = flipsPerRound - (flipsUsed + 1)
+      const flipsRemaining = flipsPerRound - newFlipsUsed
       const roundOver = flipsRemaining === 0 || allStarsFound
-      
+
+      // Batch state updates for better performance
+      // React will batch these updates automatically in React 18
+      setGameState(prev => prev.map(h => 
+        h.id === hexagonId ? { ...h, isRevealed: true } : h
+      ))
+      setFlipsUsed(newFlipsUsed)
+      setStarsFound(newStarsFound)
+
+      // Handle game completion logic
       if (allStarsFound) {
-        // Player won!
         setIsGameComplete(true)
       } else if (roundOver && currentRound >= totalRounds) {
-        // No more rounds, player lost
         setIsGameComplete(true)
       } else if (roundOver) {
         // Start next round after a delay
         setTimeout(() => startNewRound(), 1000)
       }
 
-      // Create result
-      const result = onFlip ? await onFlip(hexagonId) : {
-        type: hexagon.hasHiddenStar ? 'WIN' as const : 'NO_REWARD' as const,
-        hexagonId,
-        starsFound: hexagon.hasHiddenStar ? 1 : 0,
-        totalStarsInGame: totalStars,
-        foundAllStars: allStarsFound,
-        rewardIds: [],
-        message: hexagon.hasHiddenStar ? `Found a star in ${hexagon.text}!` : `No star in ${hexagon.text}`
+      // ASYNC NETWORK CALL - Happens after UI update for better UX
+      // User sees immediate flip animation while backend processes
+      let result: GameOutcome
+      
+      if (onFlip) {
+        try {
+          result = await onFlip(hexagonId)
+        } catch (networkError) {
+          console.error('Network error during flip:', networkError)
+          // Fallback result if network fails - game continues to work
+          result = {
+            type: hexagon.hasHiddenStar ? 'WIN' as const : 'NO_REWARD' as const,
+            hexagonId,
+            starsFound: hexagon.hasHiddenStar ? 1 : 0,
+            totalStarsInGame: totalStars,
+            foundAllStars: allStarsFound,
+            value: hexagon.hasHiddenStar ? 'Hidden Star!' : hexagon.text,
+            rewardIds: [],
+            message: hexagon.hasHiddenStar ? `Found a star in ${hexagon.text}!` : `No star in ${hexagon.text}`
+          }
+        }
+      } else {
+        // Default result for offline/trial mode
+        result = {
+          type: hexagon.hasHiddenStar ? 'WIN' as const : 'NO_REWARD' as const,
+          hexagonId,
+          starsFound: hexagon.hasHiddenStar ? 1 : 0,
+          totalStarsInGame: totalStars,
+          foundAllStars: allStarsFound,
+          value: hexagon.hasHiddenStar ? 'Hidden Star!' : hexagon.text,
+          rewardIds: [],
+          message: hexagon.hasHiddenStar ? `Found a star in ${hexagon.text}!` : `No star in ${hexagon.text}`
+        }
       }
 
       setGameResult(result)
@@ -203,11 +246,16 @@ export default function StarsHexa({
 
     } catch (error) {
       console.error('Flip error:', error)
-      // Don't throw here to prevent component crashes - the error is already handled by onFlip
+      // Revert UI changes if there was a critical error
+      setGameState(prev => prev.map(h => 
+        h.id === hexagonId ? { ...h, isRevealed: false } : h
+      ))
+      setFlipsUsed(prev => Math.max(0, prev - 1))
+      setStarsFound(prev => hexagon.hasHiddenStar ? Math.max(0, prev - 1) : prev)
     } finally {
       setIsFlipping(false)
     }
-  }
+  }, [isFlipping, disabled, isGameComplete, flipsUsed, flipsPerRound, clickedHexagons, gameState, starsFound, totalStars, currentRound, totalRounds, onFlip, onResult])
 
   // Redirect to result page when game completes
   useEffect(() => {
@@ -310,11 +358,16 @@ export default function StarsHexa({
               const position = getHexagonPosition(hexagon.position)
               const isRevealed = hexagon.isRevealed
               
+              const isBeingClicked = clickedHexagons.has(hexagon.id)
+              const isClickable = !disabled && !isGameComplete && flipsUsed < flipsPerRound && !hexagon.isRevealed && !isBeingClicked
+              
               return (
                 <button
                   key={hexagon.id}
                   type="button"
-                  className="absolute border-none bg-transparent p-0 cursor-pointer"
+                  className={`absolute border-none bg-transparent p-0 transition-all duration-100 ${
+                    isClickable ? 'cursor-pointer hover:scale-105' : 'cursor-not-allowed'
+                  } ${isBeingClicked ? 'scale-95' : ''}`}
                   style={{
                     width: `${hexWidth}px`,
                     height: `${hexWidth * 0.8660254037844386}px`,
@@ -322,11 +375,13 @@ export default function StarsHexa({
                     top: `${position.y}px`,
                     transform: 'translate(-50%, -50%)',
                     clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
-                    WebkitTapHighlightColor: 'transparent'
+                    WebkitTapHighlightColor: 'transparent',
+                    // Add hardware acceleration for smoother animations
+                    willChange: isRevealed || isBeingClicked ? 'transform' : 'auto'
                   }}
                   aria-pressed={isRevealed}
                   onClick={() => handleHexagonFlip(hexagon.id)}
-                  disabled={disabled || isGameComplete || flipsUsed >= flipsPerRound}
+                  disabled={!isClickable}
                 >
                   {/* Shape container */}
                   <div 

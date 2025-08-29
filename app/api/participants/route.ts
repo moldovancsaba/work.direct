@@ -194,6 +194,78 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
 }
 
 /**
+ * Delete a participant by ID
+ * 
+ * Handles participant removal with proper validation and cleanup
+ */
+export async function DELETE(request: NextRequest): Promise<NextResponse<ApiResponse>> {
+  try {
+    // Connect to database
+    await connectDB()
+    
+    // Parse query parameters to get participant ID
+    const { searchParams } = new URL(request.url)
+    const participantId = searchParams.get('id')
+    
+    // Validate participant ID
+    if (!participantId) {
+      return NextResponse.json({
+        success: false,
+        message: 'Participant ID is required',
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Missing participant ID parameter'
+        }
+      }, { status: 400 })
+    }
+    
+    // Find and delete the participant
+    const deletedParticipant = await ParticipantModel.findByIdAndDelete(participantId)
+    
+    if (!deletedParticipant) {
+      return NextResponse.json({
+        success: false,
+        message: 'Participant not found',
+        error: {
+          code: 'NOT_FOUND',
+          message: 'No participant exists with the provided ID'
+        }
+      }, { status: 404 })
+    }
+    
+    return NextResponse.json({
+      success: true,
+      data: { id: participantId },
+      message: 'Participant deleted successfully'
+    })
+    
+  } catch (error) {
+    console.error('Delete participant error:', error)
+    
+    // Handle invalid ObjectId errors
+    if (error instanceof Error && error.name === 'CastError') {
+      return NextResponse.json({
+        success: false,
+        message: 'Invalid participant ID format',
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Participant ID must be a valid MongoDB ObjectId'
+        }
+      }, { status: 400 })
+    }
+    
+    return NextResponse.json({
+      success: false,
+      message: 'Failed to delete participant',
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: error instanceof Error ? error.message : 'Unknown error occurred'
+      }
+    }, { status: 500 })
+  }
+}
+
+/**
  * Handle OPTIONS requests for CORS preflight
  */
 export async function OPTIONS(request: NextRequest): Promise<NextResponse> {
@@ -201,7 +273,7 @@ export async function OPTIONS(request: NextRequest): Promise<NextResponse> {
     status: 200,
     headers: {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       'Access-Control-Max-Age': '86400'
     }

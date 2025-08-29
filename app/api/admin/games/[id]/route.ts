@@ -104,10 +104,16 @@ export async function PUT(
     if (title !== undefined) updateData.title = title
     if (description !== undefined) updateData.description = description
     if (type !== undefined) updateData.type = type
-    if (configuration !== undefined) updateData.configuration = configuration
-    if (maxAttemptsPerUser !== undefined) {
+    
+    // Handle configuration update properly to avoid conflicts
+    if (configuration !== undefined) {
+      // If we have a full configuration object, use it
+      updateData.configuration = configuration
+    } else if (maxAttemptsPerUser !== undefined) {
+      // If we only have maxAttemptsPerUser, update just that nested property
       updateData['configuration.maxAttemptsPerUser'] = maxAttemptsPerUser
     }
+    
     if (isActive !== undefined) {
       updateData.status = isActive ? 'ACTIVE' : 'DRAFT'
     }
