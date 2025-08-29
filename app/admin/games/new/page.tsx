@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { Input, Select, Textarea } from '../../../components/ui/FormControls'
 
 interface HexagonCard {
   id: string
@@ -177,44 +178,31 @@ export default function NewGamePage() {
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Basic Information</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Game Title *
-                </label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="My Awesome Stars Game"
-                  required
-                />
-              </div>
+              <Input
+                label="Game Title"
+                required
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="My Awesome Stars Game"
+              />
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Status
-                </label>
-                <select
-                  value={isActive ? 'active' : 'inactive'}
-                  onChange={(e) => setIsActive(e.target.value === 'active')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-              </div>
+              <Select
+                label="Status"
+                value={isActive ? 'active' : 'inactive'}
+                onChange={(e) => setIsActive(e.target.value === 'active')}
+                options={[
+                  { value: 'active', label: 'Active' },
+                  { value: 'inactive', label: 'Inactive' }
+                ]}
+              />
             </div>
 
             <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Description
-              </label>
-              <textarea
+              <Textarea
+                label="Description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Describe your game..."
               />
             </div>
@@ -225,50 +213,36 @@ export default function NewGamePage() {
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Game Rules</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Flips Per Round
-                </label>
-                <select
-                  value={maxFlipsPerRound}
-                  onChange={(e) => setMaxFlipsPerRound(Number(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  {[1, 2, 3, 4, 5, 6, 7].map(num => (
-                    <option key={num} value={num}>{num} flip{num !== 1 ? 's' : ''}</option>
-                  ))}
-                </select>
-              </div>
+              <Select
+                label="Flips Per Round"
+                value={maxFlipsPerRound.toString()}
+                onChange={(e) => setMaxFlipsPerRound(Number(e.target.value))}
+                options={[1, 2, 3, 4, 5, 6, 7].map(num => ({
+                  value: num.toString(),
+                  label: `${num} flip${num !== 1 ? 's' : ''}`
+                }))}
+              />
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Total Rounds
-                </label>
-                <select
-                  value={maxRounds}
-                  onChange={(e) => setMaxRounds(Number(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  {[1, 2, 3, 4, 5].map(num => (
-                    <option key={num} value={num}>{num} round{num !== 1 ? 's' : ''}</option>
-                  ))}
-                </select>
-              </div>
+              <Select
+                label="Total Rounds"
+                value={maxRounds.toString()}
+                onChange={(e) => setMaxRounds(Number(e.target.value))}
+                options={[1, 2, 3, 4, 5].map(num => ({
+                  value: num.toString(),
+                  label: `${num} round${num !== 1 ? 's' : ''}`
+                }))}
+              />
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Theme
-                </label>
-                <select
-                  value={theme}
-                  onChange={(e) => setTheme(e.target.value as any)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="default">Default</option>
-                  <option value="colorful">Colorful</option>
-                  <option value="minimal">Minimal</option>
-                </select>
-              </div>
+              <Select
+                label="Theme"
+                value={theme}
+                onChange={(e) => setTheme(e.target.value as any)}
+                options={[
+                  { value: 'default', label: 'Default' },
+                  { value: 'colorful', label: 'Colorful' },
+                  { value: 'minimal', label: 'Minimal' }
+                ]}
+              />
             </div>
 
             <div className="mt-4 p-4 bg-blue-50 rounded-lg">
@@ -310,7 +284,7 @@ export default function NewGamePage() {
                     type="text"
                     value={hexagon.text}
                     onChange={(e) => updateHexagon(index, 'text', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-3 bg-white text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-500"
                     placeholder={`Text for card ${index + 1}`}
                   />
                 </div>
@@ -364,7 +338,7 @@ export default function NewGamePage() {
                           type="text"
                           value={reward.title}
                           onChange={(e) => updateReward(index, 'title', e.target.value)}
-                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
+                          className="w-full px-3 py-2 bg-white text-black text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-500"
                           placeholder="Free Coffee"
                         />
                       </div>
@@ -374,11 +348,11 @@ export default function NewGamePage() {
                         <select
                           value={reward.type}
                           onChange={(e) => updateReward(index, 'type', e.target.value)}
-                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
+                          className="w-full px-3 py-2 bg-white text-black text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                         >
-                          <option value="DISCOUNT">Discount</option>
-                          <option value="FREEBIE">Freebie</option>
-                          <option value="POINTS">Points</option>
+                          <option value="DISCOUNT" className="bg-white text-black">Discount</option>
+                          <option value="FREEBIE" className="bg-white text-black">Freebie</option>
+                          <option value="POINTS" className="bg-white text-black">Points</option>
                         </select>
                       </div>
 
@@ -388,7 +362,7 @@ export default function NewGamePage() {
                           type="number"
                           value={reward.value}
                           onChange={(e) => updateReward(index, 'value', Number(e.target.value))}
-                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
+                          className="w-full px-3 py-2 bg-white text-black text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-500"
                           placeholder="10"
                         />
                       </div>
@@ -400,7 +374,7 @@ export default function NewGamePage() {
                         type="text"
                         value={reward.description}
                         onChange={(e) => updateReward(index, 'description', e.target.value)}
-                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-3 py-2 bg-white text-black text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-500"
                         placeholder="Get a free coffee on your next visit!"
                       />
                     </div>
