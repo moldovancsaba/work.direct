@@ -11,7 +11,7 @@ export interface BaseDocument {
 // Game Types and Interfaces
 // These define the structure for different game types and their configurations
 
-export type GameType = 'STARS_HEXA' | 'WHEEL_OF_FORTUNE' | 'SCRATCH_CARD' | 'QUIZ' | 'POLL'
+export type GameType = 'STARS_HEXA' | '💰🌪️🍀';
 
 export type GameStatus = 'DRAFT' | 'ACTIVE' | 'PAUSED' | 'COMPLETED' | 'ARCHIVED'
 

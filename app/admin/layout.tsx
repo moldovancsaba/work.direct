@@ -46,7 +46,7 @@ export default function AdminLayout({
             {/* Logo */}
             <div className="flex items-center">
               <Link href="/admin" className="text-2xl font-bold text-blue-600">
-                🍄⚔️⭐ PlayMass
+                🎮 PlayMass
               </Link>
               <span className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
                 Admin
@@ -121,8 +121,8 @@ export default function AdminLayout({
               PlayMass Admin Dashboard
             </div>
             <div className="flex items-center gap-6">
-              <span>🎮 Games Management</span>
-              <span>🍄⚔️⭐ Stars vs Mushrooms</span>
+              <span>🎮 Multi-Game Platform</span>
+              <span>🎯 Interactive Experiences</span>
               <span>Built with ❤️</span>
             </div>
           </div>

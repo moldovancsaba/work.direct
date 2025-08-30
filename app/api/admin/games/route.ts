@@ -82,6 +82,13 @@ export async function POST(request: NextRequest) {
       }
     }
     
+    // For 💰🌪️🍀 games, ensure proper validation
+    if (type === '💰🌪️🍀' && configuration.wheelOfFortune) {
+      processedConfiguration.wheelOfFortune = {
+        ...configuration.wheelOfFortune
+      }
+    }
+    
     // Create game data following the existing schema
     const gameData = {
       title,
@@ -131,6 +138,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ game: gameResponse }, { status: 201 })
   } catch (error) {
     console.error('Error creating game:', error)
+    
+    // Return detailed error message if it's a validation error
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { 
+          error: 'Failed to create game',
+          message: error.message,
+          details: (error as any).errors || null
+        },
+        { status: 500 }
+      )
+    }
+    
     return NextResponse.json(
       { error: 'Failed to create game' },
       { status: 500 }

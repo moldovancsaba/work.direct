@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import StarsHexa from '../../components/StarsHexa'
+import WheelOfFortune from '../../components/WheelOfFortune'
 import Toast from '../../components/Toast'
 import { Game, GameOutcome, PlayGameResponse, Reward } from '../../types'
 
@@ -43,8 +44,9 @@ function getRewardDisplayValue(reward: Reward): string {
 /**
  * Game Play Page
  * 
- * Public interface for playing Stars Hexa games.
+ * Public interface for playing games (Stars Hexa, Wheel of Fortune, etc.).
  * Features participant registration, game instructions, and results display.
+ * Dynamically renders the appropriate game component based on game type.
  * 
  * URL: /play/[gameId]
  */
@@ -259,6 +261,25 @@ export default function GamePlayPage() {
     console.log('Game result:', result)
   }
   
+  // Handle Wheel of Fortune result (receives segment label string)
+  const handleWheelResult = (segmentLabel: string) => {
+    // Convert the segment label to a proper GameOutcome
+    const wheelResult: GameOutcome = {
+      type: 'WIN', // Wheel of Fortune is always a win (lands on something)
+      segmentLabel: segmentLabel,
+      value: segmentLabel,
+      rewardIds: [], // No rewards in trial mode, would be populated by backend in real play
+      message: `Congratulations! You landed on: ${segmentLabel}`,
+      // Wheel-specific fields
+      starsFound: 0,
+      totalStarsInGame: 0,
+      foundAllStars: false
+    }
+    
+    // Call the main result handler
+    handleResult(wheelResult)
+  }
+  
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
@@ -371,17 +392,45 @@ export default function GamePlayPage() {
           </div>
         </div>
       ) : (
-        /* ONLY HEXAGONS - NOTHING ELSE */
-        <StarsHexa
-          hexagons={game.configuration.starsHexa?.hexagons || []}
-          onFlip={handleFlip}
-          onResult={handleResult}
-          theme={game.configuration.starsHexa?.theme || 'default'}
-          maxFlipsPerAttempt={game.configuration.starsHexa?.maxFlipsPerAttempt || 3}
-          attemptsRemaining={gameResult?.attemptsRemaining || game.configuration.maxAttemptsPerUser}
-          gameId={gameId}
-          isTrialMode={isTrialMode}
-        />
+        /* Dynamic Game Rendering based on game type */
+        <>
+          {game.type === 'STARS_HEXA' && (
+            <StarsHexa
+              hexagons={game.configuration.starsHexa?.hexagons || []}
+              onFlip={handleFlip}
+              onResult={handleResult}
+              theme={game.configuration.starsHexa?.theme || 'default'}
+              maxFlipsPerAttempt={game.configuration.starsHexa?.maxFlipsPerAttempt || 3}
+              attemptsRemaining={gameResult?.attemptsRemaining || game.configuration.maxAttemptsPerUser}
+              gameId={gameId}
+              isTrialMode={isTrialMode}
+            />
+          )}
+          
+        {game.type === '💰🌪️🍀' && (
+          <WheelOfFortune
+              segments={game.configuration.wheelOfFortune?.segments || []}
+              spins={game.configuration.wheelOfFortune?.spins || 8}
+              durationMs={game.configuration.wheelOfFortune?.durationMs || 4500}
+              size={game.configuration.wheelOfFortune?.size || 520}
+              pointerAt={game.configuration.wheelOfFortune?.pointerAt || 'top'}
+              onResult={handleWheelResult}
+            />
+          )}
+          
+          {/* Fallback for unsupported game types */}
+        {game.type !== 'STARS_HEXA' && game.type !== '💰🌪️🍀' && (
+            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+              <div className="text-center max-w-md mx-auto px-6">
+                <div className="text-6xl mb-4">🚧</div>
+                <h1 className="text-2xl font-bold text-gray-800 mb-2">Game Type Not Supported</h1>
+                <p className="text-gray-600">
+                  This game type ({game.type}) is not yet supported in the play interface.
+                </p>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   )

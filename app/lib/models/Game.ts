@@ -1,5 +1,5 @@
 import mongoose, { Schema, Model } from 'mongoose'
-import { Game, GameType, GameStatus, HexagonCard, ShareLink } from '../../types'
+import { Game, GameType, GameStatus, HexagonCard, WheelSegment, ShareLink } from '../../types'
 
 // HexagonCard subdocument schema
 // This defines the structure for individual hexagon cards in Stars Hexa games
@@ -43,6 +43,41 @@ const hexagonCardSchema = new Schema<HexagonCard>({
   rewardId: {
     type: String,
     default: null
+  }
+}, { _id: false }) // Disable automatic _id for subdocuments
+
+// WheelSegment subdocument schema
+// This defines the structure for individual wheel segments in Wheel of Fortune games
+const wheelSegmentSchema = new Schema<WheelSegment>({
+  id: {
+    type: String,
+    required: [true, 'Wheel segment ID is required'],
+    trim: true
+  },
+  label: {
+    type: String,
+    required: [true, 'Wheel segment label is required'],
+    trim: true,
+    maxlength: [100, 'Segment label cannot exceed 100 characters']
+  },
+  color: {
+    type: String,
+    required: [true, 'Segment color is required'],
+    match: [/^#[0-9A-Fa-f]{6}$/, 'Color must be a valid hex color']
+  },
+  probability: {
+    type: Number,
+    min: [0, 'Probability cannot be negative'],
+    max: [1, 'Probability cannot exceed 1'],
+    default: null
+  },
+  rewardId: {
+    type: String,
+    default: null
+  },
+  isActive: {
+    type: Boolean,
+    default: true
   }
 }, { _id: false }) // Disable automatic _id for subdocuments
 
@@ -111,8 +146,8 @@ const gameSchema = new Schema<Game>({
     type: String,
     required: [true, 'Game type is required'],
     enum: {
-      values: ['STARS_HEXA', 'SCRATCH_CARD', 'QUIZ', 'POLL'] as GameType[],
-      message: 'Game type must be one of: STARS_HEXA, SCRATCH_CARD, QUIZ, POLL'
+      values: ['STARS_HEXA', '💰🌪️🍀', 'SCRATCH_CARD', 'QUIZ', 'POLL'] as GameType[],
+      message: 'Game type must be one of: STARS_HEXA, 💰🌪️🍀, SCRATCH_CARD, QUIZ, POLL'
     }
   },
   
@@ -131,44 +166,58 @@ const gameSchema = new Schema<Game>({
     // Stars Hexa specific configuration
     starsHexa: {
       hexagons: {
-        type: [hexagonCardSchema],
-        validate: {
-          validator: function(hexagons: HexagonCard[]) {
-            // Validate exactly 7 hexagons for 2-3-2 layout
-            if (hexagons.length !== 7) {
-              return false
-            }
-            
-            // Validate positions are 0-6 and unique
-            const positions = hexagons.map(h => h.position).sort()
-            const expectedPositions = [0, 1, 2, 3, 4, 5, 6]
-            if (!positions.every((pos, index) => pos === expectedPositions[index])) {
-              return false
-            }
-            
-            // Validate star count is between 1-3
-            const starsCount = hexagons.filter(h => h.hasHiddenStar).length
-            return starsCount >= 1 && starsCount <= 3
-          },
-          message: 'Stars Hexa must have exactly 7 hexagons in positions 0-6 with 1-3 hidden stars'
-        }
+        type: [hexagonCardSchema]
+        // Validation handled in pre-save middleware
       },
       totalStars: {
         type: Number,
-        required: [true, 'Total stars count is required'],
-        min: [1, 'Must have at least 1 star'],
-        max: [3, 'Cannot have more than 3 stars']
+        required: false // Validation handled in pre-save middleware
       },
       maxFlipsPerAttempt: {
-        type: Number,
-        default: 9, // Allow up to 9 flips per attempt
-        min: [3, 'Must allow at least 3 flips per attempt'],
-        max: [7, 'Cannot exceed 7 flips per attempt (one per hexagon)']
+        type: Number
+        // Validation handled in pre-save middleware
       },
       theme: {
         type: String,
         enum: ['default', 'colorful', 'minimal'],
         default: 'default'
+      }
+    },
+    
+    // Wheel of Fortune specific configuration
+    wheelOfFortune: {
+      segments: {
+        type: [wheelSegmentSchema]
+        // Validation handled in pre-save middleware
+      },
+      spins: {
+        type: Number,
+        default: 8
+        // Validation handled in pre-save middleware
+      },
+      durationMs: {
+        type: Number,
+        default: 4500
+        // Validation handled in pre-save middleware
+      },
+      pointerAt: {
+        type: String,
+        enum: ['top', 'right'],
+        default: 'top'
+      },
+      size: {
+        type: Number,
+        default: 520
+        // Validation handled in pre-save middleware
+      },
+      theme: {
+        type: String,
+        enum: ['default', 'colorful', 'minimal'],
+        default: 'default'
+      },
+      allowImmediateReplay: {
+        type: Boolean,
+        default: false
       }
     },
     
@@ -404,22 +453,56 @@ gameSchema.pre('save', function(next) {
     ;(this as any).generateShareLink()
   }
   
-    // Validate Stars Hexa configuration for Stars Hexa games
-    if (this.type === 'STARS_HEXA') {
-      if (!this.configuration.starsHexa || !this.configuration.starsHexa.hexagons || this.configuration.starsHexa.hexagons.length !== 7) {
-        return next(new Error('Stars Hexa games must have exactly 7 hexagons'))
-      }
-      
-      const starsCount = this.configuration.starsHexa.hexagons.filter(h => h.hasHiddenStar).length
-      if (starsCount < 1 || starsCount > 3) {
-        return next(new Error('Stars Hexa games must have between 1-3 hidden stars'))
-      }
-      
-      // Ensure totalStars matches actual hidden stars
-      if (this.configuration.starsHexa.totalStars !== starsCount) {
-        this.configuration.starsHexa.totalStars = starsCount
-      }
+  // Validate Stars Hexa configuration for Stars Hexa games
+  if (this.type === 'STARS_HEXA') {
+    if (!this.configuration.starsHexa || !this.configuration.starsHexa.hexagons || this.configuration.starsHexa.hexagons.length !== 7) {
+      return next(new Error('Stars Hexa games must have exactly 7 hexagons'))
     }
+    
+    const starsCount = this.configuration.starsHexa.hexagons.filter(h => h.hasHiddenStar).length
+    if (starsCount < 1 || starsCount > 3) {
+      return next(new Error('Stars Hexa games must have between 1-3 hidden stars'))
+    }
+    
+    // Validate maxFlipsPerAttempt
+    if (this.configuration.starsHexa.maxFlipsPerAttempt && (this.configuration.starsHexa.maxFlipsPerAttempt < 3 || this.configuration.starsHexa.maxFlipsPerAttempt > 7)) {
+      return next(new Error('Stars Hexa maxFlipsPerAttempt must be between 3-7'))
+    }
+    
+    // Ensure totalStars matches actual hidden stars
+    if (!this.configuration.starsHexa.totalStars || this.configuration.starsHexa.totalStars !== starsCount) {
+      this.configuration.starsHexa.totalStars = starsCount
+    }
+  }
+  
+  // Validate Wheel of Fortune configuration for Wheel of Fortune games
+  if (this.type === '💰🌪️🍀') {
+    if (!this.configuration.wheelOfFortune || !this.configuration.wheelOfFortune.segments || this.configuration.wheelOfFortune.segments.length < 2) {
+      return next(new Error('Wheel of Fortune games must have at least 2 segments'))
+    }
+    
+    if (this.configuration.wheelOfFortune.segments.length > 12) {
+      return next(new Error('Wheel of Fortune games cannot have more than 12 segments'))
+    }
+    
+    const hasEmptyLabels = this.configuration.wheelOfFortune.segments.some(s => !s.label || s.label.trim().length === 0)
+    if (hasEmptyLabels) {
+      return next(new Error('All wheel segments must have non-empty labels'))
+    }
+    
+    // Validate wheel configuration
+    if (this.configuration.wheelOfFortune.spins && (this.configuration.wheelOfFortune.spins < 3 || this.configuration.wheelOfFortune.spins > 15)) {
+      return next(new Error('Wheel spins must be between 3-15'))
+    }
+    
+    if (this.configuration.wheelOfFortune.durationMs && (this.configuration.wheelOfFortune.durationMs < 2000 || this.configuration.wheelOfFortune.durationMs > 10000)) {
+      return next(new Error('Wheel duration must be between 2-10 seconds'))
+    }
+    
+    if (this.configuration.wheelOfFortune.size && (this.configuration.wheelOfFortune.size < 300 || this.configuration.wheelOfFortune.size > 800)) {
+      return next(new Error('Wheel size must be between 300-800 pixels'))
+    }
+  }
   
   next()
 })

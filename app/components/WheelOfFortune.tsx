@@ -43,6 +43,7 @@ export default function WheelOfFortune({
   const [rotation, setRotation] = useState(0);    // current wheel rotation in degrees
   const [result, setResult] = useState<string | null>(null);
   const [winnerIndex, setWinnerIndex] = useState<number | null>(null);
+  const spinningRef = useRef(false); // Additional protection against double spins
 
   const wheelRef = useRef<SVGSVGElement>(null);
 
@@ -56,9 +57,10 @@ export default function WheelOfFortune({
   const sliceAngle = 360 / N;
 
   // Where the pointer sits in absolute degrees
-  // "top" means pointer points straight up at 270 deg in SVG space (y increases downward)
-  // "right" means pointer at 0 deg
-  const pointerDeg = pointerAt === "top" ? 270 : 0;
+  // Since slices are rotated by -90deg, the pointer at top should align with 0 degrees
+  // "top" means pointer points at the top of the wheel (0 degrees after slice rotation)
+  // "right" means pointer at 90 deg after slice rotation
+  const pointerDeg = pointerAt === "top" ? 0 : 90;
 
   // Precompute slices: start angle, end angle, mid angle
   // This optimization ensures smooth performance during spinning
@@ -96,53 +98,61 @@ export default function WheelOfFortune({
     };
   }
 
-  // Main spin function - calculates precise landing position
-  // Choose a random winning index and compute the final rotation so that
-  // the winner lands under the pointer.
+  // Calculate which segment the pointer is pointing at based on current rotation
+  function getCurrentSegment(currentRotation: number): number {
+    // Normalize rotation to 0-360
+    const normalizedRotation = ((currentRotation % 360) + 360) % 360;
+    
+    // The pointer is at the top (0 degrees), so we need to find which segment
+    // is currently at the top position
+    // Since segments start from 0 degrees and go clockwise, and the wheel rotates,
+    // we need to reverse the calculation
+    const pointerPosition = (360 - normalizedRotation) % 360;
+    
+    // Find which segment this position falls into
+    const segmentIndex = Math.floor(pointerPosition / sliceAngle) % N;
+    return segmentIndex;
+  }
+
+  // Main spin function - single direction spin with accurate result reading
   function spin() {
-    if (spinning || N === 0) return;
+    // Double protection against multiple spins
+    if (spinning || spinningRef.current || N === 0) return;
+    
+    // Set both state and ref to prevent double spinning
+    setSpinning(true);
+    spinningRef.current = true;
 
     setResult(null);
     setWinnerIndex(null);
 
-    // Pick a random target slice for fair gameplay
-    const targetIndex = Math.floor(Math.random() * N);
+    // Calculate spin amount: base spins + random extra rotation
+    const baseSpinDegrees = spins * 360;
+    const extraSpin = Math.random() * 360;
+    const totalSpinDegrees = baseSpinDegrees + extraSpin;
 
-    // The visual angle for the target slice center in wheel coordinates (0 to 360)
-    const targetMid = slices[targetIndex].mid;
+    // Calculate final rotation
+    const newRotation = rotation + totalSpinDegrees;
 
-    // We want (rotationFinal + targetMid) % 360 == pointerDeg
-    // So rotationFinal = spins*360 + (pointerDeg - targetMid) normalized
-    const base = spins * 360;
-    let offset = pointerDeg - targetMid;
+    // Apply the rotation immediately
+    setRotation(newRotation);
 
-    // Normalize offset to [0, 360) to ensure consistent behavior
-    offset = ((offset % 360) + 360) % 360;
-
-    const finalRotation = base + offset;
-
-    // Trigger the spin with CSS transition on a wrapper
-    setSpinning(true);
-    setWinnerIndex(null);
-
-    // Apply the rotation on the next tick to ensure transition runs smoothly
-    // This prevents the browser from batching the state change with the transition
-    requestAnimationFrame(() => {
-      setRotation((prev) => prev + finalRotation);
-    });
-
-    // After animation ends, set the result and call callback
-    // Extra 50ms buffer ensures the animation has fully completed
-    window.setTimeout(() => {
+    // After animation completes, calculate result
+    const timeoutId = setTimeout(() => {
+      const winnerIndex = getCurrentSegment(newRotation);
+      
       setSpinning(false);
-      setWinnerIndex(targetIndex);
-      const label = segments[targetIndex].label;
+      spinningRef.current = false;
+      setWinnerIndex(winnerIndex);
+      const label = segments[winnerIndex].label;
       setResult(label);
       onResult?.(label);
-      // Normalize rotation to avoid number explosion over many spins
-      // This prevents floating point precision issues
-      setRotation((prev) => ((prev % 360) + 360) % 360);
-    }, durationMs + 50);
+      
+      // Keep the final rotation as is - no normalization to prevent second spin
+    }, durationMs + 100);
+
+    // Store timeout ID for potential cleanup
+    return timeoutId;
   }
 
   return (
@@ -266,17 +276,16 @@ export default function WheelOfFortune({
             fill="#eaeaea"
             style={{ userSelect: "none" }}
           >
-            {spinning ? "Spinning..." : "Tap to Spin"}
+            {spinning ? "Spinning..." : "Ready"}
           </text>
 
-          {/* Invisible click area covering entire wheel */}
+          {/* Invisible overlay - no click handler to prevent double spins */}
           <circle
             cx={CX}
             cy={CY}
             r={R}
             fill="transparent"
-            style={{ cursor: spinning ? "not-allowed" : "pointer" }}
-            onClick={spin}
+            style={{ cursor: spinning ? "not-allowed" : "default" }}
           />
         </svg>
       </div>
@@ -288,7 +297,7 @@ export default function WheelOfFortune({
             Result: <span className="text-emerald-300">{result}</span>
           </p>
         ) : (
-          <p className="text-neutral-300">Click the wheel to spin</p>
+          <p className="text-neutral-300">Click the button to spin</p>
         )}
       </div>
 
