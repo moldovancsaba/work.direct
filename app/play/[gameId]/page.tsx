@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import StarsHexa from '../../components/StarsHexa'
-import WheelOfFortune from '../../components/WheelOfFortune'
+import WheelGamePlay from '../../components/WheelGamePlay'
 import Toast from '../../components/Toast'
 import { Game, GameOutcome, PlayGameResponse, Reward } from '../../types'
 
@@ -261,23 +261,19 @@ export default function GamePlayPage() {
     console.log('Game result:', result)
   }
   
-  // Handle Wheel of Fortune result (receives segment label string)
-  const handleWheelResult = (segmentLabel: string) => {
-    // Convert the segment label to a proper GameOutcome
-    const wheelResult: GameOutcome = {
-      type: 'WIN', // Wheel of Fortune is always a win (lands on something)
-      segmentLabel: segmentLabel,
-      value: segmentLabel,
-      rewardIds: [], // No rewards in trial mode, would be populated by backend in real play
-      message: `Congratulations! You landed on: ${segmentLabel}`,
-      // Wheel-specific fields
-      starsFound: 0,
-      totalStarsInGame: 0,
-      foundAllStars: false
+  // Handle Wheel of Fortune result - now receives full GameOutcome from WheelGamePlay
+  const handleWheelResult = (result: GameOutcome) => {
+    // Store the full response for later use if needed
+    const mockGameResult: PlayGameResponse = {
+      result: result,
+      rewards: [], // No rewards in trial/simple mode, would be populated by backend in real play
+      canPlayAgain: false, // Wheel games end when complete
+      attemptsRemaining: result.spinsRemaining || 0
     }
+    setGameResult(mockGameResult)
     
     // Call the main result handler
-    handleResult(wheelResult)
+    handleResult(result)
   }
   
   if (loading) {
@@ -408,15 +404,13 @@ export default function GamePlayPage() {
           )}
           
         {game.type === '💰🌪️🍀' && (
-          <WheelOfFortune
-              segments={game.configuration.wheelOfFortune?.segments || []}
-              spins={game.configuration.wheelOfFortune?.spins || 8}
-              durationMs={game.configuration.wheelOfFortune?.durationMs || 4500}
-              size={game.configuration.wheelOfFortune?.size || 520}
-              pointerAt={game.configuration.wheelOfFortune?.pointerAt || 'top'}
-              onResult={handleWheelResult}
-            />
-          )}
+          <WheelGamePlay
+            gameId={gameId}
+            configuration={game.configuration.wheelOfFortune!}
+            onResult={handleWheelResult}
+            isTrialMode={isTrialMode}
+          />
+        )}
           
           {/* Fallback for unsupported game types */}
         {game.type !== 'STARS_HEXA' && game.type !== '💰🌪️🍀' && (

@@ -1,7 +1,7 @@
 // components/WheelOfFortune.tsx
 "use client";
 
-import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState, useEffect } from "react";
 
 type Segment = { label: string; color: string };
 
@@ -12,6 +12,9 @@ type Props = {
   durationMs?: number;      // animation duration
   pointerAt?: "top" | "right";
   onResult?: (label: string) => void;
+  disabled?: boolean;       // prevent spinning when true
+  triggerSpin?: number;     // external trigger - increment to trigger spin
+  hideSpinButton?: boolean; // hide the built-in spin button
 };
 
 /**
@@ -38,14 +41,26 @@ export default function WheelOfFortune({
   durationMs = 4500,
   pointerAt = "top",
   onResult,
+  disabled = false,
+  triggerSpin = 0,
+  hideSpinButton = false,
 }: Props) {
   const [spinning, setSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);    // current wheel rotation in degrees
   const [result, setResult] = useState<string | null>(null);
   const [winnerIndex, setWinnerIndex] = useState<number | null>(null);
   const spinningRef = useRef(false); // Additional protection against double spins
+  const previousTrigger = useRef(triggerSpin);
 
   const wheelRef = useRef<SVGSVGElement>(null);
+  
+  // Watch for external trigger changes
+  useEffect(() => {
+    if (triggerSpin > previousTrigger.current && !spinning && !disabled) {
+      previousTrigger.current = triggerSpin;
+      spin();
+    }
+  }, [triggerSpin, spinning, disabled]);
 
   const N = segments.length;
   const CX = size / 2;
@@ -116,8 +131,8 @@ export default function WheelOfFortune({
 
   // Main spin function - single direction spin with accurate result reading
   function spin() {
-    // Double protection against multiple spins
-    if (spinning || spinningRef.current || N === 0) return;
+    // Double protection against multiple spins and disabled state
+    if (spinning || spinningRef.current || N === 0 || disabled) return;
     
     // Set both state and ref to prevent double spinning
     setSpinning(true);
@@ -285,7 +300,7 @@ export default function WheelOfFortune({
             cy={CY}
             r={R}
             fill="transparent"
-            style={{ cursor: spinning ? "not-allowed" : "default" }}
+            style={{ cursor: spinning || disabled ? "not-allowed" : "default" }}
           />
         </svg>
       </div>
@@ -301,20 +316,22 @@ export default function WheelOfFortune({
         )}
       </div>
 
-      {/* Spin button for explicit interaction */}
-      <button
-        onClick={() => {
-          if (!spinning) {
-            setResult(null);
-            setWinnerIndex(null);
-            spin();
-          }
-        }}
-        disabled={spinning}
-        className="px-5 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-black font-semibold disabled:opacity-60 transition-all duration-200"
-      >
-        {spinning ? "Spinning…" : "Spin"}
-      </button>
+      {/* Spin button for explicit interaction - conditionally rendered */}
+      {!hideSpinButton && (
+        <button
+          onClick={() => {
+            if (!spinning && !disabled) {
+              setResult(null);
+              setWinnerIndex(null);
+              spin();
+            }
+          }}
+          disabled={spinning || disabled}
+          className="px-5 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-black font-semibold disabled:opacity-60 transition-all duration-200"
+        >
+          {disabled ? "Game Over" : spinning ? "Spinning…" : "Spin"}
+        </button>
+      )}
     </div>
   );
 }

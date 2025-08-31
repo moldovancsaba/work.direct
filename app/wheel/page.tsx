@@ -1,76 +1,53 @@
 // app/wheel/page.tsx
 "use client";
 
-import WheelOfFortune from "../components/WheelOfFortune";
+import WheelGamePlay from "../components/WheelGamePlay";
+import { DEFAULT_SEGMENT_NAMES } from '../lib/wheelGenerator'
 
 /**
  * Wheel of Fortune Test Page
  * 
- * This page demonstrates the WheelOfFortune component integration
- * with sample segments for testing and development purposes.
- * 
- * Integration Notes:
- * - Uses PlayMass color scheme and styling patterns
- * - Ready for backend game configuration integration
- * - Compatible with existing reward system architecture
+ * This page demonstrates the simple wheel configuration system.
+ * Just set 4 simple parameters and the wheels are automatically generated!
  */
 export default function WheelPage() {
-  // Sample segments — customize freely
-  // These represent different prize categories that can be configured
-  // through the admin interface in the full PlayMass system
-  const segments = [
-    { label: "💰 Jackpot", color: "#F94144" },
-    { label: "🔥 Bonus", color: "#F3722C" },
-    { label: "🌪️ Tornado", color: "#F8961E" },
-    { label: "⭐ Extra Spin", color: "#F9844A" },
-    { label: "🎁 Mystery", color: "#F9C74F" },
-    { label: "🍀 Lucky 7", color: "#90BE6D" },
-    { label: "🧠 Quiz", color: "#43AA8B" },
-    { label: "🧩 Puzzle", color: "#4D908E" },
-    { label: "⚡ Turbo", color: "#577590" },
-    { label: "🎯 Double", color: "#277DA1" },
-    { label: "💎 Gem", color: "#9B5DE5" },
-    { label: "🎉 Win", color: "#B5179E" },
-  ];
+  // 🎮 SIMPLE CONFIGURATION - Just 4 parameters!
+  const simpleWheelConfig = {
+    segments: [], // Not used with simple config
+    spins: 8,
+    spinsPerGame: 2,
+    durationMs: 4500,
+    pointerAt: 'top' as const,
+    size: 280,
+    theme: 'default' as const,
+    allowImmediateReplay: false,
+    gameRule: {
+      winCondition: 'jackpot_once' as const,
+      jackpotLabel: '💰 Jackpot',
+      collectionsNeeded: 3
+    },
+    // ✨ THE MAGIC - Simple Configuration!
+    simpleConfig: {
+      jackpotsCount: 1 as const,                // 🎯 1-6 jackpots across all wheels
+      wheel1Segments: 5 as const,              // 🎰 3-8 segments on wheel 1
+      wheel2Segments: 4 as const,              // 🎰 3-8 segments on wheel 2  
+      wheel3Segments: 6 as const,              // 🎰 3-8 segments on wheel 3
+      totalSegmentsToUse: 7 as const,          // 🎲 5-11 different segments (including jackpot)
+      segmentNames: DEFAULT_SEGMENT_NAMES       // ⚽ List of sports names
+    }
+  };
 
   return (
-    <main className="min-h-dvh flex items-center justify-center p-6 bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="w-full max-w-[720px] bg-white rounded-2xl shadow-xl p-8">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">🎰 Wheel of Fortune</h1>
-          <p className="text-gray-600">Spin the wheel to win amazing prizes!</p>
-        </div>
-        
-        <div style={{ 
-          background: 'radial-gradient(1200px 800px at 50% 45%, #0a1224 0%, #070d1b 50%, #04070f 100%)',
-          borderRadius: '1rem',
-          padding: '2rem'
-        }}>
-          <WheelOfFortune
-            segments={segments}
-            spins={8}                 // base full rotations before stopping
-            durationMs={4500}         // spin animation duration
-            pointerAt="top"           // "top" or "right" pointer
-            size={520}                // SVG size in px
-            onResult={(label) => {
-              // Optional hook for integration, analytics, or socket emit
-              console.log("Spin result:", label);
-              
-              // Future integration points:
-              // - Send result to backend for tracking
-              // - Trigger reward distribution
-              // - Update user statistics
-              // - Emit to Socket.IO for real-time updates
-            }}
-          />
-        </div>
-        
-        {/* Integration Information */}
-        <div className="mt-8 text-center text-sm text-gray-500">
-          <p>🎮 Part of the PlayMass Interactive Game Platform</p>
-          <p>Ready for rewards system and admin configuration integration</p>
-        </div>
-      </div>
-    </main>
+    <div>
+      {/* Demo of Simple Triple Wheel Configuration */}
+      <WheelGamePlay
+        gameId="demo-simple-wheel"
+        configuration={simpleWheelConfig}
+        onResult={(result) => {
+          console.log("Simple wheel result:", result);
+        }}
+        isTrialMode={true}
+      />
+    </div>
   );
 }

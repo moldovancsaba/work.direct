@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { GameType, WheelSegment } from '../../../types'
 
 interface HexagonCard {
   id: string
@@ -24,6 +25,7 @@ interface GameData {
   _id: string
   title: string
   description?: string
+  type: GameType
   status: string
   configuration: {
     starsHexa?: {
@@ -31,6 +33,21 @@ interface GameData {
       maxFlipsPerAttempt: number
       theme: 'default' | 'colorful' | 'minimal'
       totalStars: number
+    }
+    wheelOfFortune?: {
+      segments: WheelSegment[]
+      spins: number
+      spinsPerGame: number
+      durationMs: number
+      pointerAt: 'top' | 'right'
+      size: number
+      theme: 'default' | 'colorful' | 'minimal'
+      allowImmediateReplay: boolean
+      gameRule: {
+        winCondition: 'collect_three_same' | 'jackpot_once'
+        jackpotLabel: string
+        collectionsNeeded: number
+      }
     }
     maxAttemptsPerUser: number
   }
@@ -70,6 +87,23 @@ export default function EditGamePage() {
     { id: '7', text: 'Card 7', hasHiddenStar: false }
   ])
   
+  // Wheel of Fortune configuration
+  const [wheelSegments, setWheelSegments] = useState<WheelSegment[]>([
+    { id: '1', label: '💰 Jackpot', color: '#F94144', isActive: true },
+    { id: '2', label: '🔥 Bonus', color: '#F3722C', isActive: true },
+    { id: '3', label: '🎁 Mystery', color: '#F9C74F', isActive: true },
+    { id: '4', label: '🍀 Lucky', color: '#90BE6D', isActive: true },
+    { id: '5', label: '⚡ Turbo', color: '#577590', isActive: true },
+    { id: '6', label: '🎯 Double', color: '#277DA1', isActive: true },
+    { id: '7', label: '💎 Gem', color: '#9B5DE5', isActive: true },
+    { id: '8', label: '🎉 Win', color: '#B5179E', isActive: true }
+  ])
+  const [wheelSpins, setWheelSpins] = useState(8)
+  const [wheelSpinsPerGame, setWheelSpinsPerGame] = useState(3)
+  const [wheelDuration, setWheelDuration] = useState(4500)
+  const [jackpotLabel, setJackpotLabel] = useState('💰 Jackpot')
+  const [collectionsNeeded, setCollectionsNeeded] = useState(3)
+  
   // Rewards configuration
   const [rewards, setRewards] = useState<RewardConfig[]>([])
 
@@ -100,7 +134,7 @@ export default function EditGamePage() {
       setDescription(game.description || '')
       setIsActive(game.status === 'ACTIVE')
 
-      // Set configuration
+      // Set Stars Hexa configuration
       if (game.configuration.starsHexa) {
         setMaxFlipsPerRound(game.configuration.starsHexa.maxFlipsPerAttempt || 3)
         setTheme(game.configuration.starsHexa.theme || 'default')
@@ -111,6 +145,28 @@ export default function EditGamePage() {
             text: hex.text || `Card ${index + 1}`,
             hasHiddenStar: hex.hasHiddenStar || false,
             color: hex.color
+          })))
+        }
+      }
+
+      // Set Wheel of Fortune configuration
+      if (game.configuration.wheelOfFortune) {
+        setWheelSpins(game.configuration.wheelOfFortune.spins || 8)
+        setWheelSpinsPerGame(game.configuration.wheelOfFortune.spinsPerGame || 3)
+        setWheelDuration(game.configuration.wheelOfFortune.durationMs || 4500)
+        setTheme(game.configuration.wheelOfFortune.theme || 'default')
+        
+        if (game.configuration.wheelOfFortune.gameRule) {
+          setJackpotLabel(game.configuration.wheelOfFortune.gameRule.jackpotLabel || '💰 Jackpot')
+          setCollectionsNeeded(game.configuration.wheelOfFortune.gameRule.collectionsNeeded || 3)
+        }
+        
+        if (game.configuration.wheelOfFortune.segments && game.configuration.wheelOfFortune.segments.length > 0) {
+          setWheelSegments(game.configuration.wheelOfFortune.segments.map((segment: any, index: number) => ({
+            id: segment.id || (index + 1).toString(),
+            label: segment.label || `Segment ${index + 1}`,
+            color: segment.color || '#' + Math.floor(Math.random()*16777215).toString(16),
+            isActive: segment.isActive !== false
           })))
         }
       }
@@ -142,6 +198,28 @@ export default function EditGamePage() {
     ))
   }
 
+  const updateWheelSegment = (index: number, field: keyof WheelSegment, value: any) => {
+    setWheelSegments(prev => prev.map((segment, i) => 
+      i === index ? { ...segment, [field]: value } : segment
+    ))
+  }
+
+  const addWheelSegment = () => {
+    const newId = (wheelSegments.length + 1).toString()
+    setWheelSegments(prev => [...prev, {
+      id: newId,
+      label: `Segment ${newId}`,
+      color: '#' + Math.floor(Math.random()*16777215).toString(16),
+      isActive: true
+    }])
+  }
+
+  const removeWheelSegment = (index: number) => {
+    if (wheelSegments.length > 2) {
+      setWheelSegments(prev => prev.filter((_, i) => i !== index))
+    }
+  }
+
   const addReward = () => {
     setRewards(prev => [...prev, {
       title: '',
@@ -169,40 +247,68 @@ export default function EditGamePage() {
     setError(null)
 
     try {
-      // Validate required fields
       if (!title.trim()) {
         throw new Error('Game title is required')
       }
 
-      if (hexagons.some(h => !h.text.trim())) {
-        throw new Error('All hexagon cards must have text')
+      if (!gameData) {
+        throw new Error('Game data not loaded')
       }
 
-      const starCount = hexagons.filter(h => h.hasHiddenStar).length
-      if (starCount === 0) {
-        throw new Error('At least one hexagon must have a hidden star')
-      }
-
-      // Create game data
-      const updateData = {
+      let updateData: any = {
         title: title.trim(),
         description: description.trim(),
-        type: 'STARS_HEXA',
+        type: gameData.type,
         isActive,
         maxAttemptsPerUser: maxRounds,
         configuration: {
-          starsHexa: {
-            hexagons: hexagons.map((hex, index) => ({
-              ...hex,
-              position: index
-            })),
-            maxFlipsPerAttempt: maxFlipsPerRound,
-            theme,
-            totalStars: starCount
-          },
           maxAttemptsPerUser: maxRounds
         },
-        rewards: rewards.filter(r => r.title.trim()) // Only include rewards with titles
+        rewards: rewards.filter(r => r.title.trim())
+      }
+
+      // Add game-specific configuration
+      if (gameData.type === 'STARS_HEXA') {
+        const starCount = hexagons.filter(h => h.hasHiddenStar).length
+        if (starCount === 0) {
+          throw new Error('At least one hexagon must have a hidden star')
+        }
+        if (hexagons.some(h => !h.text.trim())) {
+          throw new Error('All hexagon cards must have text')
+        }
+
+        updateData.configuration.starsHexa = {
+          hexagons: hexagons.map((hex, index) => ({
+            ...hex,
+            position: index
+          })),
+          maxFlipsPerAttempt: maxFlipsPerRound,
+          theme,
+          totalStars: starCount
+        }
+      } else if (gameData.type === '💰🌪️🍀') {
+        if (wheelSegments.length < 2) {
+          throw new Error('At least 2 wheel segments are required')
+        }
+        if (wheelSegments.some(s => !s.label.trim())) {
+          throw new Error('All wheel segments must have labels')
+        }
+
+        updateData.configuration.wheelOfFortune = {
+          segments: wheelSegments,
+          spins: wheelSpins,
+          spinsPerGame: wheelSpinsPerGame,
+          durationMs: wheelDuration,
+          pointerAt: 'top',
+          size: 520,
+          theme,
+          allowImmediateReplay: false,
+          gameRule: {
+            winCondition: 'collect_three_same',
+            jackpotLabel: jackpotLabel,
+            collectionsNeeded: collectionsNeeded
+          }
+        }
       }
 
       const response = await fetch(`/api/admin/games/${gameId}`, {
@@ -218,7 +324,6 @@ export default function EditGamePage() {
         throw new Error(data.error || 'Failed to update game')
       }
 
-      // Redirect to games list
       router.push('/admin/games')
     } catch (error) {
       console.error('Error updating game:', error)
@@ -258,6 +363,7 @@ export default function EditGamePage() {
   }
 
   const starsCount = hexagons.filter(h => h.hasHiddenStar).length
+  const gameTypeName = gameData?.type === 'STARS_HEXA' ? 'Stars Hexa' : gameData?.type === '💰🌪️🍀' ? 'Wheel of Fortune' : 'Game'
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
@@ -265,8 +371,8 @@ export default function EditGamePage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Edit Game</h1>
-            <p className="text-gray-600 mt-1">Modify your Stars vs Mushrooms game</p>
+            <h1 className="text-3xl font-bold text-gray-900">Edit {gameTypeName} Game</h1>
+            <p className="text-gray-600 mt-1">Modify your {gameTypeName} game configuration</p>
           </div>
           <Link
             href="/admin/games"
@@ -301,8 +407,8 @@ export default function EditGamePage() {
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="My Awesome Stars Game"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder={`My Awesome ${gameTypeName} Game`}
                   required
                 />
               </div>
@@ -314,7 +420,7 @@ export default function EditGamePage() {
                 <select
                   value={isActive ? 'active' : 'inactive'}
                   onChange={(e) => setIsActive(e.target.value === 'active')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
@@ -330,201 +436,263 @@ export default function EditGamePage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Describe your game..."
               />
             </div>
           </div>
 
-          {/* Game Configuration */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Game Rules</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Flips Per Round
-                </label>
-                <select
-                  value={maxFlipsPerRound}
-                  onChange={(e) => setMaxFlipsPerRound(Number(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  {[1, 2, 3, 4, 5, 6, 7].map(num => (
-                    <option key={num} value={num}>{num} flip{num !== 1 ? 's' : ''}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Total Rounds
-                </label>
-                <select
-                  value={maxRounds}
-                  onChange={(e) => setMaxRounds(Number(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  {[1, 2, 3, 4, 5].map(num => (
-                    <option key={num} value={num}>{num} round{num !== 1 ? 's' : ''}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Theme
-                </label>
-                <select
-                  value={theme}
-                  onChange={(e) => setTheme(e.target.value as any)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="default">Default</option>
-                  <option value="colorful">Colorful</option>
-                  <option value="minimal">Minimal</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-              <div className="flex items-center gap-2 text-blue-800 text-sm">
-                <span>ℹ️</span>
-                <span>Player gets <strong>{maxFlipsPerRound} flips per round</strong> and <strong>{maxRounds} total rounds</strong> to find all {starsCount} star{starsCount !== 1 ? 's' : ''}.</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Hexagons Configuration */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-900">Hexagon Cards (7 cards)</h2>
-              <div className="text-sm text-gray-600">
-                ⭐ {starsCount} stars | 🍄 {7 - starsCount} mushrooms
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {hexagons.map((hexagon, index) => (
-                <div key={hexagon.id} className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-medium text-gray-700">Card {index + 1}</span>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={hexagon.hasHiddenStar}
-                        onChange={(e) => updateHexagon(index, 'hasHiddenStar', e.target.checked)}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="text-sm text-gray-600">
-                        {hexagon.hasHiddenStar ? '⭐ Has star' : '🍄 Has mushroom'}
-                      </span>
-                    </label>
+          {/* Game-Specific Configuration */}
+          {gameData?.type === 'STARS_HEXA' && (
+            <>
+              {/* Stars Hexa Rules */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Game Rules</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Flips Per Round</label>
+                    <select
+                      value={maxFlipsPerRound}
+                      onChange={(e) => setMaxFlipsPerRound(Number(e.target.value))}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      {[3, 4, 5, 6, 7].map(num => (
+                        <option key={num} value={num}>{num} flip{num !== 1 ? 's' : ''}</option>
+                      ))}
+                    </select>
                   </div>
-                  
-                  <input
-                    type="text"
-                    value={hexagon.text}
-                    onChange={(e) => updateHexagon(index, 'text', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder={`Text for card ${index + 1}`}
-                  />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Total Rounds</label>
+                    <select
+                      value={maxRounds}
+                      onChange={(e) => setMaxRounds(Number(e.target.value))}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      {[1, 2, 3, 4, 5].map(num => (
+                        <option key={num} value={num}>{num} round{num !== 1 ? 's' : ''}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Theme</label>
+                    <select
+                      value={theme}
+                      onChange={(e) => setTheme(e.target.value as any)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="default">Default</option>
+                      <option value="colorful">Colorful</option>
+                      <option value="minimal">Minimal</option>
+                    </select>
+                  </div>
                 </div>
-              ))}
-            </div>
-
-            {starsCount === 0 && (
-              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-red-800 text-sm">⚠️ You need at least one card with a hidden star!</p>
+                <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                  <p className="text-blue-800 text-sm">
+                    ℹ️ Player gets <strong>{maxFlipsPerRound} flips per round</strong> and <strong>{maxRounds} total rounds</strong> to find all {starsCount} star{starsCount !== 1 ? 's' : ''}.
+                  </p>
+                </div>
               </div>
-            )}
-          </div>
 
-          {/* Rewards Configuration */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-900">Rewards (Optional)</h2>
-              <button
-                type="button"
-                onClick={addReward}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm"
-              >
-                + Add Reward
-              </button>
-            </div>
-
-            {rewards.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <p>No rewards configured. Players will just play for fun!</p>
-                <p className="text-sm mt-1">Click "Add Reward" to create incentives for players.</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {rewards.map((reward, index) => (
-                  <div key={index} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm font-medium text-gray-700">Reward {index + 1}</span>
-                      <button
-                        type="button"
-                        onClick={() => removeReward(index)}
-                        className="text-red-600 hover:text-red-800 text-sm"
-                      >
-                        Remove
-                      </button>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <label className="block text-xs text-gray-600 mb-1">Title</label>
-                        <input
-                          type="text"
-                          value={reward.title}
-                          onChange={(e) => updateReward(index, 'title', e.target.value)}
-                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
-                          placeholder="Free Coffee"
-                        />
+              {/* Hexagon Cards */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold text-gray-900">Hexagon Cards (7 cards)</h2>
+                  <div className="text-sm text-gray-600">
+                    ⭐ {starsCount} stars | 🍄 {7 - starsCount} mushrooms
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {hexagons.map((hexagon, index) => (
+                    <div key={hexagon.id} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm font-medium text-gray-700">Card {index + 1}</span>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={hexagon.hasHiddenStar}
+                            onChange={(e) => updateHexagon(index, 'hasHiddenStar', e.target.checked)}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="text-sm text-gray-600">
+                            {hexagon.hasHiddenStar ? '⭐ Has star' : '🍄 Has mushroom'}
+                          </span>
+                        </label>
                       </div>
-
-                      <div>
-                        <label className="block text-xs text-gray-600 mb-1">Type</label>
-                        <select
-                          value={reward.type}
-                          onChange={(e) => updateReward(index, 'type', e.target.value)}
-                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
-                        >
-                          <option value="DISCOUNT">Discount</option>
-                          <option value="FREEBIE">Freebie</option>
-                          <option value="POINTS">Points</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-xs text-gray-600 mb-1">Value</label>
-                        <input
-                          type="number"
-                          value={reward.value}
-                          onChange={(e) => updateReward(index, 'value', Number(e.target.value))}
-                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
-                          placeholder="10"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="mt-3">
-                      <label className="block text-xs text-gray-600 mb-1">Description</label>
                       <input
                         type="text"
-                        value={reward.description}
-                        onChange={(e) => updateReward(index, 'description', e.target.value)}
-                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
-                        placeholder="Get a free coffee on your next visit!"
+                        value={hexagon.text}
+                        onChange={(e) => updateHexagon(index, 'text', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder={`Text for card ${index + 1}`}
                       />
                     </div>
+                  ))}
+                </div>
+                {starsCount === 0 && (
+                  <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-red-800 text-sm">⚠️ You need at least one card with a hidden star!</p>
                   </div>
-                ))}
+                )}
               </div>
-            )}
-          </div>
+            </>
+          )}
+
+          {gameData?.type === '💰🌪️🍀' && (
+            <>
+              {/* Wheel Settings */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Wheel Settings & Game Rules</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Base Spins</label>
+                    <select
+                      value={wheelSpins}
+                      onChange={(e) => setWheelSpins(Number(e.target.value))}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      {[5, 6, 7, 8, 9, 10].map(num => (
+                        <option key={num} value={num}>{num} spins</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Spins Per Game</label>
+                    <select
+                      value={wheelSpinsPerGame}
+                      onChange={(e) => setWheelSpinsPerGame(Number(e.target.value))}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      {[1, 2, 3, 4, 5].map(num => (
+                        <option key={num} value={num}>{num} spin{num !== 1 ? 's' : ''}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Duration (ms)</label>
+                    <select
+                      value={wheelDuration}
+                      onChange={(e) => setWheelDuration(Number(e.target.value))}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value={3000}>3.0 seconds</option>
+                      <option value={3500}>3.5 seconds</option>
+                      <option value={4000}>4.0 seconds</option>
+                      <option value={4500}>4.5 seconds</option>
+                      <option value={5000}>5.0 seconds</option>
+                      <option value={5500}>5.5 seconds</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Theme</label>
+                    <select
+                      value={theme}
+                      onChange={(e) => setTheme(e.target.value as any)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="default">Default</option>
+                      <option value="colorful">Colorful</option>
+                      <option value="minimal">Minimal</option>
+                    </select>
+                  </div>
+                </div>
+                
+                {/* Game Rules */}
+                <div className="mt-6 border-t border-gray-200 pt-6">
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Win Condition Rules</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Jackpot Segment</label>
+                      <select
+                        value={jackpotLabel}
+                        onChange={(e) => setJackpotLabel(e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        {wheelSegments.map((segment) => (
+                          <option key={segment.id} value={segment.label}>
+                            {segment.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Collections Needed to Win</label>
+                      <select
+                        value={collectionsNeeded}
+                        onChange={(e) => setCollectionsNeeded(Number(e.target.value))}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        {[2, 3, 4, 5].map(num => (
+                          <option key={num} value={num}>{num} same items</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="mt-4 p-4 bg-green-50 rounded-lg">
+                    <p className="text-green-800 text-sm">
+                      🎯 <strong>Win Conditions:</strong> Player wins by collecting <strong>{collectionsNeeded} of the same segment</strong> OR hitting <strong>{jackpotLabel}</strong> once. 
+                      They get <strong>{wheelSpinsPerGame} spins</strong> per game to achieve this.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Wheel Segments */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold text-gray-900">Wheel Segments ({wheelSegments.length} segments)</h2>
+                  <button
+                    type="button"
+                    onClick={addWheelSegment}
+                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm"
+                  >
+                    + Add Segment
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {wheelSegments.map((segment, index) => (
+                    <div key={segment.id} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm font-medium text-gray-700">Segment {index + 1}</span>
+                        {wheelSegments.length > 2 && (
+                          <button
+                            type="button"
+                            onClick={() => removeWheelSegment(index)}
+                            className="text-red-600 hover:text-red-800 text-sm"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                      <div className="space-y-3">
+                        <input
+                          type="text"
+                          value={segment.label}
+                          onChange={(e) => updateWheelSegment(index, 'label', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Segment label (e.g., 💰 Jackpot)"
+                        />
+                        <div className="flex items-center gap-2">
+                          <label className="text-xs text-gray-600">Color:</label>
+                          <input
+                            type="color"
+                            value={segment.color}
+                            onChange={(e) => updateWheelSegment(index, 'color', e.target.value)}
+                            className="w-12 h-8 border border-gray-300 rounded cursor-pointer"
+                          />
+                          <span className="text-xs text-gray-600">{segment.color}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {wheelSegments.length < 2 && (
+                  <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-red-800 text-sm">⚠️ You need at least 2 wheel segments!</p>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
 
           {/* Submit Button */}
           <div className="flex items-center justify-between pt-6">
@@ -534,13 +702,14 @@ export default function EditGamePage() {
             >
               Cancel
             </Link>
-            
             <button
               type="submit"
-              disabled={saving || !title.trim() || starsCount === 0}
+              disabled={saving || !title.trim() || 
+                (gameData?.type === 'STARS_HEXA' && starsCount === 0) || 
+                (gameData?.type === '💰🌪️🍀' && wheelSegments.length < 2)}
               className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
             >
-              {saving ? 'Saving...' : 'Update Game'}
+              {saving ? 'Saving...' : `Update ${gameTypeName} Game`}
             </button>
           </div>
         </form>

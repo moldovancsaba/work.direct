@@ -36,6 +36,37 @@ export interface WheelSegment {
   isActive: boolean
 }
 
+// Simple configuration for auto-generating wheels
+export interface SimpleWheelConfiguration {
+  jackpotsCount: 1 | 2 | 3 | 4 | 5 | 6 // How many jackpots across all wheels
+  wheel1Segments: 3 | 4 | 5 | 6 | 7 | 8 // Number of segments on wheel 1
+  wheel2Segments: 3 | 4 | 5 | 6 | 7 | 8 // Number of segments on wheel 2
+  wheel3Segments: 3 | 4 | 5 | 6 | 7 | 8 // Number of segments on wheel 3
+  totalSegmentsToUse: 5 | 6 | 7 | 8 | 9 | 10 | 11 // How many different segment types to use (including jackpot)
+  segmentNames: string[] // List of available segment names
+}
+
+export interface WheelOfFortuneConfiguration {
+  segments: WheelSegment[] // Default segments for all wheels (backward compatibility)
+  wheel1Segments?: WheelSegment[] // Custom segments for wheel 1
+  wheel2Segments?: WheelSegment[] // Custom segments for wheel 2
+  wheel3Segments?: WheelSegment[] // Custom segments for wheel 3
+  spins: number // Base number of full rotations before stopping
+  spinsPerGame: number // Number of spins allowed per game (default 3)
+  durationMs: number // Spin animation duration in milliseconds
+  pointerAt: 'top' | 'right' // Pointer position
+  size: number // SVG size in pixels
+  theme: 'default' | 'colorful' | 'minimal'
+  allowImmediateReplay: boolean // Whether user can spin again immediately
+  gameRule: {
+    winCondition: 'collect_three_same' | 'jackpot_once' // Win by collecting 3 same or hitting jackpot once
+    jackpotLabel: string // Which segment label is considered jackpot
+    collectionsNeeded: number // Number of same items needed to win (default 3)
+  }
+  // Simple configuration (optional)
+  simpleConfig?: SimpleWheelConfiguration
+}
+
 export interface GameConfiguration {
   // Stars Hexa specific configuration
   starsHexa?: {
@@ -47,13 +78,24 @@ export interface GameConfiguration {
   
   // Wheel of Fortune specific configuration
   wheelOfFortune?: {
-    segments: WheelSegment[]
+    segments: WheelSegment[] // Default segments for all wheels
+    wheel1Segments?: WheelSegment[] // Custom segments for wheel 1
+    wheel2Segments?: WheelSegment[] // Custom segments for wheel 2
+    wheel3Segments?: WheelSegment[] // Custom segments for wheel 3
     spins: number // Base number of full rotations before stopping
+    spinsPerGame: number // Number of spins allowed per game (default 3)
     durationMs: number // Spin animation duration in milliseconds
     pointerAt: 'top' | 'right' // Pointer position
     size: number // SVG size in pixels
     theme: 'default' | 'colorful' | 'minimal'
     allowImmediateReplay: boolean // Whether user can spin again immediately
+    gameRule: {
+      winCondition: 'collect_three_same' | 'jackpot_once' // Win by collecting 3 same or hitting jackpot once
+      jackpotLabel: string // Which segment label is considered jackpot
+      collectionsNeeded: number // Number of same items needed to win (default 3)
+    }
+    // Simple configuration (optional)
+    simpleConfig?: SimpleWheelConfiguration
   }
   
   // General game settings
@@ -143,6 +185,13 @@ export interface GameOutcome {
   // Wheel of Fortune specific fields
   segmentId?: string // For Wheel of Fortune games - which segment was landed on
   segmentLabel?: string // The label of the winning segment
+  spinsUsed?: number // Number of spins used in this game session
+  spinsRemaining?: number // Number of spins remaining
+  segmentsCollected?: Record<string, number> // Track collected segments: label -> count
+  isGameComplete?: boolean // Whether the wheel game has ended
+  // Triple Wheel specific fields
+  allResults?: string[] // All results from all wheels across all spins
+  winType?: string // Type of win: 'JACKPOT', 'THREE_SAME', 'NONE'
   // Common fields
   value?: string | number
   rewardIds: string[] // Multiple rewards can be won

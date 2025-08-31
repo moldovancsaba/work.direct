@@ -47,18 +47,23 @@ export default function NewGamePage() {
     { id: '7', text: 'Card 7', hasHiddenStar: false }
   ])
   
-  // Wheel of Fortune configuration
-  const [wheelSegments, setWheelSegments] = useState<WheelSegment[]>([
-    { id: '1', label: '💰 Jackpot', color: '#F94144', isActive: true },
-    { id: '2', label: '🔥 Bonus', color: '#F3722C', isActive: true },
-    { id: '3', label: '🎁 Mystery', color: '#F9C74F', isActive: true },
-    { id: '4', label: '🍀 Lucky', color: '#90BE6D', isActive: true },
-    { id: '5', label: '⚡ Turbo', color: '#577590', isActive: true },
-    { id: '6', label: '🎯 Double', color: '#277DA1', isActive: true },
-    { id: '7', label: '💎 Gem', color: '#9B5DE5', isActive: true },
-    { id: '8', label: '🎉 Win', color: '#B5179E', isActive: true }
-  ])
+  // Triple wheel configuration
+  const [simpleWheelConfig, setSimpleWheelConfig] = useState({
+    jackpotsCount: 1 as 1 | 2 | 3 | 4 | 5 | 6,
+    wheel1Segments: 5 as 3 | 4 | 5 | 6 | 7 | 8,
+    wheel2Segments: 4 as 3 | 4 | 5 | 6 | 7 | 8,
+    wheel3Segments: 6 as 3 | 4 | 5 | 6 | 7 | 8,
+    totalSegmentsToUse: 7 as 5 | 6 | 7 | 8 | 9 | 10 | 11,
+    segmentNames: [
+      'soccer', 'volleyball', 'handball', 'swimming', 
+      'wrestling', 'boxing', 'running', 'skiing', 
+      'waterpolo', 'basketball'
+    ]
+  })
+  
+  // Wheel animation settings
   const [wheelSpins, setWheelSpins] = useState(8)
+  const [wheelSpinsPerGame, setWheelSpinsPerGame] = useState(2)
   const [wheelDuration, setWheelDuration] = useState(4500)
   
   const [theme, setTheme] = useState<'default' | 'colorful' | 'minimal'>('default')
@@ -69,27 +74,6 @@ export default function NewGamePage() {
     ))
   }
 
-  const updateWheelSegment = (index: number, field: keyof WheelSegment, value: any) => {
-    setWheelSegments(prev => prev.map((segment, i) => 
-      i === index ? { ...segment, [field]: value } : segment
-    ))
-  }
-
-  const addWheelSegment = () => {
-    const newId = (wheelSegments.length + 1).toString()
-    setWheelSegments(prev => [...prev, {
-      id: newId,
-      label: `Segment ${newId}`,
-      color: '#' + Math.floor(Math.random()*16777215).toString(16),
-      isActive: true
-    }])
-  }
-
-  const removeWheelSegment = (index: number) => {
-    if (wheelSegments.length > 2) { // Keep at least 2 segments
-      setWheelSegments(prev => prev.filter((_, i) => i !== index))
-    }
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -136,21 +120,23 @@ export default function NewGamePage() {
           theme
         }
       } else if (gameType === '💰🌪️🍀') {
-        if (wheelSegments.length < 2) {
-          throw new Error('At least 2 wheel segments are required')
-        }
-        if (wheelSegments.some(s => !s.label.trim())) {
-          throw new Error('All wheel segments must have labels')
-        }
-
+        // Triple wheel configuration
         gameData.configuration.wheelOfFortune = {
-          segments: wheelSegments,
+          segments: [], // Will be auto-generated
           spins: wheelSpins,
+          spinsPerGame: wheelSpinsPerGame,
           durationMs: wheelDuration,
           pointerAt: 'top',
-          size: 520,
+          size: 320, // Updated to meet validation requirements (300-800)
           theme,
-          allowImmediateReplay: false
+          allowImmediateReplay: false,
+          gameRule: {
+            winCondition: 'jackpot_once',
+            jackpotLabel: '💰 Jackpot',
+            collectionsNeeded: 3
+          },
+          // Add simple configuration
+          simpleConfig: simpleWheelConfig
         }
       }
 
@@ -379,9 +365,152 @@ export default function NewGamePage() {
 
           {gameType === '💰🌪️🍀' && (
             <>
-              {/* Wheel Settings */}
+              {/* Triple Wheel Configuration */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Wheel Settings</h2>
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">🎰 Triple Wheel Setup</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Jackpots Across All Wheels</label>
+                        <select
+                          value={simpleWheelConfig.jackpotsCount}
+                          onChange={(e) => setSimpleWheelConfig(prev => ({
+                            ...prev,
+                            jackpotsCount: Number(e.target.value) as any
+                          }))}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                          {[1, 2, 3, 4, 5, 6].map(num => (
+                            <option key={num} value={num}>{num} jackpot{num !== 1 ? 's' : ''} total</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Wheel 1 Segments</label>
+                        <select
+                          value={simpleWheelConfig.wheel1Segments}
+                          onChange={(e) => setSimpleWheelConfig(prev => ({
+                            ...prev,
+                            wheel1Segments: Number(e.target.value) as any
+                          }))}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                          {[3, 4, 5, 6, 7, 8].map(num => (
+                            <option key={num} value={num}>{num} segments</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Wheel 2 Segments</label>
+                        <select
+                          value={simpleWheelConfig.wheel2Segments}
+                          onChange={(e) => setSimpleWheelConfig(prev => ({
+                            ...prev,
+                            wheel2Segments: Number(e.target.value) as any
+                          }))}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                          {[3, 4, 5, 6, 7, 8].map(num => (
+                            <option key={num} value={num}>{num} segments</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Wheel 3 Segments</label>
+                        <select
+                          value={simpleWheelConfig.wheel3Segments}
+                          onChange={(e) => setSimpleWheelConfig(prev => ({
+                            ...prev,
+                            wheel3Segments: Number(e.target.value) as any
+                          }))}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                          {[3, 4, 5, 6, 7, 8].map(num => (
+                            <option key={num} value={num}>{num} segments</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Total Different Segments</label>
+                        <select
+                          value={simpleWheelConfig.totalSegmentsToUse}
+                          onChange={(e) => setSimpleWheelConfig(prev => ({
+                            ...prev,
+                            totalSegmentsToUse: Number(e.target.value) as any
+                          }))}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                          {[5, 6, 7, 8, 9, 10, 11].map(num => (
+                            <option key={num} value={num}>{num} types (including jackpot)</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Spins Per Game</label>
+                        <select
+                          value={wheelSpinsPerGame}
+                          onChange={(e) => setWheelSpinsPerGame(Number(e.target.value))}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                          {[1, 2, 3].map(num => (
+                            <option key={num} value={num}>{num} triple spin{num !== 1 ? 's' : ''}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                      <h3 className="text-blue-900 font-semibold mb-2">🎮 Game Summary:</h3>
+                      <ul className="text-blue-800 text-sm space-y-1">
+                        <li>• <strong>3 wheels</strong> with {simpleWheelConfig.wheel1Segments}, {simpleWheelConfig.wheel2Segments}, and {simpleWheelConfig.wheel3Segments} segments each</li>
+                        <li>• <strong>{simpleWheelConfig.jackpotsCount} jackpot{simpleWheelConfig.jackpotsCount !== 1 ? 's' : ''}</strong> distributed across the wheels</li>
+                        <li>• <strong>{simpleWheelConfig.totalSegmentsToUse} different segments</strong> including sports and jackpot</li>
+                        <li>• Players get <strong>{wheelSpinsPerGame} triple spin{wheelSpinsPerGame !== 1 ? 's' : ''}</strong> to win</li>
+                        <li>• Win by getting <strong>ANY jackpot</strong> or <strong>3+ matching segments</strong></li>
+                      </ul>
+                </div>
+              </div>
+              
+              {/* Segment Names */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h2 className="text-xl font-semibold text-gray-900 mb-4">⚽ Available Segment Names</h2>
+                    <p className="text-gray-600 mb-4">These sport names will be used to fill the wheel segments:</p>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                      {simpleWheelConfig.segmentNames.map((name, index) => (
+                        <div 
+                          key={index}
+                          className={`rounded-lg p-3 text-center ${
+                            index < simpleWheelConfig.totalSegmentsToUse - 1 
+                              ? 'bg-green-50 border border-green-200' 
+                              : 'bg-gray-50 border border-gray-200'
+                          }`}
+                        >
+                          <p className={`font-medium text-sm ${
+                            index < simpleWheelConfig.totalSegmentsToUse - 1 
+                              ? 'text-green-800' 
+                              : 'text-gray-500'
+                          }`}>
+                            {name}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {index < simpleWheelConfig.totalSegmentsToUse - 1 ? 'USED' : 'unused'}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <p className="text-yellow-800 text-sm">
+                        🎆 <strong>Auto-generation:</strong> The system will automatically create 3 unique wheels using these segments, 
+                        with {simpleWheelConfig.jackpotsCount} jackpot{simpleWheelConfig.jackpotsCount !== 1 ? 's' : ''} distributed fairly across them.
+                      </p>
+                </div>
+              </div>
+              
+              {/* Wheel Animation Settings */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Animation Settings</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Base Spins</label>
@@ -425,65 +554,9 @@ export default function NewGamePage() {
                 </div>
                 <div className="mt-4 p-4 bg-green-50 rounded-lg">
                   <p className="text-green-800 text-sm">
-                    ℹ️ Wheel will spin <strong>{wheelSpins} full rotations</strong> over <strong>{wheelDuration/1000} seconds</strong> before landing on a segment.
+                    ℹ️ Each wheel will spin <strong>{wheelSpins} full rotations</strong> over <strong>{wheelDuration/1000} seconds</strong> before landing on a segment.
                   </p>
                 </div>
-              </div>
-
-              {/* Wheel Segments */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-semibold text-gray-900">Wheel Segments ({wheelSegments.length} segments)</h2>
-                  <button
-                    type="button"
-                    onClick={addWheelSegment}
-                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm"
-                  >
-                    + Add Segment
-                  </button>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {wheelSegments.map((segment, index) => (
-                    <div key={segment.id} className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-sm font-medium text-gray-700">Segment {index + 1}</span>
-                        {wheelSegments.length > 2 && (
-                          <button
-                            type="button"
-                            onClick={() => removeWheelSegment(index)}
-                            className="text-red-600 hover:text-red-800 text-sm"
-                          >
-                            Remove
-                          </button>
-                        )}
-                      </div>
-                      <div className="space-y-3">
-                        <input
-                          type="text"
-                          value={segment.label}
-                          onChange={(e) => updateWheelSegment(index, 'label', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="Segment label (e.g., 💰 Jackpot)"
-                        />
-                        <div className="flex items-center gap-2">
-                          <label className="text-xs text-gray-600">Color:</label>
-                          <input
-                            type="color"
-                            value={segment.color}
-                            onChange={(e) => updateWheelSegment(index, 'color', e.target.value)}
-                            className="w-12 h-8 border border-gray-300 rounded cursor-pointer"
-                          />
-                          <span className="text-xs text-gray-600">{segment.color}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                {wheelSegments.length < 2 && (
-                  <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-red-800 text-sm">⚠️ You need at least 2 wheel segments!</p>
-                  </div>
-                )}
               </div>
             </>
           )}
@@ -498,7 +571,7 @@ export default function NewGamePage() {
             </Link>
             <button
               type="submit"
-              disabled={loading || !title.trim() || (gameType === 'STARS_HEXA' && starsCount === 0) || (gameType === '💰🌪️🍀' && wheelSegments.length < 2)}
+              disabled={loading || !title.trim() || (gameType === 'STARS_HEXA' && starsCount === 0)}
               className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
             >
               {loading ? 'Creating...' : `Create ${selectedGameType?.name} Game`}

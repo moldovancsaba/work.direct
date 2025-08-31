@@ -195,6 +195,11 @@ const gameSchema = new Schema<Game>({
         default: 8
         // Validation handled in pre-save middleware
       },
+      spinsPerGame: {
+        type: Number,
+        default: 3
+        // Validation handled in pre-save middleware
+      },
       durationMs: {
         type: Number,
         default: 4500
@@ -218,6 +223,60 @@ const gameSchema = new Schema<Game>({
       allowImmediateReplay: {
         type: Boolean,
         default: false
+      },
+      gameRule: {
+        winCondition: {
+          type: String,
+          enum: ['collect_three_same', 'jackpot_once'],
+          default: 'collect_three_same'
+        },
+        jackpotLabel: {
+          type: String,
+          default: '💰 Jackpot'
+        },
+        collectionsNeeded: {
+          type: Number,
+          default: 3,
+          min: [2, 'Collections needed must be at least 2'],
+          max: [5, 'Collections needed cannot exceed 5']
+        }
+      },
+      // Simple configuration for auto-generated triple wheels
+      simpleConfig: {
+        jackpotsCount: {
+          type: Number,
+          min: [1, 'Jackpots count must be at least 1'],
+          max: [6, 'Jackpots count cannot exceed 6']
+        },
+        wheel1Segments: {
+          type: Number,
+          min: [3, 'Wheel 1 segments must be at least 3'],
+          max: [8, 'Wheel 1 segments cannot exceed 8']
+        },
+        wheel2Segments: {
+          type: Number,
+          min: [3, 'Wheel 2 segments must be at least 3'],
+          max: [8, 'Wheel 2 segments cannot exceed 8']
+        },
+        wheel3Segments: {
+          type: Number,
+          min: [3, 'Wheel 3 segments must be at least 3'],
+          max: [8, 'Wheel 3 segments cannot exceed 8']
+        },
+        totalSegmentsToUse: {
+          type: Number,
+          min: [5, 'Total segments to use must be at least 5'],
+          max: [11, 'Total segments to use cannot exceed 11']
+        },
+        segmentNames: {
+          type: [String],
+          validate: {
+            validator: function(names: string[]) {
+              return names && names.length >= 4 // Need at least 4 names for minimal config
+            },
+            message: 'Must provide at least 4 segment names'
+          }
+        }
       }
     },
     
@@ -477,17 +536,58 @@ gameSchema.pre('save', function(next) {
   
   // Validate Wheel of Fortune configuration for Wheel of Fortune games
   if (this.type === '💰🌪️🍀') {
-    if (!this.configuration.wheelOfFortune || !this.configuration.wheelOfFortune.segments || this.configuration.wheelOfFortune.segments.length < 2) {
-      return next(new Error('Wheel of Fortune games must have at least 2 segments'))
+    if (!this.configuration.wheelOfFortune) {
+      return next(new Error('Wheel of Fortune games must have wheel configuration'))
     }
     
-    if (this.configuration.wheelOfFortune.segments.length > 12) {
-      return next(new Error('Wheel of Fortune games cannot have more than 12 segments'))
-    }
+    // Check if using simple configuration (auto-generated wheels)
+    const hasSimpleConfig = this.configuration.wheelOfFortune.simpleConfig
     
-    const hasEmptyLabels = this.configuration.wheelOfFortune.segments.some(s => !s.label || s.label.trim().length === 0)
-    if (hasEmptyLabels) {
-      return next(new Error('All wheel segments must have non-empty labels'))
+    if (hasSimpleConfig) {
+      // Validate simple configuration
+      const simpleConfig = this.configuration.wheelOfFortune.simpleConfig
+      
+      if (!simpleConfig) {
+        return next(new Error('Simple wheel config is missing'))
+      }
+      
+      if (!simpleConfig.jackpotsCount || simpleConfig.jackpotsCount < 1 || simpleConfig.jackpotsCount > 6) {
+        return next(new Error('Simple wheel config: jackpotsCount must be between 1-6'))
+      }
+      
+      if (!simpleConfig.wheel1Segments || simpleConfig.wheel1Segments < 3 || simpleConfig.wheel1Segments > 8) {
+        return next(new Error('Simple wheel config: wheel1Segments must be between 3-8'))
+      }
+      
+      if (!simpleConfig.wheel2Segments || simpleConfig.wheel2Segments < 3 || simpleConfig.wheel2Segments > 8) {
+        return next(new Error('Simple wheel config: wheel2Segments must be between 3-8'))
+      }
+      
+      if (!simpleConfig.wheel3Segments || simpleConfig.wheel3Segments < 3 || simpleConfig.wheel3Segments > 8) {
+        return next(new Error('Simple wheel config: wheel3Segments must be between 3-8'))
+      }
+      
+      if (!simpleConfig.totalSegmentsToUse || simpleConfig.totalSegmentsToUse < 5 || simpleConfig.totalSegmentsToUse > 11) {
+        return next(new Error('Simple wheel config: totalSegmentsToUse must be between 5-11'))
+      }
+      
+      if (!simpleConfig.segmentNames || !Array.isArray(simpleConfig.segmentNames) || simpleConfig.segmentNames.length < simpleConfig.totalSegmentsToUse - 1) {
+        return next(new Error('Simple wheel config: must have enough segment names'))
+      }
+    } else {
+      // Validate traditional configuration (manual segments)
+      if (!this.configuration.wheelOfFortune.segments || this.configuration.wheelOfFortune.segments.length < 2) {
+        return next(new Error('Traditional wheel config: must have at least 2 segments'))
+      }
+      
+      if (this.configuration.wheelOfFortune.segments.length > 12) {
+        return next(new Error('Traditional wheel config: cannot have more than 12 segments'))
+      }
+      
+      const hasEmptyLabels = this.configuration.wheelOfFortune.segments.some(s => !s.label || s.label.trim().length === 0)
+      if (hasEmptyLabels) {
+        return next(new Error('Traditional wheel config: all segments must have non-empty labels'))
+      }
     }
     
     // Validate wheel configuration

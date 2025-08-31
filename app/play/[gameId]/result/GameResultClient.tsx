@@ -7,11 +7,19 @@ import { Game } from '../../../types'
 
 interface GameResultData {
   won: boolean
-  starsFound: number
-  totalStars: number
-  flipsUsed: number
-  roundsUsed: number
+  // Stars Hexa specific fields
+  starsFound?: number
+  totalStars?: number
+  flipsUsed?: number
+  roundsUsed?: number
+  // Wheel of Fortune specific fields
+  segment?: string
+  winningSegment?: string
+  spinsUsed?: number
+  // Common fields
   isTrialMode?: boolean
+  gameType: 'STARS_HEXA' | '💰🌪️🍀'
+  message?: string
 }
 
 interface GameResultClientProps {
@@ -41,20 +49,38 @@ export default function GameResultClient({ gameId, initialGameData }: GameResult
   }, [gameId, searchParams])
 
   const parseResultData = () => {
-    const won = searchParams.get('won') === 'true'
+    // Common parameters
+    const outcome = searchParams.get('outcome')
+    const won = outcome === 'WIN' || searchParams.get('won') === 'true'
+    const isTrialMode = searchParams.get('trial') === 'true'
+    const message = searchParams.get('message') || ''
+    const gameType = game.type
+
+    // Stars Hexa specific parameters
     const starsFound = parseInt(searchParams.get('starsFound') || '0')
     const totalStars = parseInt(searchParams.get('totalStars') || '0')
     const flipsUsed = parseInt(searchParams.get('flipsUsed') || '0')
     const roundsUsed = parseInt(searchParams.get('roundsUsed') || '1')
-    const isTrialMode = searchParams.get('trial') === 'true'
+
+    // Wheel of Fortune specific parameters
+    const segment = searchParams.get('segment') || ''
+    const winningSegment = searchParams.get('winningSegment') || ''
+    const spinsUsed = parseInt(searchParams.get('spinsUsed') || '0')
 
     setResultData({
       won,
+      gameType,
+      message,
+      isTrialMode,
+      // Stars Hexa fields
       starsFound,
       totalStars,
       flipsUsed,
       roundsUsed,
-      isTrialMode
+      // Wheel of Fortune fields
+      segment,
+      winningSegment,
+      spinsUsed
     })
 
     // Generate share URL using the configured production URL
@@ -66,9 +92,17 @@ export default function GameResultClient({ gameId, initialGameData }: GameResult
   const handleShare = async (platform: string) => {
     if (!game || !resultData) return
 
-    const resultText = resultData.won 
-      ? `🎉 I just won "${game.title}"! Found ${resultData.starsFound}/${resultData.totalStars} stars in ${resultData.roundsUsed} round${resultData.roundsUsed !== 1 ? 's' : ''}!`
-      : `🎮 I just played "${game.title}"! Found ${resultData.starsFound}/${resultData.totalStars} stars. Can you do better?`
+    let resultText = ''
+    
+    if (resultData.gameType === 'STARS_HEXA') {
+      resultText = resultData.won 
+        ? `🎉 I just won "${game.title}"! Found ${resultData.starsFound}/${resultData.totalStars} stars in ${resultData.roundsUsed} round${resultData.roundsUsed !== 1 ? 's' : ''}!`
+        : `🎮 I just played "${game.title}"! Found ${resultData.starsFound}/${resultData.totalStars} stars. Can you do better?`
+    } else if (resultData.gameType === '💰🌪️🍀') {
+      resultText = resultData.won 
+        ? `🎰 I just won "${game.title}"! Hit ${resultData.winningSegment || resultData.segment} in ${resultData.spinsUsed} spin${resultData.spinsUsed !== 1 ? 's' : ''}!`
+        : `🎰 I just played "${game.title}"! Used ${resultData.spinsUsed} spins and landed on ${resultData.segment}. Can you do better?`
+    }
 
     const fullText = `${resultText}\n\n🕹️ Play now: ${shareUrl}`
 
@@ -153,7 +187,7 @@ export default function GameResultClient({ gameId, initialGameData }: GameResult
     )
   }
 
-  const { won, starsFound, totalStars, flipsUsed, roundsUsed, isTrialMode } = resultData
+  const { won, gameType, message, isTrialMode, starsFound, totalStars, roundsUsed, segment, winningSegment, spinsUsed } = resultData
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100">
@@ -161,10 +195,16 @@ export default function GameResultClient({ gameId, initialGameData }: GameResult
         {/* Result Header */}
         <div className="text-center mb-8">
           <div className="text-8xl mb-4">
-            {won ? '🎉' : '💀'}
+            {gameType === 'STARS_HEXA' 
+              ? (won ? '🎉' : '💀')
+              : (won ? '🎰🎆' : '🎰😕')
+            }
           </div>
           <h1 className={`text-4xl font-bold mb-2 ${won ? 'text-green-600' : 'text-red-600'}`}>
-            {won ? 'Congratulations!' : 'Game Over'}
+            {gameType === 'STARS_HEXA'
+              ? (won ? 'Congratulations!' : 'Game Over')
+              : (won ? 'Jackpot Winner!' : 'Spin Complete')
+            }
           </h1>
           <h2 className="text-xl text-gray-700 font-medium">
             {game.title}
@@ -182,33 +222,60 @@ export default function GameResultClient({ gameId, initialGameData }: GameResult
         <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
           <div className="text-center mb-6">
             <h3 className="text-2xl font-semibold text-gray-800 mb-4">
-              {won ? 'You found all the stars!' : `You found ${starsFound} out of ${totalStars} stars`}
+              {gameType === 'STARS_HEXA' 
+                ? (won ? 'You found all the stars!' : `You found ${starsFound} out of ${totalStars} stars`)
+                : (won ? `🎰 Winner! You hit ${winningSegment || segment}!` : `🎰 You landed on ${segment}!`)
+              }
             </h3>
           </div>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-2 gap-6 mb-6">
-            <div className="text-center p-4 bg-blue-50 rounded-xl">
-              <div className="text-3xl font-bold text-blue-600">
-                {starsFound}/{totalStars}
+          {/* Stats Grid - Dynamic based on game type */}
+          {gameType === 'STARS_HEXA' ? (
+            <div className="grid grid-cols-2 gap-6 mb-6">
+              <div className="text-center p-4 bg-blue-50 rounded-xl">
+                <div className="text-3xl font-bold text-blue-600">
+                  {starsFound}/{totalStars}
+                </div>
+                <div className="text-sm text-gray-600 mt-1">Stars Found</div>
               </div>
-              <div className="text-sm text-gray-600 mt-1">Stars Found</div>
-            </div>
-            <div className="text-center p-4 bg-purple-50 rounded-xl">
-              <div className="text-3xl font-bold text-purple-600">
-                {roundsUsed}
+              <div className="text-center p-4 bg-purple-50 rounded-xl">
+                <div className="text-3xl font-bold text-purple-600">
+                  {roundsUsed}
+                </div>
+                <div className="text-sm text-gray-600 mt-1">Rounds Used</div>
               </div>
-              <div className="text-sm text-gray-600 mt-1">Rounds Used</div>
             </div>
-          </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-6 mb-6">
+              <div className="text-center p-4 bg-green-50 rounded-xl">
+                <div className="text-2xl font-bold text-green-600">
+                  {segment}
+                </div>
+                <div className="text-sm text-gray-600 mt-1">Final Segment</div>
+              </div>
+              <div className="text-center p-4 bg-purple-50 rounded-xl">
+                <div className="text-3xl font-bold text-purple-600">
+                  {spinsUsed}
+                </div>
+                <div className="text-sm text-gray-600 mt-1">Spins Used</div>
+              </div>
+            </div>
+          )}
 
           {/* Result Message */}
           <div className={`text-center p-4 rounded-xl ${won ? 'bg-green-50' : 'bg-orange-50'}`}>
             <p className={`text-lg font-medium ${won ? 'text-green-800' : 'text-orange-800'}`}>
-              {won 
-                ? `Amazing! You completed the game in ${roundsUsed} round${roundsUsed !== 1 ? 's' : ''}!`
-                : `Good try! You found ${starsFound} star${starsFound !== 1 ? 's' : ''} out of ${totalStars}.`
-              }
+              {message || (
+                gameType === 'STARS_HEXA'
+                  ? (won 
+                      ? `Amazing! You completed the game in ${roundsUsed} round${roundsUsed !== 1 ? 's' : ''}!`
+                      : `Good try! You found ${starsFound} star${starsFound !== 1 ? 's' : ''} out of ${totalStars}.`
+                    )
+                  : (won 
+                      ? `🎉 Congratulations! You won by hitting ${winningSegment || segment}!`
+                      : `Better luck next time! You used ${spinsUsed} spins and landed on ${segment}.`
+                    )
+              )}
             </p>
           </div>
         </div>

@@ -22,14 +22,6 @@ export default function HomePage() {
               </div>
             </div>
             
-            <nav className="flex items-center space-x-6">
-              <Link 
-                href="/admin" 
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-              >
-                Create Game
-              </Link>
-            </nav>
           </div>
         </div>
       </header>
@@ -51,7 +43,7 @@ export default function HomePage() {
               href="/admin" 
               className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105 shadow-lg font-medium text-lg"
             >
-              🎮 Start Creating Games
+              🎮 Management
             </Link>
             
             <Link 
