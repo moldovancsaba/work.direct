@@ -104,7 +104,11 @@ export default function GameLayout({
             {titleIcon && <span className="mr-3">{titleIcon}</span>}
             {title}
           </h1>
-          <p className="text-xl text-gray-200">
+          <p className={`text-xl text-gray-200 ${
+            gameType === 'PENALTY_SHOOTOUT' && subtitle.includes('HOME') && subtitle.includes('VISITOR') 
+              ? 'font-bold text-2xl md:text-3xl text-white' 
+              : ''
+          }`}>
             {subtitle}
           </p>
         </div>

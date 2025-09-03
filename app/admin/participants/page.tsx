@@ -7,6 +7,8 @@ interface Participant {
   name: string
   email?: string
   phone?: string
+  uuid?: string
+  referrerUuid?: string
   createdAt: string
   lastActivityAt: string
   totalGamesPlayed: number
@@ -305,6 +307,9 @@ export default function ParticipantsPage() {
                     Participant
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Referral Info
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Joined
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -332,6 +337,24 @@ export default function ParticipantsPage() {
                         <div className="text-sm text-gray-500">
                           {participant.email || participant.phone || 'No contact info'}
                         </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-xs">
+                        {participant.uuid ? (
+                          <>
+                            <div className="text-gray-900 font-mono mb-1">
+                              ID: {participant.uuid.slice(0, 8)}...
+                            </div>
+                            {participant.referrerUuid && (
+                              <div className="text-gray-500 font-mono">
+                                👥 {participant.referrerUuid.slice(0, 8)}...
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <span className="text-gray-400">Legacy user</span>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

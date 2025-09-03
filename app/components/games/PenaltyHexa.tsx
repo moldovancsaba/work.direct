@@ -17,6 +17,7 @@ interface PenaltyHexaProps {
   theme?: 'default' | 'colorful' | 'football'
   gameId?: string
   isTrialMode?: boolean
+  referralUuid?: string | null
 }
 
 // Game state interface for useReducer
@@ -168,7 +169,8 @@ export default function PenaltyHexa({
   maxRounds = 3,
   theme = 'football',
   gameId,
-  isTrialMode = false
+  isTrialMode = false,
+  referralUuid
 }: PenaltyHexaProps) {
   const router = useRouter()
   const params = useParams()
@@ -445,14 +447,15 @@ export default function PenaltyHexa({
           userScore: gameState.goalsScored.toString(),
           opponentScore: gameState.opponentScore.toString(),
           rounds: gameState.currentRound.toString(),
-          ...(isTrialMode && { trial: 'true' })
+          ...(isTrialMode && { trial: 'true' }),
+          ...(referralUuid && { ref: referralUuid })
         })
         
         // IMMEDIATE redirect - no delay for flash gaming experience (EXACT COPY FROM STARS_HEXA)
         router.push(`/play/${targetGameId}/result?${resultParams.toString()}`)
       }
     }
-  }, [gameState.isGameComplete, gameState.goalsScored, gameState.opponentScore, gameState.currentRound, gameId, params.gameId, isTrialMode, router])
+  }, [gameState.isGameComplete, gameState.goalsScored, gameState.opponentScore, gameState.currentRound, gameId, params.gameId, isTrialMode, referralUuid, router])
 
   // Generate honeycomb grid like reference HTML - EXACT implementation
   const renderHoneycombGrid = () => {

@@ -115,38 +115,51 @@ export async function POST(
       }, { status: 403 })
     }
     
-    // Validate game type
-    if (game.type !== 'STARS_HEXA') {
+    // Validate game type - support both STARS_HEXA and PENALTY_SHOOTOUT
+    if (game.type !== 'STARS_HEXA' && game.type !== 'PENALTY_SHOOTOUT') {
       return NextResponse.json({
         success: false,
-        message: 'This endpoint only supports Stars Hexa games',
+        message: 'This endpoint only supports Stars Hexa and Penalty Shootout games',
         error: {
           code: 'UNSUPPORTED_GAME_TYPE',
-          message: `Game type: ${game.type}`
+          message: `Unsupported game type: ${game.type}`
         }
       }, { status: 400 })
     }
     
-    // Validate Stars Hexa configuration
-    if (!game.configuration.starsHexa?.hexagons || game.configuration.starsHexa.hexagons.length !== 7) {
-      return NextResponse.json({
-        success: false,
-        message: 'Game configuration is invalid',
-        error: {
-          code: 'INVALID_CONFIGURATION',
-          message: 'Stars Hexa hexagons are missing or invalid'
-        }
-      }, { status: 500 })
+    // Validate game configuration based on type
+    if (game.type === 'STARS_HEXA') {
+      if (!game.configuration.starsHexa?.hexagons || game.configuration.starsHexa.hexagons.length !== 7) {
+        return NextResponse.json({
+          success: false,
+          message: 'Game configuration is invalid',
+          error: {
+            code: 'INVALID_CONFIGURATION',
+            message: 'Stars Hexa hexagons are missing or invalid'
+          }
+        }, { status: 500 })
+      }
+    } else if (game.type === 'PENALTY_SHOOTOUT') {
+      if (!game.configuration.penaltyShootout?.players || game.configuration.penaltyShootout.players.length !== 11) {
+        return NextResponse.json({
+          success: false,
+          message: 'Game configuration is invalid',
+          error: {
+            code: 'INVALID_CONFIGURATION',
+            message: 'Penalty Shootout players are missing or invalid'
+          }
+        }, { status: 500 })
+      }
     }
     
-    // Validate hexagon ID is provided
+    // Validate player/hexagon ID is provided
     if (!playRequest.hexagonId) {
       return NextResponse.json({
         success: false,
-        message: 'Hexagon ID is required for Stars Hexa games',
+        message: 'Player/hexagon ID is required',
         error: {
           code: 'VALIDATION_ERROR',
-          message: 'Missing hexagonId in request'
+          message: 'Missing hexagonId/playerId in request'
         }
       }, { status: 400 })
     }
@@ -214,21 +227,58 @@ export async function POST(
     // Note: IP-based rate limiting removed to support hostess/event use cases
     // where multiple participants may play from the same location
     
-    // Find the hexagon being flipped
-    const flippedHexagon = game.configuration.starsHexa.hexagons.find(h => h.id === playRequest.hexagonId)
+    // Find the hexagon/player being flipped based on game type
+    let flippedItem: any = null
     
-    if (!flippedHexagon) {
-      return NextResponse.json({
-        success: false,
-        message: 'Hexagon not found',
-        error: {
-          code: 'NOT_FOUND',
-          message: `No hexagon found with ID: ${playRequest.hexagonId}`
-        }
-      }, { status: 404 })
+    if (game.type === 'STARS_HEXA') {
+      if (!game.configuration.starsHexa?.hexagons) {
+        return NextResponse.json({
+          success: false,
+          message: 'Game configuration is invalid',
+          error: {
+            code: 'INVALID_CONFIGURATION',
+            message: 'Stars Hexa hexagons configuration is missing'
+          }
+        }, { status: 500 })
+      }
+      
+      flippedItem = game.configuration.starsHexa.hexagons.find(h => h.id === playRequest.hexagonId)
+      if (!flippedItem) {
+        return NextResponse.json({
+          success: false,
+          message: 'Hexagon not found',
+          error: {
+            code: 'NOT_FOUND',
+            message: `No hexagon found with ID: ${playRequest.hexagonId}`
+          }
+        }, { status: 404 })
+      }
+    } else if (game.type === 'PENALTY_SHOOTOUT') {
+      if (!game.configuration.penaltyShootout?.players) {
+        return NextResponse.json({
+          success: false,
+          message: 'Game configuration is invalid',
+          error: {
+            code: 'INVALID_CONFIGURATION',
+            message: 'Penalty Shootout players configuration is missing'
+          }
+        }, { status: 500 })
+      }
+      
+      flippedItem = game.configuration.penaltyShootout.players.find(p => p.id === playRequest.hexagonId)
+      if (!flippedItem) {
+        return NextResponse.json({
+          success: false,
+          message: 'Player not found',
+          error: {
+            code: 'NOT_FOUND',
+            message: `No player found with ID: ${playRequest.hexagonId}`
+          }
+        }, { status: 404 })
+      }
     }
     
-    // Check if hexagon is already revealed in this session
+    // Check if hexagon/player is already revealed in this session
     const existingFlip = await GameResultModel.findOne({
       gameId: game._id,
       participantId: participant._id,
@@ -237,34 +287,62 @@ export async function POST(
     })
     
     if (existingFlip) {
+      const itemType = game.type === 'STARS_HEXA' ? 'card' : 'player'
       return NextResponse.json({
         success: false,
-        message: '🔄 You\'ve already flipped that card! Try another one.',
+        message: `🔄 You've already selected that ${itemType}! Try another one.`,
         error: {
           code: 'ALREADY_REVEALED',
-          message: 'This hexagon has already been revealed in this session'
+          message: `This ${itemType} has already been selected in this session`
         }
       }, { status: 400 })
     }
     
-    // Calculate Stars Hexa result
-    const hexaResult = calculateHexaResult(flippedHexagon, game.configuration.starsHexa.hexagons, participant._id.toString(), sessionId)
+    // Calculate game result based on type
+    let gameOutcome: GameOutcome
     
-    // Log the flipped hexagon for debugging
-    console.log('Flipped hexagon:', {
-      id: flippedHexagon.id,
-      text: flippedHexagon.text,
-      hasHiddenStar: flippedHexagon.hasHiddenStar,
-      position: flippedHexagon.position,
-      starsFound: hexaResult.starsFound,
-      totalStars: hexaResult.totalStarsInGame,
-      foundAllStars: hexaResult.foundAllStars
-    })
+    if (game.type === 'STARS_HEXA') {
+      if (!game.configuration.starsHexa?.hexagons) {
+        throw new Error('Stars Hexa configuration missing')
+      }
+      
+      gameOutcome = calculateHexaResult(flippedItem, game.configuration.starsHexa.hexagons, participant._id.toString(), sessionId)
+      
+      // Log the flipped hexagon for debugging
+      console.log('Flipped hexagon:', {
+        id: flippedItem.id,
+        text: flippedItem.text,
+        hasHiddenStar: flippedItem.hasHiddenStar,
+        position: flippedItem.position,
+        starsFound: gameOutcome.starsFound,
+        totalStars: gameOutcome.totalStarsInGame,
+        foundAllStars: gameOutcome.foundAllStars
+      })
+    } else if (game.type === 'PENALTY_SHOOTOUT') {
+      if (!game.configuration.penaltyShootout?.players) {
+        throw new Error('Penalty Shootout configuration missing')
+      }
+      
+      gameOutcome = calculatePenaltyResult(flippedItem, game.configuration.penaltyShootout.players, participant._id.toString(), sessionId)
+      
+      // Log the selected player for debugging
+      console.log('Selected player:', {
+        id: flippedItem.id,
+        playerNumber: flippedItem.playerNumber,
+        hasGoal: flippedItem.hasGoal,
+        position: flippedItem.position,
+        starsFound: gameOutcome.starsFound,
+        totalStars: gameOutcome.totalStarsInGame,
+        foundAllStars: gameOutcome.foundAllStars
+      })
+    } else {
+      throw new Error(`Unsupported game type: ${game.type}`)
+    }
     
-    const outcome: GameOutcome = hexaResult
+    const outcome: GameOutcome = gameOutcome
     
     // Create game result record
-    const gameResult = new GameResultModel({
+    const gameResultRecord = new GameResultModel({
       gameId: game._id,
       participantId: participant._id,
       outcome: outcome,
@@ -275,17 +353,17 @@ export async function POST(
       isValidated: false // Will be validated after anti-cheat checks
     })
     
-    await gameResult.save()
+    await gameResultRecord.save()
     
     // Perform basic validation (can be enhanced with more sophisticated anti-cheat)
-    const isValidResult = await validateGameResult(gameResult)
+    const isValidResult = await validateGameResult(gameResultRecord)
     
     if (isValidResult) {
-      gameResult.isValidated = true
-      await gameResult.save()
+      gameResultRecord.isValidated = true
+      await gameResultRecord.save()
       
       // Update participant stats
-      participant.gameResults.push(gameResult._id)
+      participant.gameResults.push(gameResultRecord._id)
       participant.totalGamesPlayed += 1
       await participant.save()
       
@@ -311,13 +389,13 @@ export async function POST(
             const rewardClaim = new RewardClaimModel({
               rewardId: reward._id,
               participantId: participant._id,
-              gameResultId: gameResult._id,
+              gameResultId: gameResultRecord._id,
               status: 'AVAILABLE',
               claimedAt: new Date(),
               expiresAt: reward.expiresAt || null,
               metadata: {
                 gameTitle: game.title,
-                hexagonText: flippedHexagon.text,
+                itemText: flippedItem.text || `Player #${flippedItem.playerNumber}` || 'Game item',
                 sessionId: sessionId
               }
             })
@@ -332,7 +410,8 @@ export async function POST(
             // Update participant reward count
             participant.totalRewardsEarned += 1
             await participant.save()
-                       // Add reward info to response
+            
+            // Add reward info to response
             rewards.push(reward)
           }
         } catch (rewardError) {
@@ -437,6 +516,67 @@ function calculateHexaResult(
     return {
       type: 'NO_REWARD',
       hexagonId: flippedHexagon.id,
+      starsFound: 0,
+      totalStarsInGame: 0,
+      foundAllStars: false,
+      rewardIds: [],
+      message: 'Error calculating result'
+    }
+  }
+}
+
+/**
+ * Calculate Penalty Shootout result for player selection
+ * Determines if the player scores a goal or misses
+ */
+function calculatePenaltyResult(
+  selectedPlayer: any, 
+  allPlayers: any[], 
+  participantId: string, 
+  sessionId: string
+): GameOutcome {
+  try {
+    // Determine if this player scores a goal
+    const scoredGoal = selectedPlayer.hasGoal
+    
+    // Count total goals in the game
+    const totalGoalsInGame = allPlayers.filter(p => p.hasGoal).length
+    
+    // For penalty shootout, we track "goals" as "stars"
+    const goalsScored = scoredGoal ? 1 : 0
+    
+    // In penalty shootout, game completion is handled by the frontend component
+    // based on the number of attempts, so we don't determine foundAllStars here
+    const foundAllStars = false // Game completion is determined by the component
+    
+    // Determine outcome type
+    let outcomeType: GameOutcomeType = 'NO_REWARD'
+    let message = `Player #${selectedPlayer.playerNumber}: ${scoredGoal ? 'GOAL! ⚽' : 'MISS! ❌'}`
+    
+    if (scoredGoal) {
+      outcomeType = 'WIN'
+      message = `⚽ GOAL! Player #${selectedPlayer.playerNumber} scores!`
+    } else {
+      outcomeType = 'NO_REWARD'
+      message = `❌ MISS! Player #${selectedPlayer.playerNumber} missed the shot!`
+    }
+    
+    return {
+      type: outcomeType,
+      hexagonId: selectedPlayer.id,
+      starsFound: goalsScored, // Goals are treated as "stars" for consistency
+      totalStarsInGame: totalGoalsInGame,
+      foundAllStars: foundAllStars,
+      value: `Player #${selectedPlayer.playerNumber}`,
+      rewardIds: [], // Rewards typically handled at game completion, not per shot
+      message: message
+    }
+    
+  } catch (error) {
+    console.error('Penalty calculation error:', error)
+    return {
+      type: 'NO_REWARD',
+      hexagonId: selectedPlayer.id,
       starsFound: 0,
       totalStarsInGame: 0,
       foundAllStars: false,

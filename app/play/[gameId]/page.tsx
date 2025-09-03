@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import StarsHexa from '../../components/games/StarsHexa'
 import PenaltyShootout from '../../components/games/PenaltyShootout'
 import PenaltyHexa from '../../components/games/PenaltyHexa'
@@ -57,7 +57,12 @@ function getRewardDisplayValue(reward: Reward): string {
  */
 export default function GamePlayPage() {
   const params = useParams()
+  const searchParams = useSearchParams()
+  const router = useRouter()
   const gameId = params.gameId as string
+  
+  // Extract referral UUID from URL parameters
+  const referralUuid = searchParams.get('ref')
   
   // Game state
   const [game, setGame] = useState<Game | null>(null)
@@ -66,6 +71,7 @@ export default function GamePlayPage() {
   
   // Participant state
   const [participant, setParticipant] = useState<Participant>({ name: '' })
+  const [participantUuid, setParticipantUuid] = useState<string | null>(null)
   const [isRegistered, setIsRegistered] = useState(false)
   const [registrationError, setRegistrationError] = useState<string | null>(null)
   
@@ -185,12 +191,18 @@ export default function GamePlayPage() {
     try {
       setRegistrationError(null)
       
+      // Include referral UUID if present
+      const registrationData = {
+        ...participantData,
+        referrerUuid: referralUuid || undefined
+      }
+      
       const response = await fetch('/api/participants', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(participantData)
+        body: JSON.stringify(registrationData)
       })
       
       const data = await response.json()
@@ -199,8 +211,20 @@ export default function GamePlayPage() {
         throw new Error(data.message || 'Registration failed')
       }
       
+      // Store participant data and UUID
       setParticipant(participantData)
+      setParticipantUuid(data.data.uuid)
       setIsRegistered(true)
+      
+      // Update URL with participant's UUID for sharing/referral
+      const currentUrl = new URL(window.location.href)
+      currentUrl.searchParams.set('ref', data.data.uuid)
+      
+      // Update the URL without triggering a page reload
+      window.history.replaceState({}, '', currentUrl.toString())
+      
+      // Show success message with sharing option
+      showToast('🎮 Registration successful! You can now share your personalized game link!', 'success')
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Registration failed'
       setRegistrationError(errorMessage)
@@ -284,7 +308,7 @@ export default function GamePlayPage() {
       case 'STARS_HEXA':
         return 'Find all hidden stars in hexagonal cards to win!'
       case 'PENALTY_SHOOTOUT':
-        // Dynamic score display for penalty shootout
+        // Dynamic score display for penalty shootout - will be styled as bold and bigger
         return `HOME ${penaltyScore.home} - ${penaltyScore.visitor} VISITOR`
       default:
         return game?.description || 'Play to win amazing rewards!'
@@ -318,6 +342,7 @@ export default function GamePlayPage() {
             attemptsRemaining={gameResult?.attemptsRemaining || game.configuration.maxAttemptsPerUser}
             gameId={gameId}
             isTrialMode={isTrialMode}
+            referralUuid={referralUuid}
           />
         )
       case 'PENALTY_SHOOTOUT':
@@ -332,6 +357,7 @@ export default function GamePlayPage() {
             attemptsRemaining={gameResult?.attemptsRemaining || game.configuration.maxAttemptsPerUser}
             gameId={gameId}
             isTrialMode={isTrialMode}
+            referralUuid={referralUuid}
           />
         )
       default:

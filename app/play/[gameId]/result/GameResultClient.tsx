@@ -83,9 +83,12 @@ export default function GameResultClient({ gameId, initialGameData }: GameResult
       rounds
     })
 
-    // Generate share URL using the configured production URL
+    // Generate share URL using the configured production URL with referral UUID
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
-    const playUrl = `${baseUrl}/play/${gameId}`
+    const referralUuid = searchParams.get('ref')
+    const playUrl = referralUuid 
+      ? `${baseUrl}/play/${gameId}?ref=${referralUuid}`
+      : `${baseUrl}/play/${gameId}`
     setShareUrl(playUrl)
   }
 

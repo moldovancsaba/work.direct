@@ -16,6 +16,7 @@ interface StarsHexaProps {
   theme?: 'default' | 'colorful' | 'minimal'
   gameId?: string
   isTrialMode?: boolean
+  referralUuid?: string | null
 }
 
 // Game state interface for useReducer
@@ -140,7 +141,8 @@ export default function StarsHexa({
   maxRounds = 3,
   theme = 'default',
   gameId,
-  isTrialMode = false
+  isTrialMode = false,
+  referralUuid
 }: StarsHexaProps) {
   const router = useRouter()
   const params = useParams()
@@ -358,14 +360,15 @@ export default function StarsHexa({
           totalStars: gameState.totalStars.toString(),
           flipsUsed: gameState.flipsUsed.toString(),
           roundsUsed: gameState.currentRound.toString(),
-          ...(isTrialMode && { trial: 'true' })
+          ...(isTrialMode && { trial: 'true' }),
+          ...(referralUuid && { ref: referralUuid })
         })
         
         // IMMEDIATE redirect - no delay for flash gaming experience
         router.push(`/play/${targetGameId}/result?${resultParams.toString()}`)
       }
     }
-  }, [gameState.isGameComplete, gameState.starsFound, gameState.totalStars, gameState.flipsUsed, gameState.currentRound, gameId, params.gameId, isTrialMode, router])
+  }, [gameState.isGameComplete, gameState.starsFound, gameState.totalStars, gameState.flipsUsed, gameState.currentRound, gameId, params.gameId, isTrialMode, referralUuid, router])
 
   return (
     <div 

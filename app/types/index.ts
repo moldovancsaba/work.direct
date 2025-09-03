@@ -17,6 +17,8 @@ export interface ParticipantData {
   name: string
   email?: string
   phone?: string
+  uuid?: string // Unique identifier for referral tracking
+  referrerUuid?: string // UUID of the person who referred this participant
 }
 
 // Game Layout Props for centralized layout system
@@ -252,6 +254,8 @@ export interface Participant extends BaseDocument {
   name: string
   email?: string
   phone?: string
+  uuid?: string // Unique identifier for referral tracking (optional for backward compatibility)
+  referrerUuid?: string // UUID of the person who referred this participant
   groupIds: ObjectId[] // Can belong to multiple groups
   gameResults: ObjectId[] // References to GameResult documents
   totalGamesPlayed: number

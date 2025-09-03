@@ -140,21 +140,21 @@ export default function UnifiedRegistration({
       case 'light':
         return {
           container: 'bg-white border-gray-200',
-          input: 'border-gray-300 focus:ring-blue-500 focus:border-blue-500',
+          input: 'bg-white !text-black border-gray-300 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500 !caret-black',
           button: 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700',
           trialButton: 'bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700'
         }
       case 'dark':
         return {
           container: 'bg-gray-800 border-gray-600',
-          input: 'bg-gray-700 border-gray-600 text-white focus:ring-purple-500 focus:border-purple-500',
+          input: 'bg-white !text-black border-gray-300 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500 !caret-black',
           button: 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700',
           trialButton: 'bg-gradient-to-r from-teal-500 to-green-600 hover:from-teal-600 hover:to-green-700'
         }
       default:
         return {
           container: 'bg-white border-gray-200',
-          input: 'border-gray-300 focus:ring-blue-500 focus:border-blue-500',
+          input: 'bg-white !text-black border-gray-300 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500 !caret-black',
           button: 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700',
           trialButton: 'bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700'
         }
@@ -189,6 +189,7 @@ export default function UnifiedRegistration({
                 value={participant.name}
                 onChange={(e) => setParticipant({ ...participant, name: e.target.value })}
                 className={`w-full px-4 py-3 rounded-lg transition-colors ${themeClasses.input}`}
+                style={{ color: '#000000', backgroundColor: '#ffffff', caretColor: '#000000' }}
                 placeholder="Enter your name"
                 required
                 disabled={isLoading || isSubmitting}
@@ -202,6 +203,7 @@ export default function UnifiedRegistration({
                 value={participant.email || ''}
                 onChange={(e) => setParticipant({ ...participant, email: e.target.value })}
                 className={`w-full px-4 py-3 rounded-lg transition-colors ${themeClasses.input}`}
+                style={{ color: '#000000', backgroundColor: '#ffffff', caretColor: '#000000' }}
                 placeholder={requireEmail ? "your@email.com (required)" : "your@email.com"}
                 required={requireEmail}
                 disabled={isLoading || isSubmitting}
@@ -215,6 +217,7 @@ export default function UnifiedRegistration({
                 value={participant.phone || ''}
                 onChange={(e) => setParticipant({ ...participant, phone: e.target.value })}
                 className={`w-full px-4 py-3 rounded-lg transition-colors ${themeClasses.input}`}
+                style={{ color: '#000000', backgroundColor: '#ffffff', caretColor: '#000000' }}
                 placeholder={requirePhone ? "+1 (555) 123-4567 (required)" : "+1 (555) 123-4567"}
                 required={requirePhone}
                 disabled={isLoading || isSubmitting}

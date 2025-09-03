@@ -27,6 +27,19 @@ const participantSchema = new Schema<Participant>({
     sparse: true // Allow multiple documents to have null/undefined phone
   },
   
+  // UUID for referral tracking (optional for backward compatibility)
+  uuid: {
+    type: String,
+    unique: true,
+    sparse: true // Allow null/undefined values temporarily for existing participants
+  },
+  
+  // UUID of the person who referred this participant
+  referrerUuid: {
+    type: String,
+    sparse: true // Allow null for participants without referrers
+  },
+  
   // References to target groups this participant belongs to
   groupIds: [{
     type: Schema.Types.ObjectId,

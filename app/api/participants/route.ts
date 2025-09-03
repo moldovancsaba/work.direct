@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { connectDB } from '../../lib/mongodb'
 import ParticipantModel from '../../lib/models/Participant'
 import { ApiResponse } from '../../types'
+import { v4 as uuidv4 } from 'uuid'
 
 /**
  * Participants API Route Handler
@@ -59,11 +60,16 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       })
     }
     
+    // Generate UUID for new participant if not provided
+    const uuid = participantData.uuid || uuidv4()
+    
     // Create new participant
     const participant = new ParticipantModel({
       name: participantData.name,
       email: participantData.email || undefined,
       phone: participantData.phone || undefined,
+      uuid: uuid,
+      referrerUuid: participantData.referrerUuid || undefined,
       groupIds: participantData.groupIds || [],
       gameResults: [],
       totalGamesPlayed: 0,
