@@ -15,6 +15,7 @@ export async function GET(
     await connectDB()
     
     const { id } = await params
+    console.log('GET /api/admin/games/[id] - Received ID:', id)
     
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(

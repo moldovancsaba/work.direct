@@ -3,13 +3,21 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { GameType, WheelSegment } from '../../../types'
+import { GameType } from '../../../types'
 
 interface HexagonCard {
   id: string
   text: string
   hasHiddenStar: boolean
   color?: string
+}
+
+// Local interface for compatibility with existing wheel games
+interface WheelSegment {
+  id: string
+  label: string
+  color: string
+  isActive: boolean
 }
 
 interface RewardConfig {
@@ -33,21 +41,6 @@ interface GameData {
       maxFlipsPerAttempt: number
       theme: 'default' | 'colorful' | 'minimal'
       totalStars: number
-    }
-    wheelOfFortune?: {
-      segments: WheelSegment[]
-      spins: number
-      spinsPerGame: number
-      durationMs: number
-      pointerAt: 'top' | 'right'
-      size: number
-      theme: 'default' | 'colorful' | 'minimal'
-      allowImmediateReplay: boolean
-      gameRule: {
-        winCondition: 'collect_three_same' | 'jackpot_once'
-        jackpotLabel: string
-        collectionsNeeded: number
-      }
     }
     maxAttemptsPerUser: number
   }
@@ -87,7 +80,7 @@ export default function EditGamePage() {
     { id: '7', text: 'Card 7', hasHiddenStar: false }
   ])
   
-  // Wheel of Fortune configuration
+  // Wheel of Fortune configuration - Old style (manual segments)
   const [wheelSegments, setWheelSegments] = useState<WheelSegment[]>([
     { id: '1', label: '💰 Jackpot', color: '#F94144', isActive: true },
     { id: '2', label: '🔥 Bonus', color: '#F3722C', isActive: true },
@@ -104,6 +97,23 @@ export default function EditGamePage() {
   const [jackpotLabel, setJackpotLabel] = useState('💰 Jackpot')
   const [collectionsNeeded, setCollectionsNeeded] = useState(3)
   
+  // Triple wheel configuration - New style (simple config)
+  const [simpleWheelConfig, setSimpleWheelConfig] = useState({
+    jackpotsCount: 1 as 1 | 2 | 3 | 4 | 5 | 6,
+    wheel1Segments: 5 as 3 | 4 | 5 | 6 | 7 | 8,
+    wheel2Segments: 4 as 3 | 4 | 5 | 6 | 7 | 8,
+    wheel3Segments: 6 as 3 | 4 | 5 | 6 | 7 | 8,
+    totalSegmentsToUse: 7 as 5 | 6 | 7 | 8 | 9 | 10 | 11,
+    segmentNames: [
+      'soccer', 'volleyball', 'handball', 'swimming', 
+      'wrestling', 'boxing', 'running', 'skiing', 
+      'waterpolo', 'basketball'
+    ]
+  })
+  
+  // Track which type of wheel configuration this game uses
+  const [isSimpleWheelConfig, setIsSimpleWheelConfig] = useState(false)
+  
   // Rewards configuration
   const [rewards, setRewards] = useState<RewardConfig[]>([])
 
@@ -119,6 +129,7 @@ export default function EditGamePage() {
       setLoading(true)
       setError(null)
 
+      console.log('Edit page - Loading game with ID:', gameId)
       const response = await fetch(`/api/admin/games/${gameId}`)
       const data = await response.json()
 
@@ -127,6 +138,7 @@ export default function EditGamePage() {
       }
 
       const game = data.game
+      console.log('Edit page - Loaded game:', game)
       setGameData(game)
 
       // Set form values
@@ -161,13 +173,32 @@ export default function EditGamePage() {
           setCollectionsNeeded(game.configuration.wheelOfFortune.gameRule.collectionsNeeded || 3)
         }
         
-        if (game.configuration.wheelOfFortune.segments && game.configuration.wheelOfFortune.segments.length > 0) {
-          setWheelSegments(game.configuration.wheelOfFortune.segments.map((segment: any, index: number) => ({
-            id: segment.id || (index + 1).toString(),
-            label: segment.label || `Segment ${index + 1}`,
-            color: segment.color || '#' + Math.floor(Math.random()*16777215).toString(16),
-            isActive: segment.isActive !== false
-          })))
+        // Check if this is a new-style simple configuration
+        if (game.configuration.wheelOfFortune.simpleConfig) {
+          setIsSimpleWheelConfig(true)
+          setSimpleWheelConfig({
+            jackpotsCount: game.configuration.wheelOfFortune.simpleConfig.jackpotsCount || 1,
+            wheel1Segments: game.configuration.wheelOfFortune.simpleConfig.wheel1Segments || 5,
+            wheel2Segments: game.configuration.wheelOfFortune.simpleConfig.wheel2Segments || 4,
+            wheel3Segments: game.configuration.wheelOfFortune.simpleConfig.wheel3Segments || 6,
+            totalSegmentsToUse: game.configuration.wheelOfFortune.simpleConfig.totalSegmentsToUse || 7,
+            segmentNames: game.configuration.wheelOfFortune.simpleConfig.segmentNames || [
+              'soccer', 'volleyball', 'handball', 'swimming', 
+              'wrestling', 'boxing', 'running', 'skiing', 
+              'waterpolo', 'basketball'
+            ]
+          })
+        } else {
+          // Old-style manual segments configuration
+          setIsSimpleWheelConfig(false)
+          if (game.configuration.wheelOfFortune.segments && game.configuration.wheelOfFortune.segments.length > 0) {
+            setWheelSegments(game.configuration.wheelOfFortune.segments.map((segment: any, index: number) => ({
+              id: segment.id || `segment-${index + 1}-${Date.now()}`, // Ensure unique IDs
+              label: segment.label || `Segment ${index + 1}`,
+              color: segment.color || '#' + Math.floor(Math.random()*16777215).toString(16),
+              isActive: segment.isActive !== false
+            })))
+          }
         }
       }
 
@@ -205,10 +236,11 @@ export default function EditGamePage() {
   }
 
   const addWheelSegment = () => {
-    const newId = (wheelSegments.length + 1).toString()
+    const newId = `segment-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    const segmentNumber = wheelSegments.length + 1
     setWheelSegments(prev => [...prev, {
       id: newId,
-      label: `Segment ${newId}`,
+      label: `Segment ${segmentNumber}`,
       color: '#' + Math.floor(Math.random()*16777215).toString(16),
       isActive: true
     }])
@@ -286,29 +318,6 @@ export default function EditGamePage() {
           theme,
           totalStars: starCount
         }
-      } else if (gameData.type === '💰🌪️🍀') {
-        if (wheelSegments.length < 2) {
-          throw new Error('At least 2 wheel segments are required')
-        }
-        if (wheelSegments.some(s => !s.label.trim())) {
-          throw new Error('All wheel segments must have labels')
-        }
-
-        updateData.configuration.wheelOfFortune = {
-          segments: wheelSegments,
-          spins: wheelSpins,
-          spinsPerGame: wheelSpinsPerGame,
-          durationMs: wheelDuration,
-          pointerAt: 'top',
-          size: 520,
-          theme,
-          allowImmediateReplay: false,
-          gameRule: {
-            winCondition: 'collect_three_same',
-            jackpotLabel: jackpotLabel,
-            collectionsNeeded: collectionsNeeded
-          }
-        }
       }
 
       const response = await fetch(`/api/admin/games/${gameId}`, {
@@ -363,7 +372,7 @@ export default function EditGamePage() {
   }
 
   const starsCount = hexagons.filter(h => h.hasHiddenStar).length
-  const gameTypeName = gameData?.type === 'STARS_HEXA' ? 'Stars Hexa' : gameData?.type === '💰🌪️🍀' ? 'Wheel of Fortune' : 'Game'
+  const gameTypeName = gameData?.type === 'STARS_HEXA' ? 'Stars Hexa' : 'Game'
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
@@ -537,162 +546,6 @@ export default function EditGamePage() {
             </>
           )}
 
-          {gameData?.type === '💰🌪️🍀' && (
-            <>
-              {/* Wheel Settings */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Wheel Settings & Game Rules</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Base Spins</label>
-                    <select
-                      value={wheelSpins}
-                      onChange={(e) => setWheelSpins(Number(e.target.value))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      {[5, 6, 7, 8, 9, 10].map(num => (
-                        <option key={num} value={num}>{num} spins</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Spins Per Game</label>
-                    <select
-                      value={wheelSpinsPerGame}
-                      onChange={(e) => setWheelSpinsPerGame(Number(e.target.value))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      {[1, 2, 3, 4, 5].map(num => (
-                        <option key={num} value={num}>{num} spin{num !== 1 ? 's' : ''}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Duration (ms)</label>
-                    <select
-                      value={wheelDuration}
-                      onChange={(e) => setWheelDuration(Number(e.target.value))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value={3000}>3.0 seconds</option>
-                      <option value={3500}>3.5 seconds</option>
-                      <option value={4000}>4.0 seconds</option>
-                      <option value={4500}>4.5 seconds</option>
-                      <option value={5000}>5.0 seconds</option>
-                      <option value={5500}>5.5 seconds</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Theme</label>
-                    <select
-                      value={theme}
-                      onChange={(e) => setTheme(e.target.value as any)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="default">Default</option>
-                      <option value="colorful">Colorful</option>
-                      <option value="minimal">Minimal</option>
-                    </select>
-                  </div>
-                </div>
-                
-                {/* Game Rules */}
-                <div className="mt-6 border-t border-gray-200 pt-6">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Win Condition Rules</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Jackpot Segment</label>
-                      <select
-                        value={jackpotLabel}
-                        onChange={(e) => setJackpotLabel(e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        {wheelSegments.map((segment) => (
-                          <option key={segment.id} value={segment.label}>
-                            {segment.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Collections Needed to Win</label>
-                      <select
-                        value={collectionsNeeded}
-                        onChange={(e) => setCollectionsNeeded(Number(e.target.value))}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        {[2, 3, 4, 5].map(num => (
-                          <option key={num} value={num}>{num} same items</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                  <div className="mt-4 p-4 bg-green-50 rounded-lg">
-                    <p className="text-green-800 text-sm">
-                      🎯 <strong>Win Conditions:</strong> Player wins by collecting <strong>{collectionsNeeded} of the same segment</strong> OR hitting <strong>{jackpotLabel}</strong> once. 
-                      They get <strong>{wheelSpinsPerGame} spins</strong> per game to achieve this.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Wheel Segments */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-semibold text-gray-900">Wheel Segments ({wheelSegments.length} segments)</h2>
-                  <button
-                    type="button"
-                    onClick={addWheelSegment}
-                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm"
-                  >
-                    + Add Segment
-                  </button>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {wheelSegments.map((segment, index) => (
-                    <div key={segment.id} className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-sm font-medium text-gray-700">Segment {index + 1}</span>
-                        {wheelSegments.length > 2 && (
-                          <button
-                            type="button"
-                            onClick={() => removeWheelSegment(index)}
-                            className="text-red-600 hover:text-red-800 text-sm"
-                          >
-                            Remove
-                          </button>
-                        )}
-                      </div>
-                      <div className="space-y-3">
-                        <input
-                          type="text"
-                          value={segment.label}
-                          onChange={(e) => updateWheelSegment(index, 'label', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="Segment label (e.g., 💰 Jackpot)"
-                        />
-                        <div className="flex items-center gap-2">
-                          <label className="text-xs text-gray-600">Color:</label>
-                          <input
-                            type="color"
-                            value={segment.color}
-                            onChange={(e) => updateWheelSegment(index, 'color', e.target.value)}
-                            className="w-12 h-8 border border-gray-300 rounded cursor-pointer"
-                          />
-                          <span className="text-xs text-gray-600">{segment.color}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                {wheelSegments.length < 2 && (
-                  <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-red-800 text-sm">⚠️ You need at least 2 wheel segments!</p>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
 
           {/* Submit Button */}
           <div className="flex items-center justify-between pt-6">
@@ -705,8 +558,7 @@ export default function EditGamePage() {
             <button
               type="submit"
               disabled={saving || !title.trim() || 
-                (gameData?.type === 'STARS_HEXA' && starsCount === 0) || 
-                (gameData?.type === '💰🌪️🍀' && wheelSegments.length < 2)}
+                (gameData?.type === 'STARS_HEXA' && starsCount === 0)}
               className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
             >
               {saving ? 'Saving...' : `Update ${gameTypeName} Game`}

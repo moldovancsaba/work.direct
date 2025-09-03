@@ -3,7 +3,15 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { GameType, WheelSegment } from '../../../types'
+import { GameType } from '../../../types'
+
+// Local interface for compatibility
+interface WheelSegment {
+  id: string
+  label: string
+  color: string
+  isActive: boolean
+}
 
 // Game type information for the selection UI
 const GAME_TYPES = [
@@ -15,11 +23,11 @@ const GAME_TYPES = [
     color: 'from-blue-500 to-purple-600'
   },
   {
-    type: '💰🌪️🍀' as GameType,
-    name: 'Wheel of Fortune',
-    icon: '🎰',
-    description: 'Spinning wheel game with customizable segments and prizes.',
-    color: 'from-green-500 to-teal-600'
+    type: 'PENALTY_SHOOTOUT' as GameType,
+    name: 'Penalty Shootout',
+    icon: '⚽',
+    description: 'Football penalty shootout - select 5 players and beat the opponent!',
+    color: 'from-green-500 to-emerald-600'
   }
 ]
 
@@ -119,24 +127,25 @@ export default function NewGamePage() {
           maxFlipsPerAttempt: maxFlipsPerRound,
           theme
         }
-      } else if (gameType === '💰🌪️🍀') {
-        // Triple wheel configuration
-        gameData.configuration.wheelOfFortune = {
-          segments: [], // Will be auto-generated
-          spins: wheelSpins,
-          spinsPerGame: wheelSpinsPerGame,
-          durationMs: wheelDuration,
-          pointerAt: 'top',
-          size: 320, // Updated to meet validation requirements (300-800)
-          theme,
-          allowImmediateReplay: false,
-          gameRule: {
-            winCondition: 'jackpot_once',
-            jackpotLabel: '💰 Jackpot',
-            collectionsNeeded: 3
-          },
-          // Add simple configuration
-          simpleConfig: simpleWheelConfig
+      } else if (gameType === 'PENALTY_SHOOTOUT') {
+        // Generate 11 penalty players with random numbers and goal distribution
+        const playerNumbers = Array.from({ length: 21 }, (_, i) => i + 2) // 2-22
+        const shuffledNumbers = playerNumbers.sort(() => Math.random() - 0.5).slice(0, 11)
+        const goalPositions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].sort(() => Math.random() - 0.5).slice(0, 7) // 7 goals, 4 misses
+        
+        const players = Array.from({ length: 11 }, (_, index) => ({
+          id: `player-${index + 1}`,
+          playerNumber: shuffledNumbers[index],
+          hasGoal: goalPositions.includes(index),
+          isRevealed: false,
+          position: index
+        }))
+        
+        gameData.configuration.penaltyShootout = {
+          players,
+          totalGoals: 7,
+          playersToSelect: 5,
+          theme: 'football'
         }
       }
 
@@ -363,202 +372,50 @@ export default function NewGamePage() {
             </>
           )}
 
-          {gameType === '💰🌪️🍀' && (
-            <>
-              {/* Triple Wheel Configuration */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">🎰 Triple Wheel Setup</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Jackpots Across All Wheels</label>
-                        <select
-                          value={simpleWheelConfig.jackpotsCount}
-                          onChange={(e) => setSimpleWheelConfig(prev => ({
-                            ...prev,
-                            jackpotsCount: Number(e.target.value) as any
-                          }))}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        >
-                          {[1, 2, 3, 4, 5, 6].map(num => (
-                            <option key={num} value={num}>{num} jackpot{num !== 1 ? 's' : ''} total</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Wheel 1 Segments</label>
-                        <select
-                          value={simpleWheelConfig.wheel1Segments}
-                          onChange={(e) => setSimpleWheelConfig(prev => ({
-                            ...prev,
-                            wheel1Segments: Number(e.target.value) as any
-                          }))}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        >
-                          {[3, 4, 5, 6, 7, 8].map(num => (
-                            <option key={num} value={num}>{num} segments</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Wheel 2 Segments</label>
-                        <select
-                          value={simpleWheelConfig.wheel2Segments}
-                          onChange={(e) => setSimpleWheelConfig(prev => ({
-                            ...prev,
-                            wheel2Segments: Number(e.target.value) as any
-                          }))}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        >
-                          {[3, 4, 5, 6, 7, 8].map(num => (
-                            <option key={num} value={num}>{num} segments</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Wheel 3 Segments</label>
-                        <select
-                          value={simpleWheelConfig.wheel3Segments}
-                          onChange={(e) => setSimpleWheelConfig(prev => ({
-                            ...prev,
-                            wheel3Segments: Number(e.target.value) as any
-                          }))}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        >
-                          {[3, 4, 5, 6, 7, 8].map(num => (
-                            <option key={num} value={num}>{num} segments</option>
-                          ))}
-                        </select>
-                      </div>
+          {/* Penalty Shootout Configuration */}
+          {gameType === 'PENALTY_SHOOTOUT' && (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Penalty Shootout Rules</h2>
+              <div className="bg-green-50 rounded-lg p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                      11
                     </div>
-                    
-                    <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Total Different Segments</label>
-                        <select
-                          value={simpleWheelConfig.totalSegmentsToUse}
-                          onChange={(e) => setSimpleWheelConfig(prev => ({
-                            ...prev,
-                            totalSegmentsToUse: Number(e.target.value) as any
-                          }))}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        >
-                          {[5, 6, 7, 8, 9, 10, 11].map(num => (
-                            <option key={num} value={num}>{num} types (including jackpot)</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Spins Per Game</label>
-                        <select
-                          value={wheelSpinsPerGame}
-                          onChange={(e) => setWheelSpinsPerGame(Number(e.target.value))}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        >
-                          {[1, 2, 3].map(num => (
-                            <option key={num} value={num}>{num} triple spin{num !== 1 ? 's' : ''}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                      <h3 className="text-blue-900 font-semibold mb-2">🎮 Game Summary:</h3>
-                      <ul className="text-blue-800 text-sm space-y-1">
-                        <li>• <strong>3 wheels</strong> with {simpleWheelConfig.wheel1Segments}, {simpleWheelConfig.wheel2Segments}, and {simpleWheelConfig.wheel3Segments} segments each</li>
-                        <li>• <strong>{simpleWheelConfig.jackpotsCount} jackpot{simpleWheelConfig.jackpotsCount !== 1 ? 's' : ''}</strong> distributed across the wheels</li>
-                        <li>• <strong>{simpleWheelConfig.totalSegmentsToUse} different segments</strong> including sports and jackpot</li>
-                        <li>• Players get <strong>{wheelSpinsPerGame} triple spin{wheelSpinsPerGame !== 1 ? 's' : ''}</strong> to win</li>
-                        <li>• Win by getting <strong>ANY jackpot</strong> or <strong>3+ matching segments</strong></li>
-                      </ul>
-                </div>
-              </div>
-              
-              {/* Segment Names */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <h2 className="text-xl font-semibold text-gray-900 mb-4">⚽ Available Segment Names</h2>
-                    <p className="text-gray-600 mb-4">These sport names will be used to fill the wheel segments:</p>
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                      {simpleWheelConfig.segmentNames.map((name, index) => (
-                        <div 
-                          key={index}
-                          className={`rounded-lg p-3 text-center ${
-                            index < simpleWheelConfig.totalSegmentsToUse - 1 
-                              ? 'bg-green-50 border border-green-200' 
-                              : 'bg-gray-50 border border-gray-200'
-                          }`}
-                        >
-                          <p className={`font-medium text-sm ${
-                            index < simpleWheelConfig.totalSegmentsToUse - 1 
-                              ? 'text-green-800' 
-                              : 'text-gray-500'
-                          }`}>
-                            {name}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {index < simpleWheelConfig.totalSegmentsToUse - 1 ? 'USED' : 'unused'}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                      <p className="text-yellow-800 text-sm">
-                        🎆 <strong>Auto-generation:</strong> The system will automatically create 3 unique wheels using these segments, 
-                        with {simpleWheelConfig.jackpotsCount} jackpot{simpleWheelConfig.jackpotsCount !== 1 ? 's' : ''} distributed fairly across them.
-                      </p>
-                </div>
-              </div>
-              
-              {/* Wheel Animation Settings */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Animation Settings</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Base Spins</label>
-                    <select
-                      value={wheelSpins}
-                      onChange={(e) => setWheelSpins(Number(e.target.value))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      {[5, 6, 7, 8, 9, 10].map(num => (
-                        <option key={num} value={num}>{num} spins</option>
-                      ))}
-                    </select>
+                    <span className="text-gray-800 font-medium">Players in formation (1-4-3-2-1)</span>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Duration (ms)</label>
-                    <select
-                      value={wheelDuration}
-                      onChange={(e) => setWheelDuration(Number(e.target.value))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value={3000}>3.0 seconds</option>
-                      <option value={3500}>3.5 seconds</option>
-                      <option value={4000}>4.0 seconds</option>
-                      <option value={4500}>4.5 seconds</option>
-                      <option value={5000}>5.0 seconds</option>
-                      <option value={5500}>5.5 seconds</option>
-                    </select>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                      5
+                    </div>
+                    <span className="text-gray-800 font-medium">Players to select for penalties</span>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Theme</label>
-                    <select
-                      value={theme}
-                      onChange={(e) => setTheme(e.target.value as any)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="default">Default</option>
-                      <option value="colorful">Colorful</option>
-                      <option value="minimal">Minimal</option>
-                    </select>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                      7
+                    </div>
+                    <span className="text-gray-800 font-medium">Players that will score goals</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                      4
+                    </div>
+                    <span className="text-gray-800 font-medium">Players that will miss</span>
                   </div>
                 </div>
-                <div className="mt-4 p-4 bg-green-50 rounded-lg">
-                  <p className="text-green-800 text-sm">
-                    ℹ️ Each wheel will spin <strong>{wheelSpins} full rotations</strong> over <strong>{wheelDuration/1000} seconds</strong> before landing on a segment.
-                  </p>
+                <div className="border-t border-green-200 pt-4">
+                  <h3 className="font-semibold text-gray-800 mb-2">⚽ Game Flow:</h3>
+                  <ul className="space-y-1 text-sm text-gray-700">
+                    <li>• Players get random jersey numbers (2-22)</li>
+                    <li>• Goal/miss distribution is randomized each game</li>
+                    <li>• Player selects 5 players for penalty shootout</li>
+                    <li>• Opponent scores random 0-5 goals</li>
+                    <li>• If draw: sudden death overtime begins</li>
+                    <li>• Winner determined by who scores more goals</li>
+                  </ul>
                 </div>
               </div>
-            </>
+            </div>
           )}
 
           {/* Submit Button */}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useReducer } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { HexagonCard, GameOutcome } from '../types'
+import { HexagonCard, GameOutcome } from '../../types'
 
 interface StarsHexaProps {
   hexagons: HexagonCard[]
@@ -314,27 +314,29 @@ export default function StarsHexa({
     }, 0) // Run immediately but non-blocking
   }, [disabled, gameState, flipsPerRound, totalRounds, onFlip, onResult])
 
-  // Layout calculation for responsive hexagons
+  // Layout calculation for responsive hexagons within container
   useEffect(() => {
     const updateLayout = () => {
       if (!stageRef.current) return
       
-      const vw = window.innerWidth
-      const vh = window.innerHeight
-      const margin = 0.96
+      // Use container dimensions instead of viewport
+      const containerRect = stageRef.current.getBoundingClientRect()
+      const containerWidth = containerRect.width || 800
+      const containerHeight = containerRect.height || 600
+      const margin = 0.9
       
-      const W_w = (vw * margin) / 2.5
-      const W_h = (vh * margin) / Math.sqrt(3)
+      const W_w = (containerWidth * margin) / 2.5
+      const W_h = (containerHeight * margin) / Math.sqrt(3)
       let W = Math.floor(Math.min(W_w, W_h))
-      if (W < 60) W = 60
-      if (W > 150) W = 150
+      if (W < 40) W = 40
+      if (W > 120) W = 120
       
       setHexWidth(W)
       
       const estimatedWidth = W * 2.5
       const estimatedHeight = W * Math.sqrt(3)
-      const scaleW = (vw * margin) / estimatedWidth
-      const scaleH = (vh * margin) / estimatedHeight
+      const scaleW = (containerWidth * margin) / estimatedWidth
+      const scaleH = (containerHeight * margin) / estimatedHeight
       const finalScale = Math.min(scaleW, scaleH, 1)
       
       setScale(finalScale)
@@ -366,127 +368,119 @@ export default function StarsHexa({
   }, [gameState.isGameComplete, gameState.starsFound, gameState.totalStars, gameState.flipsUsed, gameState.currentRound, gameId, params.gameId, isTrialMode, router])
 
   return (
-    <>
-      {/* Game Info */}
-      <div className="fixed top-4 left-4 z-10 bg-black/50 text-white p-3 rounded-lg font-mono text-sm">
-        <div>Round: {gameState.currentRound}/{totalRounds}</div>
-        <div>Flips: {gameState.flipsUsed}/{flipsPerRound}</div>
-        <div>Stars: {gameState.starsFound}/{gameState.totalStars}</div>
-        {gameState.isGameComplete && (
-          <div className={`mt-2 font-bold ${gameState.starsFound >= gameState.totalStars ? 'text-green-400' : 'text-red-400'}`}>
-            {gameState.starsFound >= gameState.totalStars ? 'YOU WON! 🎉' : 'GAME OVER 💀'}
-          </div>
-        )}
-      </div>
-
-      {/* Game Area */}
-      <main 
-        ref={stageRef}
-        className="fixed inset-0 grid place-items-center p-8"
+    <div 
+      ref={stageRef}
+      className="relative w-full h-full grid place-items-center bg-white/5 backdrop-blur-sm rounded-2xl p-8"
+      style={{
+        minHeight: '500px',
+        background: 'radial-gradient(800px 500px at 50% 50%, #1a2b4c 0%, #0f1629 50%, #0a0f1f 100%)'
+      }}
+    >
+      <div 
+        className="relative"
         style={{
-          background: 'radial-gradient(1200px 800px at 50% 45%, #0a1224 0%, #070d1b 50%, #04070f 100%)'
+          width: 0,
+          height: 0,
+          transformOrigin: '0 0',
+          transform: `rotate(30deg) scale(${scale})`,
         }}
       >
-        <div 
-          className="relative"
-          style={{
-            width: 0,
-            height: 0,
-            transformOrigin: '0 0',
-            transform: `rotate(30deg) scale(${scale})`,
-          }}
-        >
-          <section className="relative" style={{ width: 0, height: 0 }}>
-            {gameState.hexagons.map((hexagon) => {
-              const position = getHexagonPosition(hexagon.position)
-              const isRevealed = hexagon.isRevealed
-              
-              // Ultra-fast clickable state calculation
-              const isClickable = !disabled && !gameState.isGameComplete && 
-                                 gameState.flipsUsed < flipsPerRound && !hexagon.isRevealed
-              
-              return (
-                <button
-                  key={hexagon.id}
-                  type="button"
-                  className={`absolute border-none bg-transparent p-0 ${ 
-                    isClickable 
-                      ? 'cursor-pointer hover:scale-105 active:scale-95 transition-transform duration-75' 
-                      : 'cursor-not-allowed'
-                  }`}
+        <section className="relative" style={{ width: 0, height: 0 }}>
+          {gameState.hexagons.map((hexagon) => {
+            const position = getHexagonPosition(hexagon.position)
+            const isRevealed = hexagon.isRevealed
+            
+            // Ultra-fast clickable state calculation
+            const isClickable = !disabled && !gameState.isGameComplete && 
+                               gameState.flipsUsed < flipsPerRound && !hexagon.isRevealed
+            
+            return (
+              <button
+                key={hexagon.id}
+                type="button"
+                className={`absolute border-none bg-transparent p-0 ${ 
+                  isClickable 
+                    ? 'cursor-pointer hover:scale-105 active:scale-95 transition-transform duration-75' 
+                    : 'cursor-not-allowed'
+                }`}
+                style={{
+                  width: `${hexWidth}px`,
+                  height: `${hexWidth * 0.8660254037844386}px`,
+                  left: `${position.x}px`,
+                  top: `${position.y}px`,
+                  transform: 'translate(-50%, -50%)',
+                  clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
+                  WebkitTapHighlightColor: 'transparent',
+                  willChange: 'transform'
+                }}
+                onClick={() => handleHexagonFlip(hexagon.id)}
+                disabled={!isClickable}
+              >
+                {/* Shape container with 3D perspective */}
+                <div 
+                  className="w-full h-full relative"
                   style={{
-                    width: `${hexWidth}px`,
-                    height: `${hexWidth * 0.8660254037844386}px`,
-                    left: `${position.x}px`,
-                    top: `${position.y}px`,
-                    transform: 'translate(-50%, -50%)',
-                    clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
-                    WebkitTapHighlightColor: 'transparent',
-                    // Hardware acceleration for ultra-smooth animations
-                    willChange: 'transform'
+                    transformStyle: 'preserve-3d',
+                    perspective: '1000px'
                   }}
-                  onClick={() => handleHexagonFlip(hexagon.id)}
-                  disabled={!isClickable}
                 >
-                  {/* Shape container with 3D perspective */}
+                  {/* Flip container - 200ms ultra-fast animation */}
                   <div 
-                    className="w-full h-full relative"
+                    className="w-full h-full"
                     style={{
                       transformStyle: 'preserve-3d',
-                      perspective: '1000px'
+                      transition: 'transform 200ms ease-out',
+                      transform: isRevealed ? 'rotateY(180deg)' : 'rotateY(0deg)'
                     }}
                   >
-                    {/* Flip container - 200ms ultra-fast animation */}
+                    {/* Front face - TEXT */}
                     <div 
-                      className="w-full h-full"
+                      className="absolute inset-0 border-2 border-blue-400 box-border"
                       style={{
-                        transformStyle: 'preserve-3d',
-                        transition: 'transform 200ms ease-out', // LIGHTNING FAST 200ms as requested
-                        transform: isRevealed ? 'rotateY(180deg)' : 'rotateY(0deg)'
+                        backfaceVisibility: 'hidden',
+                        background: 'linear-gradient(135deg, #4a90e2, #7bd389)',
+                        clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)'
                       }}
                     >
-                      {/* Front face - TEXT (always rendered, never lazy) */}
-                      <div 
-                        className="absolute inset-0 border-2 border-blue-700 box-border"
-                        style={{
-                          backfaceVisibility: 'hidden',
-                          background: 'linear-gradient(135deg, #4a90e2, #7bd389)',
-                          clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)'
-                        }}
-                      >
-                        <div className="absolute inset-0 grid place-items-center p-2">
-                          <div className="text-center text-white font-bold text-sm leading-tight drop-shadow-lg">
-                            {hexagon.text.length > 12 ? 
-                              hexagon.text.substring(0, 10) + '...' : 
-                              hexagon.text}
-                          </div>
+                      <div className="absolute inset-0 grid place-items-center p-2" style={{ transform: 'rotate(-30deg)' }}>
+                        <div className="text-center text-white font-bold text-xs leading-tight drop-shadow-lg">
+                          {hexagon.text.length > 10 ? 
+                            hexagon.text.substring(0, 8) + '...' : 
+                            hexagon.text}
                         </div>
                       </div>
-                      
-                      {/* Back face - STAR or MUSHROOM (always rendered, never lazy) */}
-                      <div 
-                        className="absolute inset-0 border-2 border-pink-400 box-border"
-                        style={{
-                          backfaceVisibility: 'hidden',
-                          background: hexagon.hasHiddenStar ? '#ff9500' : '#ff66aa',
-                          transform: 'rotateY(180deg)',
-                          clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)'
-                        }}
-                      >
-                        <div className="absolute inset-0 grid place-items-center">
-                          <div className="text-4xl">
-                            {hexagon.hasHiddenStar ? '⭐' : '🍄'}
-                          </div>
+                    </div>
+                    
+                    {/* Back face - STAR or MUSHROOM */}
+                    <div 
+                      className="absolute inset-0 border-2 border-pink-400 box-border"
+                      style={{
+                        backfaceVisibility: 'hidden',
+                        background: hexagon.hasHiddenStar ? '#ff9500' : '#ff66aa',
+                        transform: 'rotateY(180deg)',
+                        clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)'
+                      }}
+                    >
+                      <div className="absolute inset-0 grid place-items-center" style={{ transform: 'rotate(-30deg)' }}>
+                        <div className="text-3xl">
+                          {hexagon.hasHiddenStar ? '⭐' : '🍄'}
                         </div>
                       </div>
                     </div>
                   </div>
-                </button>
-              )
-            })}
-          </section>
+                </div>
+              </button>
+            )
+          })}
+        </section>
+      </div>
+      
+      {/* Game completion indicator */}
+      {gameState.isGameComplete && (
+        <div className="absolute top-4 right-4 bg-white/90 text-gray-900 px-4 py-2 rounded-lg font-bold text-sm">
+          {gameState.starsFound >= gameState.totalStars ? '🎉 YOU WON!' : '💀 GAME OVER'}
         </div>
-      </main>
-    </>
+      )}
+    </div>
   )
 }

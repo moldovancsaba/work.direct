@@ -14,16 +14,11 @@ const config: Config = {
         foreground: "var(--foreground)",
       },
       animation: {
-        'spin-wheel': 'spin-wheel 3s cubic-bezier(0.23, 1, 0.320, 1) forwards',
         'bounce-in': 'bounce-in 0.6s ease-out',
         'fade-in': 'fade-in 0.3s ease-in',
         'slide-up': 'slide-up 0.4s ease-out',
       },
       keyframes: {
-        'spin-wheel': {
-          '0%': { transform: 'rotate(0deg)' },
-          '100%': { transform: 'rotate(var(--wheel-rotation, 1440deg))' },
-        },
         'bounce-in': {
           '0%': { transform: 'scale(0.3)', opacity: '0' },
           '50%': { transform: 'scale(1.05)' },

@@ -1,5 +1,5 @@
 import mongoose, { Schema, Model } from 'mongoose'
-import { Game, GameType, GameStatus, HexagonCard, WheelSegment, ShareLink } from '../../types'
+import { Game, GameType, GameStatus, HexagonCard, PenaltyCard, ShareLink } from '../../types'
 
 // HexagonCard subdocument schema
 // This defines the structure for individual hexagon cards in Stars Hexa games
@@ -46,40 +46,47 @@ const hexagonCardSchema = new Schema<HexagonCard>({
   }
 }, { _id: false }) // Disable automatic _id for subdocuments
 
-// WheelSegment subdocument schema
-// This defines the structure for individual wheel segments in Wheel of Fortune games
-const wheelSegmentSchema = new Schema<WheelSegment>({
+// PenaltyCard subdocument schema
+// This defines the structure for individual penalty cards in Penalty Shootout games
+const penaltyCardSchema = new Schema<PenaltyCard>({
   id: {
     type: String,
-    required: [true, 'Wheel segment ID is required'],
+    required: [true, 'Penalty card ID is required'],
     trim: true
   },
-  label: {
-    type: String,
-    required: [true, 'Wheel segment label is required'],
-    trim: true,
-    maxlength: [100, 'Segment label cannot exceed 100 characters']
+  playerNumber: {
+    type: Number,
+    required: [true, 'Player number is required'],
+    min: [2, 'Player number must be at least 2'],
+    max: [22, 'Player number cannot exceed 22']
+  },
+  hasGoal: {
+    type: Boolean,
+    required: [true, 'Goal flag is required'],
+    default: false
+  },
+  isRevealed: {
+    type: Boolean,
+    default: false
+  },
+  position: {
+    type: Number,
+    required: [true, 'Position is required'],
+    min: [0, 'Position must be at least 0'],
+    max: [10, 'Position cannot exceed 10 (for 11 players: 0-10)']
   },
   color: {
     type: String,
-    required: [true, 'Segment color is required'],
+    default: '#22C55E', // Default green color for football
     match: [/^#[0-9A-Fa-f]{6}$/, 'Color must be a valid hex color']
   },
-  probability: {
-    type: Number,
-    min: [0, 'Probability cannot be negative'],
-    max: [1, 'Probability cannot exceed 1'],
-    default: null
-  },
-  rewardId: {
+  backgroundColor: {
     type: String,
-    default: null
-  },
-  isActive: {
-    type: Boolean,
-    default: true
+    default: '#DCFCE7', // Default light green background
+    match: [/^#[0-9A-Fa-f]{6}$/, 'Background color must be a valid hex color']
   }
 }, { _id: false }) // Disable automatic _id for subdocuments
+
 
 // ShareLink subdocument schema
 // This manages the sharing links and QR codes for games
@@ -146,8 +153,8 @@ const gameSchema = new Schema<Game>({
     type: String,
     required: [true, 'Game type is required'],
     enum: {
-      values: ['STARS_HEXA', '💰🌪️🍀', 'SCRATCH_CARD', 'QUIZ', 'POLL'] as GameType[],
-      message: 'Game type must be one of: STARS_HEXA, 💰🌪️🍀, SCRATCH_CARD, QUIZ, POLL'
+      values: ['STARS_HEXA', 'PENALTY_SHOOTOUT'] as GameType[],
+      message: 'Game type must be: STARS_HEXA, PENALTY_SHOOTOUT'
     }
   },
   
@@ -184,99 +191,24 @@ const gameSchema = new Schema<Game>({
       }
     },
     
-    // Wheel of Fortune specific configuration
-    wheelOfFortune: {
-      segments: {
-        type: [wheelSegmentSchema]
+    // Penalty Shootout specific configuration
+    penaltyShootout: {
+      players: {
+        type: [penaltyCardSchema]
         // Validation handled in pre-save middleware
       },
-      spins: {
+      totalGoals: {
         type: Number,
-        default: 8
-        // Validation handled in pre-save middleware
+        required: false // Validation handled in pre-save middleware
       },
-      spinsPerGame: {
+      playersToSelect: {
         type: Number,
-        default: 3
-        // Validation handled in pre-save middleware
-      },
-      durationMs: {
-        type: Number,
-        default: 4500
-        // Validation handled in pre-save middleware
-      },
-      pointerAt: {
-        type: String,
-        enum: ['top', 'right'],
-        default: 'top'
-      },
-      size: {
-        type: Number,
-        default: 520
-        // Validation handled in pre-save middleware
+        default: 5 // Always 5 players for penalties
       },
       theme: {
         type: String,
-        enum: ['default', 'colorful', 'minimal'],
-        default: 'default'
-      },
-      allowImmediateReplay: {
-        type: Boolean,
-        default: false
-      },
-      gameRule: {
-        winCondition: {
-          type: String,
-          enum: ['collect_three_same', 'jackpot_once'],
-          default: 'collect_three_same'
-        },
-        jackpotLabel: {
-          type: String,
-          default: '💰 Jackpot'
-        },
-        collectionsNeeded: {
-          type: Number,
-          default: 3,
-          min: [2, 'Collections needed must be at least 2'],
-          max: [5, 'Collections needed cannot exceed 5']
-        }
-      },
-      // Simple configuration for auto-generated triple wheels
-      simpleConfig: {
-        jackpotsCount: {
-          type: Number,
-          min: [1, 'Jackpots count must be at least 1'],
-          max: [6, 'Jackpots count cannot exceed 6']
-        },
-        wheel1Segments: {
-          type: Number,
-          min: [3, 'Wheel 1 segments must be at least 3'],
-          max: [8, 'Wheel 1 segments cannot exceed 8']
-        },
-        wheel2Segments: {
-          type: Number,
-          min: [3, 'Wheel 2 segments must be at least 3'],
-          max: [8, 'Wheel 2 segments cannot exceed 8']
-        },
-        wheel3Segments: {
-          type: Number,
-          min: [3, 'Wheel 3 segments must be at least 3'],
-          max: [8, 'Wheel 3 segments cannot exceed 8']
-        },
-        totalSegmentsToUse: {
-          type: Number,
-          min: [5, 'Total segments to use must be at least 5'],
-          max: [11, 'Total segments to use cannot exceed 11']
-        },
-        segmentNames: {
-          type: [String],
-          validate: {
-            validator: function(names: string[]) {
-              return names && names.length >= 4 // Need at least 4 names for minimal config
-            },
-            message: 'Must provide at least 4 segment names'
-          }
-        }
+        enum: ['default', 'colorful', 'football'],
+        default: 'football'
       }
     },
     
@@ -534,73 +466,25 @@ gameSchema.pre('save', function(next) {
     }
   }
   
-  // Validate Wheel of Fortune configuration for Wheel of Fortune games
-  if (this.type === '💰🌪️🍀') {
-    if (!this.configuration.wheelOfFortune) {
-      return next(new Error('Wheel of Fortune games must have wheel configuration'))
+  // Validate Penalty Shootout configuration for Penalty Shootout games
+  if (this.type === 'PENALTY_SHOOTOUT') {
+    if (!this.configuration.penaltyShootout || !this.configuration.penaltyShootout.players || this.configuration.penaltyShootout.players.length !== 11) {
+      return next(new Error('Penalty Shootout games must have exactly 11 players'))
     }
     
-    // Check if using simple configuration (auto-generated wheels)
-    const hasSimpleConfig = this.configuration.wheelOfFortune.simpleConfig
-    
-    if (hasSimpleConfig) {
-      // Validate simple configuration
-      const simpleConfig = this.configuration.wheelOfFortune.simpleConfig
-      
-      if (!simpleConfig) {
-        return next(new Error('Simple wheel config is missing'))
-      }
-      
-      if (!simpleConfig.jackpotsCount || simpleConfig.jackpotsCount < 1 || simpleConfig.jackpotsCount > 6) {
-        return next(new Error('Simple wheel config: jackpotsCount must be between 1-6'))
-      }
-      
-      if (!simpleConfig.wheel1Segments || simpleConfig.wheel1Segments < 3 || simpleConfig.wheel1Segments > 8) {
-        return next(new Error('Simple wheel config: wheel1Segments must be between 3-8'))
-      }
-      
-      if (!simpleConfig.wheel2Segments || simpleConfig.wheel2Segments < 3 || simpleConfig.wheel2Segments > 8) {
-        return next(new Error('Simple wheel config: wheel2Segments must be between 3-8'))
-      }
-      
-      if (!simpleConfig.wheel3Segments || simpleConfig.wheel3Segments < 3 || simpleConfig.wheel3Segments > 8) {
-        return next(new Error('Simple wheel config: wheel3Segments must be between 3-8'))
-      }
-      
-      if (!simpleConfig.totalSegmentsToUse || simpleConfig.totalSegmentsToUse < 5 || simpleConfig.totalSegmentsToUse > 11) {
-        return next(new Error('Simple wheel config: totalSegmentsToUse must be between 5-11'))
-      }
-      
-      if (!simpleConfig.segmentNames || !Array.isArray(simpleConfig.segmentNames) || simpleConfig.segmentNames.length < simpleConfig.totalSegmentsToUse - 1) {
-        return next(new Error('Simple wheel config: must have enough segment names'))
-      }
-    } else {
-      // Validate traditional configuration (manual segments)
-      if (!this.configuration.wheelOfFortune.segments || this.configuration.wheelOfFortune.segments.length < 2) {
-        return next(new Error('Traditional wheel config: must have at least 2 segments'))
-      }
-      
-      if (this.configuration.wheelOfFortune.segments.length > 12) {
-        return next(new Error('Traditional wheel config: cannot have more than 12 segments'))
-      }
-      
-      const hasEmptyLabels = this.configuration.wheelOfFortune.segments.some(s => !s.label || s.label.trim().length === 0)
-      if (hasEmptyLabels) {
-        return next(new Error('Traditional wheel config: all segments must have non-empty labels'))
-      }
+    const goalsCount = this.configuration.penaltyShootout.players.filter(p => p.hasGoal).length
+    if (goalsCount !== 7) {
+      return next(new Error('Penalty Shootout games must have exactly 7 goals and 4 misses'))
     }
     
-    // Validate wheel configuration
-    if (this.configuration.wheelOfFortune.spins && (this.configuration.wheelOfFortune.spins < 3 || this.configuration.wheelOfFortune.spins > 15)) {
-      return next(new Error('Wheel spins must be between 3-15'))
+    // Validate playersToSelect
+    if (this.configuration.penaltyShootout.playersToSelect && this.configuration.penaltyShootout.playersToSelect !== 5) {
+      return next(new Error('Penalty Shootout games must allow selecting exactly 5 players'))
     }
     
-    if (this.configuration.wheelOfFortune.durationMs && (this.configuration.wheelOfFortune.durationMs < 2000 || this.configuration.wheelOfFortune.durationMs > 10000)) {
-      return next(new Error('Wheel duration must be between 2-10 seconds'))
-    }
-    
-    if (this.configuration.wheelOfFortune.size && (this.configuration.wheelOfFortune.size < 300 || this.configuration.wheelOfFortune.size > 800)) {
-      return next(new Error('Wheel size must be between 300-800 pixels'))
+    // Ensure totalGoals matches actual goals
+    if (!this.configuration.penaltyShootout.totalGoals || this.configuration.penaltyShootout.totalGoals !== goalsCount) {
+      this.configuration.penaltyShootout.totalGoals = goalsCount
     }
   }
   

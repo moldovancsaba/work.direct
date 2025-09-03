@@ -11,8 +11,8 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "PlayMass - Interactive Game Platform",
-  description: "Create and distribute simple games like Lucky Wheel to target groups with rewards management. Built with Next.js and MongoDB.",
-  keywords: ["games", "lucky wheel", "interactive", "rewards", "engagement", "marketing"],
+  description: "Create and distribute Stars Hexa games to target groups with rewards management. Built with Next.js and MongoDB.",
+  keywords: ["games", "stars hexa", "interactive", "rewards", "engagement", "marketing"],
   authors: [{ name: "Narimato" }],
   creator: "Narimato",
   publisher: "PlayMass",
@@ -23,12 +23,12 @@ export const metadata: Metadata = {
     url: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
     siteName: "PlayMass",
     title: "PlayMass - Interactive Game Platform",
-    description: "Create and distribute simple games like Lucky Wheel to target groups with rewards management.",
+    description: "Create and distribute Stars Hexa games to target groups with rewards management.",
   },
   twitter: {
     card: "summary_large_image",
     title: "PlayMass - Interactive Game Platform",
-    description: "Create and distribute simple games like Lucky Wheel to target groups with rewards management.",
+    description: "Create and distribute Stars Hexa games to target groups with rewards management.",
   },
 };
 

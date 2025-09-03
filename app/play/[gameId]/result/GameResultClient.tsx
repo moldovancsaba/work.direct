@@ -12,13 +12,13 @@ interface GameResultData {
   totalStars?: number
   flipsUsed?: number
   roundsUsed?: number
-  // Wheel of Fortune specific fields
-  segment?: string
-  winningSegment?: string
-  spinsUsed?: number
+  // Penalty Shootout specific fields
+  userScore?: number
+  opponentScore?: number
+  rounds?: number
   // Common fields
   isTrialMode?: boolean
-  gameType: 'STARS_HEXA' | '💰🌪️🍀'
+  gameType: 'STARS_HEXA' | 'PENALTY_SHOOTOUT'
   message?: string
 }
 
@@ -62,10 +62,10 @@ export default function GameResultClient({ gameId, initialGameData }: GameResult
     const flipsUsed = parseInt(searchParams.get('flipsUsed') || '0')
     const roundsUsed = parseInt(searchParams.get('roundsUsed') || '1')
 
-    // Wheel of Fortune specific parameters
-    const segment = searchParams.get('segment') || ''
-    const winningSegment = searchParams.get('winningSegment') || ''
-    const spinsUsed = parseInt(searchParams.get('spinsUsed') || '0')
+    // Penalty Shootout specific parameters
+    const userScore = parseInt(searchParams.get('userScore') || '0')
+    const opponentScore = parseInt(searchParams.get('opponentScore') || '0')
+    const rounds = parseInt(searchParams.get('rounds') || '1')
 
     setResultData({
       won,
@@ -77,10 +77,10 @@ export default function GameResultClient({ gameId, initialGameData }: GameResult
       totalStars,
       flipsUsed,
       roundsUsed,
-      // Wheel of Fortune fields
-      segment,
-      winningSegment,
-      spinsUsed
+      // Penalty Shootout fields
+      userScore,
+      opponentScore,
+      rounds
     })
 
     // Generate share URL using the configured production URL
@@ -98,10 +98,10 @@ export default function GameResultClient({ gameId, initialGameData }: GameResult
       resultText = resultData.won 
         ? `🎉 I just won "${game.title}"! Found ${resultData.starsFound}/${resultData.totalStars} stars in ${resultData.roundsUsed} round${resultData.roundsUsed !== 1 ? 's' : ''}!`
         : `🎮 I just played "${game.title}"! Found ${resultData.starsFound}/${resultData.totalStars} stars. Can you do better?`
-    } else if (resultData.gameType === '💰🌪️🍀') {
+    } else if (resultData.gameType === 'PENALTY_SHOOTOUT') {
       resultText = resultData.won 
-        ? `🎰 I just won "${game.title}"! Hit ${resultData.winningSegment || resultData.segment} in ${resultData.spinsUsed} spin${resultData.spinsUsed !== 1 ? 's' : ''}!`
-        : `🎰 I just played "${game.title}"! Used ${resultData.spinsUsed} spins and landed on ${resultData.segment}. Can you do better?`
+        ? `⚽ I just won "${game.title}" penalty shootout ${resultData.userScore}-${resultData.opponentScore}! Can you beat me?`
+        : `⚽ I played "${game.title}" penalty shootout! Lost ${resultData.userScore}-${resultData.opponentScore}. Can you do better?`
     }
 
     const fullText = `${resultText}\n\n🕹️ Play now: ${shareUrl}`
@@ -187,7 +187,7 @@ export default function GameResultClient({ gameId, initialGameData }: GameResult
     )
   }
 
-  const { won, gameType, message, isTrialMode, starsFound, totalStars, roundsUsed, segment, winningSegment, spinsUsed } = resultData
+  const { won, gameType, message, isTrialMode, starsFound, totalStars, roundsUsed, userScore, opponentScore, rounds } = resultData
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100">
@@ -197,13 +197,17 @@ export default function GameResultClient({ gameId, initialGameData }: GameResult
           <div className="text-8xl mb-4">
             {gameType === 'STARS_HEXA' 
               ? (won ? '🎉' : '💀')
-              : (won ? '🎰🎆' : '🎰😕')
+              : gameType === 'PENALTY_SHOOTOUT'
+                ? (won ? '⚽🎆' : '⚽😕')
+                : (won ? '🎰🎆' : '🎰😕')
             }
           </div>
           <h1 className={`text-4xl font-bold mb-2 ${won ? 'text-green-600' : 'text-red-600'}`}>
             {gameType === 'STARS_HEXA'
               ? (won ? 'Congratulations!' : 'Game Over')
-              : (won ? 'Jackpot Winner!' : 'Spin Complete')
+              : gameType === 'PENALTY_SHOOTOUT'
+                ? (won ? 'Victory!' : 'Defeat!')
+                : (won ? 'Jackpot Winner!' : 'Spin Complete')
             }
           </h1>
           <h2 className="text-xl text-gray-700 font-medium">
@@ -224,7 +228,9 @@ export default function GameResultClient({ gameId, initialGameData }: GameResult
             <h3 className="text-2xl font-semibold text-gray-800 mb-4">
               {gameType === 'STARS_HEXA' 
                 ? (won ? 'You found all the stars!' : `You found ${starsFound} out of ${totalStars} stars`)
-                : (won ? `🎰 Winner! You hit ${winningSegment || segment}!` : `🎰 You landed on ${segment}!`)
+                : gameType === 'PENALTY_SHOOTOUT'
+                  ? (won ? `⚽ Victory! You won ${userScore}-${opponentScore}!` : `⚽ Defeat! You lost ${userScore}-${opponentScore}`)
+                  : 'Game completed!'
               }
             </h3>
           </div>
@@ -245,19 +251,28 @@ export default function GameResultClient({ gameId, initialGameData }: GameResult
                 <div className="text-sm text-gray-600 mt-1">Rounds Used</div>
               </div>
             </div>
-          ) : (
+          ) : gameType === 'PENALTY_SHOOTOUT' ? (
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div className="text-center p-4 bg-green-50 rounded-xl">
-                <div className="text-2xl font-bold text-green-600">
-                  {segment}
+                <div className="text-3xl font-bold text-green-600">
+                  {userScore}
                 </div>
-                <div className="text-sm text-gray-600 mt-1">Final Segment</div>
+                <div className="text-sm text-gray-600 mt-1">Your Goals</div>
               </div>
-              <div className="text-center p-4 bg-purple-50 rounded-xl">
-                <div className="text-3xl font-bold text-purple-600">
-                  {spinsUsed}
+              <div className="text-center p-4 bg-red-50 rounded-xl">
+                <div className="text-3xl font-bold text-red-600">
+                  {opponentScore}
                 </div>
-                <div className="text-sm text-gray-600 mt-1">Spins Used</div>
+                <div className="text-sm text-gray-600 mt-1">Opponent Goals</div>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-6 mb-6">
+              <div className="text-center p-4 bg-gray-50 rounded-xl">
+                <div className="text-2xl font-bold text-gray-600">
+                  Game Complete
+                </div>
+                <div className="text-sm text-gray-600 mt-1">Result</div>
               </div>
             </div>
           )}
@@ -271,10 +286,12 @@ export default function GameResultClient({ gameId, initialGameData }: GameResult
                       ? `Amazing! You completed the game in ${roundsUsed} round${roundsUsed !== 1 ? 's' : ''}!`
                       : `Good try! You found ${starsFound} star${starsFound !== 1 ? 's' : ''} out of ${totalStars}.`
                     )
-                  : (won 
-                      ? `🎉 Congratulations! You won by hitting ${winningSegment || segment}!`
-                      : `Better luck next time! You used ${spinsUsed} spins and landed on ${segment}.`
-                    )
+                  : gameType === 'PENALTY_SHOOTOUT'
+                    ? (won 
+                        ? `🎉 Fantastic! You won the penalty shootout ${userScore}-${opponentScore}!`
+                        : `Good effort! You lost ${userScore}-${opponentScore}. Try again!`
+                      )
+                    : 'Game completed!'
               )}
             </p>
           </div>

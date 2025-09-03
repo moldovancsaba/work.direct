@@ -1,11 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
-import StarsHexa from '../../components/StarsHexa'
-import WheelGamePlay from '../../components/WheelGamePlay'
+import StarsHexa from '../../components/games/StarsHexa'
+import PenaltyShootout from '../../components/games/PenaltyShootout'
+import PenaltyHexa from '../../components/games/PenaltyHexa'
+import GameLayout from '../../components/game/GameLayout'
+import UnifiedRegistration from '../../components/game/UnifiedRegistration'
+import GameStatus from '../../components/game/GameStatus'
+import GameDescription from '../../components/game/GameDescription'
 import Toast from '../../components/Toast'
-import { Game, GameOutcome, PlayGameResponse, Reward } from '../../types'
+import { Game, GameOutcome, PlayGameResponse, Reward, ParticipantData } from '../../types'
 
 interface Participant {
   name: string
@@ -44,7 +49,7 @@ function getRewardDisplayValue(reward: Reward): string {
 /**
  * Game Play Page
  * 
- * Public interface for playing games (Stars Hexa, Wheel of Fortune, etc.).
+ * Public interface for playing games (Stars Hexa, Penalty Shootout).
  * Features participant registration, game instructions, and results display.
  * Dynamically renders the appropriate game component based on game type.
  * 
@@ -71,6 +76,9 @@ export default function GamePlayPage() {
   const [gameResult, setGameResult] = useState<PlayGameResponse | null>(null)
   const [playError, setPlayError] = useState<string | null>(null)
   const [sessionId] = useState(() => crypto.randomUUID())
+  
+  // Penalty shootout score state
+  const [penaltyScore, setPenaltyScore] = useState({ home: 0, visitor: 0 })
   
   // Toast notification state
   const [toast, setToast] = useState<{
@@ -172,19 +180,8 @@ export default function GamePlayPage() {
     }
   }
   
-  const handleParticipantRegistration = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!participant.name.trim()) {
-      setRegistrationError('Name is required')
-      return
-    }
-    
-    if (!participant.email && !participant.phone) {
-      setRegistrationError('Either email or phone number is required')
-      return
-    }
-    
+  // Unified registration handler using centralized component
+  const handleUnifiedRegistration = async (participantData: ParticipantData) => {
     try {
       setRegistrationError(null)
       
@@ -193,7 +190,7 @@ export default function GamePlayPage() {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(participant)
+        body: JSON.stringify(participantData)
       })
       
       const data = await response.json()
@@ -202,9 +199,12 @@ export default function GamePlayPage() {
         throw new Error(data.message || 'Registration failed')
       }
       
+      setParticipant(participantData)
       setIsRegistered(true)
     } catch (err) {
-      setRegistrationError(err instanceof Error ? err.message : 'Registration failed')
+      const errorMessage = err instanceof Error ? err.message : 'Registration failed'
+      setRegistrationError(errorMessage)
+      throw new Error(errorMessage)
     }
   }
   
@@ -242,7 +242,7 @@ export default function GamePlayPage() {
       // Store the full response for later use
       setGameResult(data.data)
       
-      // Return just the outcome for the wheel component
+      // Return just the outcome for the component
       return data.data.result
       
     } catch (err) {
@@ -261,19 +261,164 @@ export default function GamePlayPage() {
     console.log('Game result:', result)
   }
   
-  // Handle Wheel of Fortune result - now receives full GameOutcome from WheelGamePlay
-  const handleWheelResult = (result: GameOutcome) => {
-    // Store the full response for later use if needed
-    const mockGameResult: PlayGameResponse = {
-      result: result,
-      rewards: [], // No rewards in trial/simple mode, would be populated by backend in real play
-      canPlayAgain: false, // Wheel games end when complete
-      attemptsRemaining: result.spinsRemaining || 0
+  // Memoized penalty score update handler to prevent infinite re-renders
+  const handlePenaltyScoreUpdate = useCallback((homeScore: number, visitorScore: number) => {
+    setPenaltyScore({ home: homeScore, visitor: visitorScore })
+  }, [])
+  
+  
+  // Helper functions for centralized layout
+  const getGameTitle = (gameType: string): string => {
+    switch (gameType) {
+      case 'STARS_HEXA':
+        return 'Stars Hexa Quest'
+      case 'PENALTY_SHOOTOUT':
+        return 'Penalty Shootout Challenge'
+      default:
+        return game?.title || 'Game'
     }
-    setGameResult(mockGameResult)
+  }
+  
+  const getGameSubtitle = (gameType: string): string => {
+    switch (gameType) {
+      case 'STARS_HEXA':
+        return 'Find all hidden stars in hexagonal cards to win!'
+      case 'PENALTY_SHOOTOUT':
+        // Dynamic score display for penalty shootout
+        return `HOME ${penaltyScore.home} - ${penaltyScore.visitor} VISITOR`
+      default:
+        return game?.description || 'Play to win amazing rewards!'
+    }
+  }
+  
+  const getGameIcon = (gameType: string): string => {
+    switch (gameType) {
+      case 'STARS_HEXA':
+        return '⭐'
+      case 'PENALTY_SHOOTOUT':
+        return '⚽'
+      default:
+        return '🎮'
+    }
+  }
+  
+  // Render game content (2nd position)
+  const renderGameContent = () => {
+    if (!game) return null
     
-    // Call the main result handler
-    handleResult(result)
+    switch (game.type) {
+      case 'STARS_HEXA':
+        return (
+          <StarsHexa
+            hexagons={game.configuration.starsHexa?.hexagons || []}
+            onFlip={handleFlip}
+            onResult={handleResult}
+            theme={game.configuration.starsHexa?.theme || 'default'}
+            maxFlipsPerAttempt={game.configuration.starsHexa?.maxFlipsPerAttempt || 3}
+            attemptsRemaining={gameResult?.attemptsRemaining || game.configuration.maxAttemptsPerUser}
+            gameId={gameId}
+            isTrialMode={isTrialMode}
+          />
+        )
+      case 'PENALTY_SHOOTOUT':
+        return (
+          <PenaltyHexa
+            players={game.configuration.penaltyShootout?.players || []}
+            onFlip={handleFlip}
+            onResult={handleResult}
+            onScoreUpdate={handlePenaltyScoreUpdate}
+            theme={game.configuration.penaltyShootout?.theme || 'football'}
+            maxFlipsPerAttempt={game.configuration.penaltyShootout?.maxFlipsPerAttempt || 5}
+            attemptsRemaining={gameResult?.attemptsRemaining || game.configuration.maxAttemptsPerUser}
+            gameId={gameId}
+            isTrialMode={isTrialMode}
+          />
+        )
+      default:
+        return (
+          <div className="text-center">
+            <div className="text-6xl mb-4">🚧</div>
+            <h1 className="text-2xl font-bold text-white mb-2">Game Type Not Supported</h1>
+            <p className="text-gray-300">
+              This game type ({game.type}) is not yet supported in the play interface.
+            </p>
+          </div>
+        )
+    }
+  }
+  
+  // Render game status (3rd position)
+  const renderGameStatus = () => {
+    if (!game || !gameResult) return null
+    
+    const result = gameResult.result
+    
+    switch (game.type) {
+      case 'STARS_HEXA':
+        return (
+          <GameStatus
+            gameType={game.type}
+            isGameComplete={result.foundAllStars}
+            starsHexa={{
+              currentRound: 1, // Could be enhanced to track actual rounds
+              totalRounds: game.configuration.maxAttemptsPerUser || 3,
+              flipsUsed: 0, // This would come from game state
+              maxFlipsPerRound: game.configuration.starsHexa?.maxFlipsPerAttempt || 3,
+              starsFound: result.starsFound,
+              totalStars: result.totalStarsInGame
+            }}
+          />
+        )
+      default:
+        return null
+    }
+  }
+  
+  // Render game description (4th position)
+  const renderGameDescription = () => {
+    if (!game) return null
+    
+    switch (game.type) {
+      case 'STARS_HEXA':
+        return (
+          <GameDescription
+            gameType={game.type}
+            isGameComplete={gameResult?.result?.foundAllStars || false}
+            isGameActive={isRegistered && !gameResult?.result?.foundAllStars}
+            attemptsRemaining={gameResult?.attemptsRemaining || game.configuration.maxAttemptsPerUser}
+            starsHexaRules={{
+              maxFlipsPerRound: game.configuration.starsHexa?.maxFlipsPerAttempt || 3,
+              totalRounds: game.configuration.maxAttemptsPerUser || 3,
+              totalStars: game.configuration.starsHexa?.totalStars || 3,
+              autoFlipBackDelay: 1000
+            }}
+            theme="default"
+          />
+        )
+      case 'PENALTY_SHOOTOUT':
+        return (
+          <GameDescription
+            gameType={game.type}
+            isGameComplete={gameResult?.result?.foundAllStars || false}
+            isGameActive={isRegistered}
+            attemptsRemaining={gameResult?.attemptsRemaining || game.configuration.maxAttemptsPerUser}
+            penaltyShootoutRules={{
+              totalPlayers: 11,
+              playersToSelect: 5,
+              totalGoals: 7,
+              totalMisses: 4
+            }}
+            theme="default"
+          />
+        )
+      default:
+        return (
+          <GameDescription
+            gameType={game.type}
+            customDescription="Game rules not available for this game type."
+          />
+        )
+    }
   }
   
   if (loading) {
@@ -319,112 +464,31 @@ export default function GamePlayPage() {
         />
       )}
       
+      {/* Use centralized registration system */}
       {!isRegistered ? (
-        /* Registration Form with Trial Option */
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="max-w-md mx-auto">
-            <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200">
-              <div className="text-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                  Join the Game
-                </h2>
-              </div>
-              
-              <form onSubmit={handleParticipantRegistration} className="space-y-4">
-                <div>
-                  <input
-                    type="text"
-                    value={participant.name}
-                    onChange={(e) => setParticipant({ ...participant, name: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    placeholder="Enter your name"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <input
-                    type="email"
-                    value={participant.email || ''}
-                    onChange={(e) => setParticipant({ ...participant, email: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    placeholder="your@email.com"
-                  />
-                </div>
-                
-                <div>
-                  <input
-                    type="tel"
-                    value={participant.phone || ''}
-                    onChange={(e) => setParticipant({ ...participant, phone: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    placeholder="+1 (555) 123-4567"
-                  />
-                </div>
-                
-                {registrationError && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                    <p className="text-sm text-red-600">{registrationError}</p>
-                  </div>
-                )}
-                
-                <button
-                  type="submit"
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-lg font-medium transition-all"
-                >
-                  Start Playing
-                </button>
-              </form>
-              
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <button
-                  onClick={handleTrialMode}
-                  className="w-full bg-gradient-to-r from-green-500 to-teal-600 text-white py-3 px-4 rounded-lg font-medium transition-all"
-                >
-                  Try Without Registration
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <UnifiedRegistration
+          onRegister={handleUnifiedRegistration}
+          onTrialMode={handleTrialMode}
+          gameTitle={game.title}
+          gameName={game.title || 'this game'}
+          error={registrationError}
+          theme="default"
+          showTrialOption={true}
+        />
       ) : (
-        /* Dynamic Game Rendering based on game type */
-        <>
-          {game.type === 'STARS_HEXA' && (
-            <StarsHexa
-              hexagons={game.configuration.starsHexa?.hexagons || []}
-              onFlip={handleFlip}
-              onResult={handleResult}
-              theme={game.configuration.starsHexa?.theme || 'default'}
-              maxFlipsPerAttempt={game.configuration.starsHexa?.maxFlipsPerAttempt || 3}
-              attemptsRemaining={gameResult?.attemptsRemaining || game.configuration.maxAttemptsPerUser}
-              gameId={gameId}
-              isTrialMode={isTrialMode}
-            />
-          )}
-          
-        {game.type === '💰🌪️🍀' && (
-          <WheelGamePlay
-            gameId={gameId}
-            configuration={game.configuration.wheelOfFortune!}
-            onResult={handleWheelResult}
-            isTrialMode={isTrialMode}
-          />
-        )}
-          
-          {/* Fallback for unsupported game types */}
-        {game.type !== 'STARS_HEXA' && game.type !== '💰🌪️🍀' && (
-            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
-              <div className="text-center max-w-md mx-auto px-6">
-                <div className="text-6xl mb-4">🚧</div>
-                <h1 className="text-2xl font-bold text-gray-800 mb-2">Game Type Not Supported</h1>
-                <p className="text-gray-600">
-                  This game type ({game.type}) is not yet supported in the play interface.
-                </p>
-              </div>
-            </div>
-          )}
-        </>
+        /* Use centralized game layout for all games */
+        <GameLayout
+          gameId={gameId}
+          gameType={game.type}
+          title={getGameTitle(game.type)}
+          subtitle={getGameSubtitle(game.type)}
+          titleIcon={getGameIcon(game.type)}
+          theme="purple"
+          isGameComplete={gameResult?.result?.foundAllStars || false}
+          gameContent={renderGameContent()}
+          statusContent={renderGameStatus()}
+          descriptionContent={renderGameDescription()}
+        />
       )}
     </div>
   )

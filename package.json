@@ -1,8 +1,8 @@
 {
   "name": "playmass",
-  "version": "1.7.5",
+  "version": "1.0.2",
   "private": true,
-  "description": "Interactive game platform for creating and distributing simple games like Stars Hexa to target groups with rewards management",
+  "description": "Interactive game platform for creating and distributing Stars Hexa games to target groups with rewards management",
   "author": "Narimato",
   "scripts": {
     "dev": "next dev",

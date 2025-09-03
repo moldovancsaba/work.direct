@@ -1,4 +1,5 @@
 import { ObjectId, Document } from 'mongodb'
+import { ReactNode } from 'react'
 
 // Base interface for all database documents
 // This ensures consistent structure across all models
@@ -8,10 +9,143 @@ export interface BaseDocument {
   updatedAt: Date
 }
 
+// Centralized Game System Types
+// These interfaces support the centralized game environment architecture
+
+// Participant data for centralized registration
+export interface ParticipantData {
+  name: string
+  email?: string
+  phone?: string
+}
+
+// Game Layout Props for centralized layout system
+export interface GameLayoutProps {
+  // Game identification
+  gameId: string
+  gameType: string
+  
+  // Header content (1st position)
+  title: string
+  subtitle: string
+  titleIcon?: string
+  
+  // Game content (2nd position) 
+  gameContent: ReactNode
+  
+  // Status content (3rd position)
+  statusContent?: ReactNode
+  
+  // Description content (4th position)  
+  descriptionContent?: ReactNode
+  
+  // Layout customization
+  theme?: 'default' | 'purple' | 'blue' | 'colorful'
+  backgroundGradient?: string
+  containerClassName?: string
+  
+  // State management
+  isLoading?: boolean
+  isGameComplete?: boolean
+}
+
+// Unified Registration Props
+export interface UnifiedRegistrationProps {
+  // Registration handling
+  onRegister: (participant: ParticipantData) => Promise<void>
+  onTrialMode: () => void
+  
+  // Game customization
+  gameTitle?: string
+  gameName?: string
+  
+  // State management
+  isLoading?: boolean
+  error?: string | null
+  
+  // Form customization
+  requireEmail?: boolean
+  requirePhone?: boolean
+  showTrialOption?: boolean
+  
+  // Styling
+  theme?: 'default' | 'light' | 'dark'
+  className?: string
+}
+
+// Game Status Props for centralized status tracking
+export interface GameStatusProps {
+  // Game type identification
+  gameType: 'STARS_HEXA' | string
+  
+  // Common game state
+  isGameComplete?: boolean
+  isLoading?: boolean
+  
+  // Stars Hexa specific stats
+  starsHexa?: {
+    currentRound: number
+    totalRounds: number
+    flipsUsed: number
+    maxFlipsPerRound: number
+    starsFound: number
+    totalStars: number
+  }
+  
+  
+  // Custom stats for future game types
+  customStats?: Array<{
+    label: string
+    value: string | number
+    description: string
+    isHighlighted?: boolean
+  }>
+  
+  // Styling
+  theme?: 'default' | 'compact' | 'detailed'
+  className?: string
+}
+
+// Game Description Props for centralized game information
+export interface GameDescriptionProps {
+  // Game type identification
+  gameType: 'STARS_HEXA' | string
+  
+  // Game state context
+  isGameComplete?: boolean
+  isGameActive?: boolean
+  spinsRemaining?: number
+  attemptsRemaining?: number
+  
+  // Content customization
+  title?: string
+  showRules?: boolean
+  showWinConditions?: boolean
+  showCurrentState?: boolean
+  
+  // Stars Hexa specific content
+  starsHexaRules?: {
+    maxFlipsPerRound: number
+    totalRounds: number
+    totalStars: number
+    autoFlipBackDelay: number
+  }
+  
+  
+  // Custom content for future games
+  customRules?: string[]
+  customWinConditions?: string[]
+  customDescription?: string
+  
+  // Styling
+  theme?: 'default' | 'compact' | 'detailed'
+  className?: string
+}
+
 // Game Types and Interfaces
 // These define the structure for different game types and their configurations
 
-export type GameType = 'STARS_HEXA' | '💰🌪️🍀';
+export type GameType = 'STARS_HEXA' | 'PENALTY_SHOOTOUT';
 
 export type GameStatus = 'DRAFT' | 'ACTIVE' | 'PAUSED' | 'COMPLETED' | 'ARCHIVED'
 
@@ -26,46 +160,16 @@ export interface HexagonCard {
   rewardId?: string // If this hexagon contains a reward
 }
 
-// Wheel of Fortune specific interfaces
-export interface WheelSegment {
+export interface PenaltyCard {
   id: string
-  label: string
-  color: string
-  probability?: number // Optional weight for non-equal probability
-  rewardId?: string // If this segment contains a reward
-  isActive: boolean
+  playerNumber: number // Jersey number (2-22)
+  hasGoal: boolean // true if player scores, false if miss
+  isRevealed: boolean
+  position: number // 0-10 for the 11 hexagons in 1-4-3-2-1 layout
+  color?: string
+  backgroundColor?: string
 }
 
-// Simple configuration for auto-generating wheels
-export interface SimpleWheelConfiguration {
-  jackpotsCount: 1 | 2 | 3 | 4 | 5 | 6 // How many jackpots across all wheels
-  wheel1Segments: 3 | 4 | 5 | 6 | 7 | 8 // Number of segments on wheel 1
-  wheel2Segments: 3 | 4 | 5 | 6 | 7 | 8 // Number of segments on wheel 2
-  wheel3Segments: 3 | 4 | 5 | 6 | 7 | 8 // Number of segments on wheel 3
-  totalSegmentsToUse: 5 | 6 | 7 | 8 | 9 | 10 | 11 // How many different segment types to use (including jackpot)
-  segmentNames: string[] // List of available segment names
-}
-
-export interface WheelOfFortuneConfiguration {
-  segments: WheelSegment[] // Default segments for all wheels (backward compatibility)
-  wheel1Segments?: WheelSegment[] // Custom segments for wheel 1
-  wheel2Segments?: WheelSegment[] // Custom segments for wheel 2
-  wheel3Segments?: WheelSegment[] // Custom segments for wheel 3
-  spins: number // Base number of full rotations before stopping
-  spinsPerGame: number // Number of spins allowed per game (default 3)
-  durationMs: number // Spin animation duration in milliseconds
-  pointerAt: 'top' | 'right' // Pointer position
-  size: number // SVG size in pixels
-  theme: 'default' | 'colorful' | 'minimal'
-  allowImmediateReplay: boolean // Whether user can spin again immediately
-  gameRule: {
-    winCondition: 'collect_three_same' | 'jackpot_once' // Win by collecting 3 same or hitting jackpot once
-    jackpotLabel: string // Which segment label is considered jackpot
-    collectionsNeeded: number // Number of same items needed to win (default 3)
-  }
-  // Simple configuration (optional)
-  simpleConfig?: SimpleWheelConfiguration
-}
 
 export interface GameConfiguration {
   // Stars Hexa specific configuration
@@ -76,26 +180,13 @@ export interface GameConfiguration {
     theme: 'default' | 'colorful' | 'minimal'
   }
   
-  // Wheel of Fortune specific configuration
-  wheelOfFortune?: {
-    segments: WheelSegment[] // Default segments for all wheels
-    wheel1Segments?: WheelSegment[] // Custom segments for wheel 1
-    wheel2Segments?: WheelSegment[] // Custom segments for wheel 2
-    wheel3Segments?: WheelSegment[] // Custom segments for wheel 3
-    spins: number // Base number of full rotations before stopping
-    spinsPerGame: number // Number of spins allowed per game (default 3)
-    durationMs: number // Spin animation duration in milliseconds
-    pointerAt: 'top' | 'right' // Pointer position
-    size: number // SVG size in pixels
-    theme: 'default' | 'colorful' | 'minimal'
-    allowImmediateReplay: boolean // Whether user can spin again immediately
-    gameRule: {
-      winCondition: 'collect_three_same' | 'jackpot_once' // Win by collecting 3 same or hitting jackpot once
-      jackpotLabel: string // Which segment label is considered jackpot
-      collectionsNeeded: number // Number of same items needed to win (default 3)
-    }
-    // Simple configuration (optional)
-    simpleConfig?: SimpleWheelConfiguration
+  // Penalty Shootout specific configuration
+  penaltyShootout?: {
+    players: PenaltyCard[] // 11 penalty cards in 1-4-3-2-1 formation
+    totalGoals: number // Number of goals (7 out of 11)
+    playersToSelect: number // Number of players to select for penalties (5)
+    maxFlipsPerAttempt: number // Maximum penalty kicks per round (5)
+    theme: 'default' | 'colorful' | 'football'
   }
   
   // General game settings
@@ -182,16 +273,6 @@ export interface GameOutcome {
   starsFound: number // Number of stars discovered in this attempt
   totalStarsInGame: number // Total stars hidden in the game
   foundAllStars: boolean // Whether player found all stars
-  // Wheel of Fortune specific fields
-  segmentId?: string // For Wheel of Fortune games - which segment was landed on
-  segmentLabel?: string // The label of the winning segment
-  spinsUsed?: number // Number of spins used in this game session
-  spinsRemaining?: number // Number of spins remaining
-  segmentsCollected?: Record<string, number> // Track collected segments: label -> count
-  isGameComplete?: boolean // Whether the wheel game has ended
-  // Triple Wheel specific fields
-  allResults?: string[] // All results from all wheels across all spins
-  winType?: string // Type of win: 'JACKPOT', 'THREE_SAME', 'NONE'
   // Common fields
   value?: string | number
   rewardIds: string[] // Multiple rewards can be won

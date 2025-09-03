@@ -11,9 +11,11 @@ const uri = process.env.MONGODB_URI
 const options: MongoClientOptions = {
   // Connection pool settings for optimal performance
   maxPoolSize: 10, // Maintain up to 10 socket connections
-  serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
+  serverSelectionTimeoutMS: 10000, // Increased to 10 seconds for better reliability
   socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+  connectTimeoutMS: 10000, // 10 second connection timeout
   family: 4, // Use IPv4, skip trying IPv6
+  retryWrites: true, // Enable retryable writes
 }
 
 // Global variable for MongoDB client connection
@@ -45,23 +47,54 @@ if (process.env.NODE_ENV === 'development') {
 let isConnected = false
 
 export const connectDB = async (): Promise<void> => {
-  // Prevent multiple connections to the same database
-  // Mongoose maintains its own connection pool internally
-  if (isConnected) {
+  // Check if already connected
+  if (isConnected && mongoose.connection.readyState === 1) {
     console.log('MongoDB is already connected')
     return
   }
 
   try {
+    // If connection is in progress, wait for it
+    if (mongoose.connection.readyState === 2) {
+      await new Promise((resolve) => {
+        mongoose.connection.once('connected', resolve)
+      })
+      isConnected = true
+      console.log('MongoDB connection established (was connecting)')
+      return
+    }
+
+    // Create new connection
     const db = await mongoose.connect(uri, {
       // Mongoose-specific connection options
       // These options are optimized for the ODM layer
       bufferCommands: false, // Disable mongoose buffering for serverless
       maxPoolSize: 10, // Maintain up to 10 socket connections  
-      serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
+      serverSelectionTimeoutMS: 10000, // Increased to 10 seconds for better reliability
       socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+      connectTimeoutMS: 10000, // 10 second connection timeout
       family: 4, // Use IPv4, skip trying IPv6
+      retryWrites: true, // Enable retryable writes
     })
+
+    // Wait for connection to be fully ready
+    if (mongoose.connection.readyState !== 1) {
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Connection timeout - readyState not reached'))
+        }, 10000)
+        
+        mongoose.connection.once('connected', () => {
+          clearTimeout(timeout)
+          resolve(void 0)
+        })
+        
+        mongoose.connection.once('error', (err) => {
+          clearTimeout(timeout)
+          reject(err)
+        })
+      })
+    }
 
     isConnected = true
     console.log('MongoDB connected successfully via Mongoose')
@@ -74,6 +107,14 @@ export const connectDB = async (): Promise<void> => {
   } catch (error) {
     console.error('MongoDB connection failed:', error)
     isConnected = false
+    // Reset connection state on error
+    if (mongoose.connection.readyState !== 0) {
+      try {
+        await mongoose.disconnect()
+      } catch (disconnectError) {
+        console.error('Failed to disconnect after connection error:', disconnectError)
+      }
+    }
     throw error
   }
 }

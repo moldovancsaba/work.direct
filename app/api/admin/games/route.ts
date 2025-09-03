@@ -82,12 +82,6 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // For 💰🌪️🍀 games, ensure proper validation
-    if (type === '💰🌪️🍀' && configuration.wheelOfFortune) {
-      processedConfiguration.wheelOfFortune = {
-        ...configuration.wheelOfFortune
-      }
-    }
     
     // Create game data following the existing schema
     const gameData = {
