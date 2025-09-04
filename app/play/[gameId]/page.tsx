@@ -159,7 +159,9 @@ export default function GamePlayPage() {
     console.log('Game result:', result)
     
     // Move to results step when game is completed
-    if (result.foundAllStars || result.type === 'WIN') {
+    // For Stars Hexa: when all stars are found (foundAllStars)
+    // For Penalty: when round is complete (WIN or LOSE or any result type)
+    if (result.foundAllStars || result.type === 'WIN' || result.type === 'LOSE') {
       setCurrentStep('results')
     }
   }
