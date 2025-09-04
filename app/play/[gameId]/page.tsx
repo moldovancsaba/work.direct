@@ -7,6 +7,7 @@ import PenaltyShootout from '../../components/games/PenaltyShootout'
 import PenaltyHexa from '../../components/games/PenaltyHexa'
 import GameLayout from '../../components/game/GameLayout'
 import UnifiedRegistration from '../../components/game/UnifiedRegistration'
+import GameRulesPage from '../../components/game/GameRulesPage'
 import GameStatus from '../../components/game/GameStatus'
 import GameDescription from '../../components/game/GameDescription'
 import Toast from '../../components/Toast'
@@ -68,6 +69,10 @@ export default function GamePlayPage() {
   const [game, setGame] = useState<Game | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  
+  // Game flow state - 4 steps: registration -> rules -> game -> results
+  type GameStep = 'registration' | 'rules' | 'game' | 'results'
+  const [currentStep, setCurrentStep] = useState<GameStep>('registration')
   
   // Participant state
   const [participant, setParticipant] = useState<Participant>({ name: '' })
@@ -138,6 +143,36 @@ export default function GamePlayPage() {
     setIsRegistered(true)
     // Set a demo participant for trial mode
     setParticipant({ name: 'Trial Player' })
+    
+    // Move to rules step in trial mode
+    setCurrentStep('rules')
+  }
+  
+  // Handle moving from rules to game
+  const handleStartGame = () => {
+    setCurrentStep('game')
+  }
+  
+  // Handle game completion and moving to results
+  const handleGameComplete = (result: GameOutcome) => {
+    // Additional result handling can be added here
+    console.log('Game result:', result)
+    
+    // Move to results step when game is completed
+    if (result.foundAllStars || result.type === 'WIN') {
+      setCurrentStep('results')
+    }
+  }
+  
+  // Handle play again functionality
+  const handlePlayAgain = () => {
+    // Reset game state
+    setGameResult(null)
+    setPlayError(null)
+    setPenaltyScore({ home: 0, visitor: 0 })
+    
+    // Go back to rules step
+    setCurrentStep('rules')
   }
   
   const handleTrialFlip = async (hexagonId: string): Promise<GameOutcome> => {
@@ -216,6 +251,9 @@ export default function GamePlayPage() {
       setParticipantUuid(data.data.uuid)
       setIsRegistered(true)
       
+      // Move to rules step after successful registration
+      setCurrentStep('rules')
+      
       // Update URL with participant's UUID for sharing/referral
       const currentUrl = new URL(window.location.href)
       currentUrl.searchParams.set('ref', data.data.uuid)
@@ -281,8 +319,8 @@ export default function GamePlayPage() {
   }
   
   const handleResult = (result: GameOutcome) => {
-    // Additional result handling can be added here
-    console.log('Game result:', result)
+    // Use the centralized game completion handler
+    handleGameComplete(result)
   }
   
   // Memoized penalty score update handler to prevent infinite re-renders
@@ -490,8 +528,8 @@ export default function GamePlayPage() {
         />
       )}
       
-      {/* Use centralized registration system */}
-      {!isRegistered ? (
+      {/* 4-Step Game Flow */}
+      {currentStep === 'registration' && (
         <UnifiedRegistration
           onRegister={handleUnifiedRegistration}
           onTrialMode={handleTrialMode}
@@ -501,8 +539,19 @@ export default function GamePlayPage() {
           theme="default"
           showTrialOption={true}
         />
-      ) : (
-        /* Use centralized game layout for all games */
+      )}
+      
+      {currentStep === 'rules' && (
+        <GameRulesPage
+          gameType={game.type}
+          gameTitle={game.title}
+          gameDescription={game.description}
+          onStartGame={handleStartGame}
+          theme="default"
+        />
+      )}
+      
+      {currentStep === 'game' && (
         <GameLayout
           gameId={gameId}
           gameType={game.type}
@@ -510,10 +559,26 @@ export default function GamePlayPage() {
           subtitle={getGameSubtitle(game.type)}
           titleIcon={getGameIcon(game.type)}
           theme="purple"
-          isGameComplete={gameResult?.result?.foundAllStars || false}
+          isGameComplete={false}
           gameContent={renderGameContent()}
           statusContent={renderGameStatus()}
           descriptionContent={renderGameDescription()}
+        />
+      )}
+      
+      {currentStep === 'results' && (
+        <GameLayout
+          gameId={gameId}
+          gameType={game.type}
+          title={getGameTitle(game.type)}
+          subtitle={getGameSubtitle(game.type)}
+          titleIcon={getGameIcon(game.type)}
+          theme="purple"
+          isGameComplete={true}
+          gameContent={renderGameContent()}
+          statusContent={renderGameStatus()}
+          descriptionContent={renderGameDescription()}
+          onPlayAgain={handlePlayAgain}
         />
       )}
     </div>

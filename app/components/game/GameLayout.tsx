@@ -30,6 +30,7 @@ export interface GameLayoutProps {
   // State management
   isLoading?: boolean
   isGameComplete?: boolean
+  onPlayAgain?: () => void
 }
 
 /**
@@ -64,7 +65,8 @@ export default function GameLayout({
   backgroundGradient,
   containerClassName,
   isLoading = false,
-  isGameComplete = false
+  isGameComplete = false,
+  onPlayAgain
 }: GameLayoutProps) {
   
   // Theme-based background gradients
@@ -161,13 +163,35 @@ export default function GameLayout({
           </div>
         )}
         
-        {/* Game completion state indicator */}
-        {isGameComplete && (
+        {/* Results page actions */}
+        {isGameComplete && onPlayAgain && (
           <div className="text-center mt-8">
-            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4">
-              <p className="text-sm text-gray-300">
-                Game completed. Redirecting to results...
-              </p>
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-6">
+              <div className="space-y-4">
+                <p className="text-lg text-white font-semibold">
+                  🎉 Game Complete!
+                </p>
+                
+                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                  <button
+                    onClick={onPlayAgain}
+                    className="px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg"
+                  >
+                    🔄 Play Again
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      const currentUrl = window.location.href
+                      navigator.clipboard.writeText(currentUrl)
+                      // Could show toast notification here
+                    }}
+                    className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg"
+                  >
+                    📤 Share Game
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}
