@@ -562,7 +562,6 @@ export default function GamePlayPage() {
           isGameComplete={false}
           gameContent={renderGameContent()}
           statusContent={renderGameStatus()}
-          descriptionContent={renderGameDescription()}
         />
       )}
       
@@ -577,7 +576,6 @@ export default function GamePlayPage() {
           isGameComplete={true}
           gameContent={renderGameContent()}
           statusContent={renderGameStatus()}
-          descriptionContent={renderGameDescription()}
           onPlayAgain={handlePlayAgain}
         />
       )}
