@@ -108,8 +108,28 @@ export async function PUT(
     
     // Handle configuration update properly to avoid conflicts
     if (configuration !== undefined) {
-      // If we have a full configuration object, use it
-      updateData.configuration = configuration
+      // Process configuration based on game type for consistency
+      let processedConfiguration = { ...configuration }
+      
+      // For STARS_HEXA games, ensure totalStars is set correctly
+      if (type === 'STARS_HEXA' && configuration.starsHexa) {
+        const starsCount = configuration.starsHexa.hexagons?.filter((h: any) => h.hasHiddenStar).length || 0
+        processedConfiguration.starsHexa = {
+          ...configuration.starsHexa,
+          totalStars: starsCount
+        }
+      }
+      
+      // Ensure maxAttemptsPerUser is preserved or set
+      if (maxAttemptsPerUser !== undefined) {
+        processedConfiguration.maxAttemptsPerUser = maxAttemptsPerUser
+      } else if (existingGame.configuration?.maxAttemptsPerUser) {
+        processedConfiguration.maxAttemptsPerUser = existingGame.configuration.maxAttemptsPerUser
+      } else {
+        processedConfiguration.maxAttemptsPerUser = 3 // Default value
+      }
+      
+      updateData.configuration = processedConfiguration
     } else if (maxAttemptsPerUser !== undefined) {
       // If we only have maxAttemptsPerUser, update just that nested property
       updateData['configuration.maxAttemptsPerUser'] = maxAttemptsPerUser
@@ -163,6 +183,19 @@ export async function PUT(
     return NextResponse.json({ game: gameResponse })
   } catch (error) {
     console.error('Error updating game:', error)
+    
+    // Return detailed error message if it's a validation error
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { 
+          error: 'Failed to update game',
+          message: error.message,
+          details: (error as any).errors || null
+        },
+        { status: 500 }
+      )
+    }
+    
     return NextResponse.json(
       { error: 'Failed to update game' },
       { status: 500 }
