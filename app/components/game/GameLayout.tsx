@@ -1,6 +1,7 @@
 'use client'
 
 import React, { ReactNode } from 'react'
+import SplitFlapScoreboard from './SplitFlapScoreboard'
 
 export interface GameLayoutProps {
   // Game identification
@@ -94,6 +95,22 @@ export default function GameLayout({
     )
   }
 
+  // Extract scores from subtitle for penalty shootout
+  const extractScores = () => {
+    if (gameType === 'PENALTY_SHOOTOUT' && subtitle.includes('HOME') && subtitle.includes('VISITOR')) {
+      const match = subtitle.match(/HOME (\d+) - (\d+) VISITOR/)
+      if (match) {
+        return {
+          home: parseInt(match[1], 10),
+          visitor: parseInt(match[2], 10)
+        }
+      }
+    }
+    return { home: 0, visitor: 0 }
+  }
+
+  const scores = extractScores()
+
   return (
     <div className={`min-h-screen ${getBackgroundGradient()} flex flex-col items-center justify-center p-6`}>
       <div className={`w-full max-w-4xl ${containerClassName || ''}`}>
@@ -104,18 +121,30 @@ export default function GameLayout({
             {titleIcon && <span className="mr-3">{titleIcon}</span>}
             {title}
           </h1>
-          <p className={`text-xl text-gray-200 ${
-            gameType === 'PENALTY_SHOOTOUT' && subtitle.includes('HOME') && subtitle.includes('VISITOR') 
-              ? 'font-bold text-2xl md:text-3xl text-white' 
-              : ''
-          }`}>
-            {subtitle}
-          </p>
+          
+          {/* Show SplitFlapScoreboard for penalty shootout, regular subtitle for others */}
+          {gameType === 'PENALTY_SHOOTOUT' && subtitle.includes('HOME') && subtitle.includes('VISITOR') ? (
+            <div className="flex justify-center mt-6">
+              <SplitFlapScoreboard 
+                homeScore={scores.home} 
+                visitorScore={scores.visitor}
+                className="scale-90 md:scale-100"
+              />
+            </div>
+          ) : (
+            <p className="text-xl text-gray-200">
+              {subtitle}
+            </p>
+          )}
         </div>
 
-        {/* 2nd Position: Game Content - Individual game without extra wrapper */}
-        <div className="mb-8">
-          {gameContent}
+        {/* 2nd Position: Game Content - Square container for all games */}
+        <div className="mb-8 flex justify-center">
+          <div className={`w-full aspect-square ${
+            gameType === 'PENALTY_SHOOTOUT' ? 'max-w-3xl' : 'max-w-2xl'
+          }`}>
+            {gameContent}
+          </div>
         </div>
 
         {/* 3rd Position: Status Block - Game progress and statistics */}
