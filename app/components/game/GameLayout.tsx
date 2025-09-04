@@ -146,7 +146,7 @@ export default function GameLayout({
             gameType === 'PENALTY_SHOOTOUT' 
               ? 'w-full h-full max-w-6xl max-h-6xl' 
               : 'w-full h-full max-w-4xl max-h-4xl'
-          } aspect-square`}>
+          }`}>
             {gameContent}
           </div>
         </div>

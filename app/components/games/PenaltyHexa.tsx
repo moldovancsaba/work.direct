@@ -230,8 +230,10 @@ export default function PenaltyHexa({
 
   // Initialize game when players change - immediate full generation (EXACT COPY FROM STARS_HEXA)
   useEffect(() => {
-    if (players.length > 0) {
+    // Only initialize if players exist and game is not already initialized
+    if (players.length > 0 && gameState.players.length === 0) {
       const initialState = initializeGame(players)
+      
       dispatch({
         type: 'INITIALIZE_GAME',
         payload: {
@@ -240,14 +242,63 @@ export default function PenaltyHexa({
         }
       })
     }
-  }, [players])
+  }, [players, gameState.players.length])
 
-  // Update parent component with score changes
+  // Update parent component with score changes - FIXED: Remove onScoreUpdate from dependencies to prevent infinite loops
   useEffect(() => {
     if (onScoreUpdate) {
       onScoreUpdate(gameState.goalsScored, gameState.opponentScore)
     }
-  }, [gameState.goalsScored, gameState.opponentScore, onScoreUpdate])
+  }, [gameState.goalsScored, gameState.opponentScore]) // Remove onScoreUpdate from dependencies
+
+  // Handle round completion and game completion
+  useEffect(() => {
+    if (gameState.flipsUsed >= flipsPerRound && !gameState.isGameComplete) {
+      const revealedCards = gameState.players.filter(p => p.isRevealed)
+      
+      // Auto-flip back mechanism after 1 second
+      if (autoFlipTimerRef.current) {
+        clearTimeout(autoFlipTimerRef.current)
+      }
+      
+      autoFlipTimerRef.current = setTimeout(() => {
+        const revealedIds = revealedCards.map(p => p.id)
+        dispatch({ type: 'FLIP_BACK_PLAYERS', payload: { playerIds: revealedIds } })
+      }, 1000)
+      
+      // Check for game completion
+      const homeWon = gameState.goalsScored > gameState.opponentScore
+      const isDraw = gameState.goalsScored === gameState.opponentScore
+      
+      const result: GameOutcome = homeWon ? {
+        type: 'WIN',
+        hexagonId: 'game-complete',
+        starsFound: gameState.goalsScored,
+        totalStarsInGame: gameState.totalGoals,
+        foundAllStars: true,
+        value: `${gameState.goalsScored}-${gameState.opponentScore}`,
+        rewardIds: [],
+        message: `⚽ HOME won the penalty shootout ${gameState.goalsScored}-${gameState.opponentScore}!`
+      } : {
+        type: isDraw ? 'LOSE' : 'LOSE',
+        hexagonId: 'game-complete',
+        starsFound: gameState.goalsScored,
+        totalStarsInGame: gameState.totalGoals,
+        foundAllStars: false,
+        value: `${gameState.goalsScored}-${gameState.opponentScore}`,
+        rewardIds: [],
+        message: isDraw 
+          ? `🎆 DRAW ${gameState.goalsScored}-${gameState.opponentScore} - VISITOR wins on penalties!`
+          : `💀 VISITOR won the penalty shootout ${gameState.goalsScored}-${gameState.opponentScore}`
+      }
+      
+      // Complete the game after a short delay to show the flipped cards
+      setTimeout(() => {
+        dispatch({ type: 'COMPLETE_GAME', payload: { result } })
+        if (onResult) onResult(result)
+      }, 1500) // 1.5 seconds to show results
+    }
+  }, [gameState.flipsUsed, gameState.goalsScored, gameState.opponentScore, gameState.isGameComplete, gameState.totalGoals, gameState.players, flipsPerRound, onResult])
 
   // Layout positioning using EXACT axial coordinates from football formation reference
   const getHexagonPosition = (position: number) => {
@@ -278,89 +329,27 @@ export default function PenaltyHexa({
     return { x, y }
   }
 
-  // ULTRA-FAST hexagon flip handler - EXACT COPY FROM STARS_HEXA WITH PENALTY ADAPTATIONS
+  // ULTRA-FAST hexagon flip handler - SIMPLIFIED AND FIXED
   const handleHexagonFlip = useCallback((playerId: string) => {
-    // EXACT SAME minimal validation as STARS_HEXA
+    // Basic validation
     if (disabled || gameState.isGameComplete || gameState.flipsUsed >= flipsPerRound) return
     
     const player = gameState.players.find(p => p.id === playerId)
     if (!player || player.isRevealed) return
 
-    // INSTANT UI UPDATE - no waiting, pure speed (EXACT COPY FROM STARS_HEXA)
+    // INSTANT UI UPDATE - let reducer handle ALL logic
     dispatch({ type: 'FLIP_PLAYER', payload: { playerId } })
-
-    // Calculate game logic in parallel with animation (ADAPTED FROM STARS_HEXA)
-    setTimeout(() => {
-      const updatedPlayers = gameState.players.map(p => 
-        p.id === playerId ? { ...p, isRevealed: true } : p
-      )
-      const revealedCards = updatedPlayers.filter(p => p.isRevealed)
-      const newFlipsUsed = gameState.flipsUsed + 1
-      const newGoalsScored = player.hasGoal ? gameState.goalsScored + 1 : gameState.goalsScored
-      const roundComplete = newFlipsUsed >= flipsPerRound
-
-      // Auto-flip back mechanism - EXACT SAME as STARS_HEXA but adapted for penalty rounds
-      if (roundComplete) {
-        // Clear any existing timer
-        if (autoFlipTimerRef.current) {
-          clearTimeout(autoFlipTimerRef.current)
-        }
-        
-        // 1-second auto-flip back timer EXACT SAME as STARS_HEXA
-        autoFlipTimerRef.current = setTimeout(() => {
-          const revealedIds = revealedCards.map(p => p.id)
-          dispatch({ type: 'FLIP_BACK_PLAYERS', payload: { playerIds: revealedIds } })
-        }, 1000) // Exactly 1 second like STARS_HEXA
-      }
       
-      // Handle penalty shootout completion - complete after first round of 5 kicks
-      if (roundComplete) {
-        // Use the current opponent score without additional random calculation
-        // The opponent score is already calculated during each user flip
-        const finalOpponentScore = gameState.opponentScore
-        
-        // HOME wins only if score is higher, VISITOR wins on draw or higher score
-        const homeWon = newGoalsScored > finalOpponentScore
-        const isDraw = newGoalsScored === finalOpponentScore
-        
-        const result: GameOutcome = homeWon ? {
-          type: 'WIN',
-          hexagonId: playerId,
-          starsFound: newGoalsScored,
-          totalStarsInGame: gameState.totalGoals,
-          foundAllStars: true,
-          value: `${newGoalsScored}-${finalOpponentScore}`,
-          rewardIds: [],
-          message: `⚽ HOME won the penalty shootout ${newGoalsScored}-${finalOpponentScore}!`
-        } : {
-          type: isDraw ? 'LOSE' : 'LOSE', // In penalty shootouts, draws are treated as losses for the user
-          hexagonId: playerId,
-          starsFound: newGoalsScored,
-          totalStarsInGame: gameState.totalGoals,
-          foundAllStars: false,
-          value: `${newGoalsScored}-${finalOpponentScore}`,
-          rewardIds: [],
-          message: isDraw 
-            ? `🎆 DRAW ${newGoalsScored}-${finalOpponentScore} - VISITOR wins on penalties!`
-            : `💀 VISITOR won the penalty shootout ${newGoalsScored}-${finalOpponentScore}`
-        }
-        
-        dispatch({ type: 'COMPLETE_GAME', payload: { result } })
+    // Network call runs in background - ONLY for registered mode
+    if (onFlip && !isTrialMode) {
+      onFlip(playerId).then(result => {
+        // In registered mode, use API result if available
         if (onResult) onResult(result)
-      }
-      
-      // Network call runs in background - EXACT COPY FROM STARS_HEXA
-      // Skip API calls in trial mode - game logic is handled internally
-      if (onFlip && !isTrialMode) {
-        onFlip(playerId).then(result => {
-          // In registered mode, use API result if available
-          if (onResult) onResult(result)
-        }).catch(error => {
-          console.warn('Network error:', error)
-        })
-      }
-    }, 0) // Run immediately but non-blocking - EXACT SAME as STARS_HEXA
-  }, [disabled, gameState, flipsPerRound, totalRounds, onFlip, onResult])
+      }).catch(error => {
+        console.warn('Network error:', error)
+      })
+    }
+  }, [disabled, gameState.isGameComplete, gameState.flipsUsed, gameState.players, flipsPerRound, onFlip, onResult, isTrialMode])
 
   // EXACT math from reference HTML for responsive grid layout
   const DEG = Math.PI / 180

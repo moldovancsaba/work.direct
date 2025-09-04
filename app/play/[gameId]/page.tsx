@@ -354,9 +354,30 @@ export default function GamePlayPage() {
           />
         )
       case 'PENALTY_SHOOTOUT':
+        // Debug the game configuration
+        const players = game.configuration.penaltyShootout?.players || []
+        console.log('PenaltyShootout Debug:', {
+          gameType: game.type,
+          hasConfiguration: !!game.configuration,
+          hasPenaltyConfig: !!game.configuration.penaltyShootout,
+          playersData: players,
+          playersCount: players.length
+        })
+        
+        // Fallback: create dummy players if none exist
+        const fallbackPlayers = players.length > 0 ? players : Array.from({ length: 11 }, (_, i) => ({
+          id: `player-${i + 1}`,
+          playerNumber: i + 1,
+          hasGoal: false,
+          isRevealed: false,
+          position: i,
+          color: '#c00000',
+          backgroundColor: '#ffffff'
+        }))
+        
         return (
           <PenaltyHexa
-            players={game.configuration.penaltyShootout?.players || []}
+            players={fallbackPlayers}
             onFlip={handleFlip}
             onResult={handleResult}
             onScoreUpdate={handlePenaltyScoreUpdate}
