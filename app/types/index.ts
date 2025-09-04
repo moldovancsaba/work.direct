@@ -189,6 +189,70 @@ export interface GameConfiguration {
     playersToSelect: number // Number of players to select for penalties (5)
     maxFlipsPerAttempt: number // Maximum penalty kicks per round (5)
     theme: 'default' | 'colorful' | 'football'
+    
+    // Customizable texts
+    texts?: {
+      // Registration texts
+      joinButton?: string
+      gameTitle?: string
+      registrationSubtitle?: string
+      namePlaceholder?: string
+      emailPlaceholder?: string
+      phonePlaceholder?: string
+      contactRequiredError?: string
+      startPlayingButton?: string
+      tryWithoutRegText?: string
+      tryWithoutRegButton?: string
+      
+      // Game texts
+      gameIcon?: string
+      howToPlayButton?: string
+      gameRulesTitle?: string
+      gameRulesText?: string
+      winConditionsTitle?: string
+      winConditionsText?: string
+      gameDescription?: string
+      playButton?: string
+      
+      // Result texts
+      gameSubtitle?: string
+      playAgainButton?: string
+      shareWithFriendsButton?: string
+      shareResultTitle?: string
+      copyLinkButton?: string
+      shareButton?: string
+      
+      // Win/Loss texts
+      defeatIcon?: string
+      defeatTitle?: string
+      trialModeIndicator?: string
+      yourGoalsLabel?: string
+      opponentGoalsLabel?: string
+      visitorWinMessage?: string
+      drawIcon?: string
+      drawMessage?: string
+      visitorPenaltyWinMessage?: string
+      victoryIcon?: string
+      victoryTitle?: string
+      homeWinMessage?: string
+    }
+    
+    // Customizable colors
+    colors?: {
+      // Background colors
+      pageBackground?: string
+      blockBackground?: string
+      
+      // Button colors
+      primaryButton?: string
+      secondaryButton?: string
+      
+      // Game field colors
+      scoreboardCard?: string
+      gameField?: string
+      playerCard?: string
+      failedPenalty?: string
+    }
   }
   
   // General game settings

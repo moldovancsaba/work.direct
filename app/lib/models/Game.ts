@@ -209,6 +209,69 @@ const gameSchema = new Schema<Game>({
         type: String,
         enum: ['default', 'colorful', 'football'],
         default: 'football'
+      },
+      // Customizable texts
+      texts: {
+        // Registration texts
+        joinButton: { type: String, default: 'Join' },
+        gameTitle: { type: String, default: 'DVTK Büntető Párbaj' },
+        registrationSubtitle: { type: String, default: 'Enter your details to play' },
+        namePlaceholder: { type: String, default: 'Enter your name' },
+        emailPlaceholder: { type: String, default: 'your@email.com' },
+        phonePlaceholder: { type: String, default: '+1 (555) 123-4567' },
+        contactRequiredError: { type: String, default: 'Please provide either email or phone number' },
+        startPlayingButton: { type: String, default: '🎮 Start Playing' },
+        tryWithoutRegText: { type: String, default: 'Want to try without registration?' },
+        tryWithoutRegButton: { type: String, default: '🎯 Try Without Registration' },
+        
+        // Game texts
+        gameIcon: { type: String, default: '⚽' },
+        howToPlayButton: { type: String, default: '📋 How to Play' },
+        gameRulesTitle: { type: String, default: '🎮 Game Rules:' },
+        gameRulesText: { type: String, default: '⚽ Select 5 players from 11 team members\n⚡ If draw, Visitor WINS!' },
+        winConditionsTitle: { type: String, default: '🏆 Win Conditions:' },
+        winConditionsText: { type: String, default: '🏆 Score more goals than opponent\n⚽ Select players wisely - you can\'t see who scores until selected\n🔥 In overtime: first team to score more wins' },
+        gameDescription: { type: String, default: 'Válaszd ki a büntetőpárbajban résztvevő játékosokat és ha győzöl megkaphatod a DVTK FanZone ajándékok egyikét' },
+        playButton: { type: String, default: '🎮 PLAY' },
+        
+        // Result texts
+        gameSubtitle: { type: String, default: '⚽Penalty Shootout Challenge' },
+        playAgainButton: { type: String, default: '🎮 Play Again' },
+        shareWithFriendsButton: { type: String, default: '🚀 Share with Friends' },
+        shareResultTitle: { type: String, default: 'Share Your Result' },
+        copyLinkButton: { type: String, default: '📋 Copy Link' },
+        shareButton: { type: String, default: '📱 Share' },
+        
+        // Win/Loss texts
+        defeatIcon: { type: String, default: '⚽😕' },
+        defeatTitle: { type: String, default: 'Defeat!' },
+        trialModeIndicator: { type: String, default: '👀 Trial Mode' },
+        yourGoalsLabel: { type: String, default: 'Your Goals' },
+        opponentGoalsLabel: { type: String, default: 'Opponent Goals' },
+        visitorWinMessage: { type: String, default: '💀 VISITOR won the penalty shootout' },
+        drawIcon: { type: String, default: '🎆' },
+        drawMessage: { type: String, default: 'DRAW' },
+        visitorPenaltyWinMessage: { type: String, default: 'VISITOR wins on penalties!' },
+        victoryIcon: { type: String, default: '⚽🎆' },
+        victoryTitle: { type: String, default: 'Victory! You won' },
+        homeWinMessage: { type: String, default: '⚽ HOME won the penalty shootout' }
+      },
+      
+      // Customizable colors
+      colors: {
+        // Background colors
+        pageBackground: { type: String, default: 'bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900' },
+        blockBackground: { type: String, default: 'bg-white/10 backdrop-blur-sm' },
+        
+        // Button colors
+        primaryButton: { type: String, default: 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700' },
+        secondaryButton: { type: String, default: 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700' },
+        
+        // Game field colors
+        scoreboardCard: { type: String, default: '#000000' },
+        gameField: { type: String, default: '#2ecc71' },
+        playerCard: { type: String, default: '#c00000' },
+        failedPenalty: { type: String, default: '#ffffff' }
       }
     },
     
