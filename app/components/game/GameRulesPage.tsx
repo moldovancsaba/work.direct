@@ -208,32 +208,32 @@ export default function GameRulesPage({
   const themeClasses = getThemeClasses()
 
   return (
-    <div className={`min-h-screen ${themeClasses.container} flex items-center justify-center p-6 ${className}`}>
-      <div className="max-w-2xl mx-auto w-full">
-        
-        {/* Game Rules Content */}
-        <div className="mb-8">
+    <div className={`h-screen w-screen ${themeClasses.container} flex flex-col overflow-hidden ${className}`}>
+      
+      {/* Game Rules Content - Scrollable */}
+      <div className="flex-1 flex items-center justify-center p-4 overflow-y-auto">
+        <div className="max-w-2xl mx-auto w-full">
           {gameType === 'PENALTY_SHOOTOUT' && getPenaltyShootoutRules()}
           {gameType === 'STARS_HEXA' && getStarsHexaRules()}
         </div>
+      </div>
 
-        {/* Play Button */}
-        <div className="text-center">
-          <button
-            onClick={onStartGame}
-            className={`
-              px-12 py-4 text-xl font-bold rounded-xl transition-all duration-200 transform hover:scale-105 
-              ${themeClasses.playButton}
-            `}
-          >
-            🎮 PLAY
-          </button>
-          
-          {/* Optional subtitle */}
-          <p className="text-gray-600 mt-4 text-sm">
-            Click PLAY when you're ready to start {gameTitle}
-          </p>
-        </div>
+      {/* Play Button - Fixed at bottom */}
+      <div className="flex-shrink-0 text-center p-6 bg-white/10 backdrop-blur-sm">
+        <button
+          onClick={onStartGame}
+          className={`
+            px-12 py-4 text-xl font-bold rounded-xl transition-all duration-200 transform hover:scale-105 
+            ${themeClasses.playButton}
+          `}
+        >
+          🎮 PLAY
+        </button>
+        
+        {/* Optional subtitle */}
+        <p className="text-white/80 mt-3 text-sm">
+          Click PLAY when you're ready to start {gameTitle}
+        </p>
       </div>
     </div>
   )

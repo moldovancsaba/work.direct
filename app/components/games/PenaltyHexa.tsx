@@ -313,31 +313,36 @@ export default function PenaltyHexa({
         }, 1000) // Exactly 1 second like STARS_HEXA
       }
       
-      // Handle game completion (ADAPTED FROM STARS_HEXA LOGIC)
+      // Handle penalty shootout completion - complete after first round of 5 kicks
       if (roundComplete) {
+        // Use the current opponent score without additional random calculation
+        // The opponent score is already calculated during each user flip
+        const finalOpponentScore = gameState.opponentScore
+        
         // HOME wins only if score is higher, VISITOR wins on draw or higher score
-        const homeWon = newGoalsScored > gameState.opponentScore
-        const isDraw = newGoalsScored === gameState.opponentScore
+        const homeWon = newGoalsScored > finalOpponentScore
+        const isDraw = newGoalsScored === finalOpponentScore
+        
         const result: GameOutcome = homeWon ? {
           type: 'WIN',
           hexagonId: playerId,
           starsFound: newGoalsScored,
           totalStarsInGame: gameState.totalGoals,
           foundAllStars: true,
-          value: `${newGoalsScored}-${gameState.opponentScore}`,
+          value: `${newGoalsScored}-${finalOpponentScore}`,
           rewardIds: [],
-          message: `⚽ HOME won the penalty shootout ${newGoalsScored}-${gameState.opponentScore}!`
+          message: `⚽ HOME won the penalty shootout ${newGoalsScored}-${finalOpponentScore}!`
         } : {
-          type: 'LOSE',
+          type: isDraw ? 'LOSE' : 'LOSE', // In penalty shootouts, draws are treated as losses for the user
           hexagonId: playerId,
           starsFound: newGoalsScored,
           totalStarsInGame: gameState.totalGoals,
           foundAllStars: false,
-          value: `${newGoalsScored}-${gameState.opponentScore}`,
+          value: `${newGoalsScored}-${finalOpponentScore}`,
           rewardIds: [],
           message: isDraw 
-            ? `🎆 DRAW ${newGoalsScored}-${gameState.opponentScore} - VISITOR wins!`
-            : `💀 VISITOR won the penalty shootout ${newGoalsScored}-${gameState.opponentScore}`
+            ? `🎆 DRAW ${newGoalsScored}-${finalOpponentScore} - VISITOR wins on penalties!`
+            : `💀 VISITOR won the penalty shootout ${newGoalsScored}-${finalOpponentScore}`
         }
         
         dispatch({ type: 'COMPLETE_GAME', payload: { result } })
@@ -345,8 +350,10 @@ export default function PenaltyHexa({
       }
       
       // Network call runs in background - EXACT COPY FROM STARS_HEXA
-      if (onFlip) {
+      // Skip API calls in trial mode - game logic is handled internally
+      if (onFlip && !isTrialMode) {
         onFlip(playerId).then(result => {
+          // In registered mode, use API result if available
           if (onResult) onResult(result)
         }).catch(error => {
           console.warn('Network error:', error)
@@ -580,12 +587,12 @@ export default function PenaltyHexa({
   }
   
   return (
-    // Container with grass green solid background
+    // Container with grass green solid background - MAXIMIZED
     <div 
       ref={stageRef}
       className="relative w-full h-full"
       style={{
-        minHeight: '500px',
+        minHeight: '100%',
         backgroundColor: '#2ecc71' // Grass green solid background
       }}
     >

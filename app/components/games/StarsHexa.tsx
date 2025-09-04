@@ -306,8 +306,10 @@ export default function StarsHexa({
       }
       
       // Network call runs in background - doesn't block UI
-      if (onFlip) {
+      // Skip API calls in trial mode - game logic is handled internally
+      if (onFlip && !isTrialMode) {
         onFlip(hexagonId).then(result => {
+          // In registered mode, use API result if available
           if (onResult) onResult(result)
         }).catch(error => {
           console.warn('Network error:', error)
@@ -373,9 +375,9 @@ export default function StarsHexa({
   return (
     <div 
       ref={stageRef}
-      className="relative w-full h-full grid place-items-center bg-white/5 backdrop-blur-sm rounded-2xl p-8"
+      className="relative w-full h-full grid place-items-center bg-white/5 backdrop-blur-sm rounded-2xl"
       style={{
-        minHeight: '500px',
+        minHeight: '100%',
         background: 'radial-gradient(800px 500px at 50% 50%, #1a2b4c 0%, #0f1629 50%, #0a0f1f 100%)'
       }}
     >

@@ -82,6 +82,7 @@ export default function GamePlayPage() {
   
   // Trial mode state
   const [isTrialMode, setIsTrialMode] = useState(false)
+  const [trialStarsFound, setTrialStarsFound] = useState(0)
   
   // Game play state
   const [gameResult, setGameResult] = useState<PlayGameResponse | null>(null)
@@ -141,6 +142,9 @@ export default function GamePlayPage() {
   const handleTrialMode = () => {
     setIsTrialMode(true)
     setIsRegistered(true)
+    // Reset trial state
+    setTrialStarsFound(0)
+    setPenaltyScore({ home: 0, visitor: 0 })
     // Set a demo participant for trial mode
     setParticipant({ name: 'Trial Player' })
     
@@ -153,75 +157,37 @@ export default function GamePlayPage() {
     setCurrentStep('game')
   }
   
-  // Handle game completion and moving to results
+  // Handle game completion and redirect to dedicated results page
   const handleGameComplete = (result: GameOutcome) => {
     // Additional result handling can be added here
     console.log('Game result:', result)
     
-    // Move to results step when game is completed
+    // REDIRECT to dedicated results page when game is completed
     // For Stars Hexa: when all stars are found (foundAllStars)
     // For Penalty: when round is complete (WIN or LOSE or any result type)
     if (result.foundAllStars || result.type === 'WIN' || result.type === 'LOSE') {
-      setCurrentStep('results')
+      // Build result parameters for the dedicated results page
+      const resultParams = new URLSearchParams({
+        outcome: result.type,
+        won: (result.foundAllStars || result.type === 'WIN').toString(),
+        ...(result.starsFound !== undefined && { starsFound: result.starsFound.toString() }),
+        ...(result.totalStarsInGame !== undefined && { totalStars: result.totalStarsInGame.toString() }),
+        ...(game?.type === 'PENALTY_SHOOTOUT' && {
+          userScore: penaltyScore.home.toString(),
+          opponentScore: penaltyScore.visitor.toString()
+        }),
+        ...(result.message && { message: result.message }),
+        ...(isTrialMode && { trial: 'true' }),
+        ...(referralUuid && { ref: referralUuid })
+      })
+      
+      // REDIRECT to the dedicated results page
+      router.push(`/play/${gameId}/result?${resultParams.toString()}`)
     }
   }
   
-  // Handle play again functionality
-  const handlePlayAgain = () => {
-    // Reset game state
-    setGameResult(null)
-    setPlayError(null)
-    setPenaltyScore({ home: 0, visitor: 0 })
-    
-    // Go back to rules step
-    setCurrentStep('rules')
-  }
-  
-  const handleTrialFlip = async (hexagonId: string): Promise<GameOutcome> => {
-    // Simulate realistic delay
-    await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000))
-    
-    if (!game?.configuration.starsHexa?.hexagons) {
-      throw new Error('Game configuration not available')
-    }
-    
-    // For trial mode, we need to create a simple result based on the hexagon ID
-    // Since the StarsHexa component handles the actual shuffled state internally,
-    // we'll create a mock result that works with any hexagon ID
-    
-    // Get original configuration for reference
-    const originalHexagons = game.configuration.starsHexa.hexagons
-    const totalStarsInGame = originalHexagons.filter(h => h.hasHiddenStar).length
-    
-    // For trial mode, randomly determine if this flip found a star (30% chance)
-    const foundStar = Math.random() < 0.3
-    const starsFound = foundStar ? 1 : 0
-    
-    // Simple trial logic - randomly determine if all stars found (20% chance if found a star)
-    const foundAllStars = foundStar && Math.random() < 0.2
-    
-    // Use a generic message since we don't know the actual shuffled text
-    let outcomeType: 'WIN' | 'NO_REWARD' = 'NO_REWARD'
-    let message = foundStar ? 'You found a star!' : 'No star here, keep trying!'
-    
-    if (foundStar) {
-      outcomeType = 'WIN'
-      message = foundAllStars 
-        ? `🎉 Amazing! You found a star and completed the game!`
-        : `⭐ Great! You found a star!`
-    }
-    
-    return {
-      type: outcomeType,
-      hexagonId: hexagonId,
-      starsFound: starsFound,
-      totalStarsInGame: totalStarsInGame,
-      foundAllStars: foundAllStars,
-      value: foundStar ? 'Hidden Star!' : 'Empty',
-      rewardIds: [], // No rewards in trial mode
-      message: message
-    }
-  }
+  // This function is no longer needed since we redirect to dedicated results page
+  // The play again functionality is now handled by the GameResultClient component
   
   // Unified registration handler using centralized component
   const handleUnifiedRegistration = async (participantData: ParticipantData) => {
@@ -273,9 +239,11 @@ export default function GamePlayPage() {
   }
   
   const handleFlip = async (hexagonId: string): Promise<GameOutcome> => {
-    // If in trial mode, use trial flip handler
+    // Trial mode: Skip API calls, let game components handle their own logic
     if (isTrialMode) {
-      return handleTrialFlip(hexagonId)
+      // Just return a placeholder - the game components will handle their own trial logic internally
+      // This function won't actually be called in trial mode since components handle clicks internally
+      throw new Error('Trial mode should not call handleFlip - components handle internally')
     }
     
     try {
@@ -489,7 +457,7 @@ export default function GamePlayPage() {
   
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="h-screen w-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center overflow-hidden">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-xl text-gray-600">Loading game...</p>
@@ -500,7 +468,7 @@ export default function GamePlayPage() {
   
   if (error || !game) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-100 flex items-center justify-center">
+      <div className="h-screen w-screen bg-gradient-to-br from-red-50 to-pink-100 flex items-center justify-center overflow-hidden">
         <div className="text-center max-w-md mx-auto px-6">
           <div className="text-6xl mb-4">😞</div>
           <h1 className="text-2xl font-bold text-gray-800 mb-2">Game Not Found</h1>
@@ -519,7 +487,7 @@ export default function GamePlayPage() {
   }
   
   return (
-    <div className="min-h-screen">
+    <div className="h-screen w-screen overflow-hidden">
       {/* Toast Notification */}
       {toast && (
         <Toast
@@ -567,20 +535,7 @@ export default function GamePlayPage() {
         />
       )}
       
-      {currentStep === 'results' && (
-        <GameLayout
-          gameId={gameId}
-          gameType={game.type}
-          title={getGameTitle(game.type)}
-          subtitle={getGameSubtitle(game.type)}
-          titleIcon={getGameIcon(game.type)}
-          theme="purple"
-          isGameComplete={true}
-          gameContent={renderGameContent()}
-          statusContent={renderGameStatus()}
-          onPlayAgain={handlePlayAgain}
-        />
-      )}
+      {/* Results step removed - now redirects to dedicated /result page */}
     </div>
   )
 }

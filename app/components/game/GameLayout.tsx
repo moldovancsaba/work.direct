@@ -88,7 +88,7 @@ export default function GameLayout({
   // Loading state
   if (isLoading) {
     return (
-      <div className={`min-h-screen ${getBackgroundGradient()} flex flex-col items-center justify-center p-6`}>
+      <div className={`h-screen w-screen ${getBackgroundGradient()} flex flex-col items-center justify-center overflow-hidden`}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white mb-4 mx-auto"></div>
           <p className="text-white text-lg">🎮 Loading game...</p>
@@ -114,88 +114,85 @@ export default function GameLayout({
   const scores = extractScores()
 
   return (
-    <div className={`min-h-screen ${getBackgroundGradient()} flex flex-col items-center justify-center p-6`}>
-      <div className={`w-full max-w-4xl ${containerClassName || ''}`}>
+    <div className={`h-screen w-screen ${getBackgroundGradient()} flex flex-col overflow-hidden`}>
+      
+      {/* 1st Position: Compact Game Header */}
+      <div className="flex-shrink-0 text-center py-4 px-4">
+        <h1 className="text-2xl md:text-3xl font-bold text-white mb-1">
+          {titleIcon && <span className="mr-2">{titleIcon}</span>}
+          {title}
+        </h1>
         
-        {/* 1st Position: Game Header - Consistent title and subtitle positioning */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">
-            {titleIcon && <span className="mr-3">{titleIcon}</span>}
-            {title}
-          </h1>
-          
-          {/* Show SplitFlapScoreboard for penalty shootout, regular subtitle for others */}
-          {gameType === 'PENALTY_SHOOTOUT' && subtitle.includes('HOME') && subtitle.includes('VISITOR') ? (
-            <div className="flex justify-center mt-6">
-              <SplitFlapScoreboard 
-                homeScore={scores.home} 
-                visitorScore={scores.visitor}
-                className="scale-90 md:scale-100"
-              />
-            </div>
-          ) : (
-            <p className="text-xl text-gray-200">
-              {subtitle}
-            </p>
-          )}
-        </div>
+        {/* Show SplitFlapScoreboard for penalty shootout, regular subtitle for others */}
+        {gameType === 'PENALTY_SHOOTOUT' && subtitle.includes('HOME') && subtitle.includes('VISITOR') ? (
+          <div className="flex justify-center mt-2">
+            <SplitFlapScoreboard 
+              homeScore={scores.home} 
+              visitorScore={scores.visitor}
+              className="scale-75 md:scale-90"
+            />
+          </div>
+        ) : (
+          <p className="text-lg md:text-xl text-gray-200">
+            {subtitle}
+          </p>
+        )}
+      </div>
 
-        {/* 2nd Position: Game Content - Square container for all games */}
-        <div className="mb-8 flex justify-center">
-          <div className={`w-full aspect-square ${
-            gameType === 'PENALTY_SHOOTOUT' ? 'max-w-3xl' : 'max-w-2xl'
-          }`}>
+      {/* 2nd Position: MAXIMIZED Game Content Area */}
+      <div className="flex-1 flex items-center justify-center p-2 min-h-0">
+        <div className="w-full h-full max-w-none flex items-center justify-center">
+          <div className={`${
+            gameType === 'PENALTY_SHOOTOUT' 
+              ? 'w-full h-full max-w-6xl max-h-6xl' 
+              : 'w-full h-full max-w-4xl max-h-4xl'
+          } aspect-square`}>
             {gameContent}
           </div>
         </div>
+      </div>
 
-        {/* 3rd Position: Status Block - Game progress and statistics */}
-        {statusContent && (
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 mb-8">
-            {statusContent}
-          </div>
-        )}
-
-        {/* 4th Position: Description Block - Rules and game state information */}
-        {descriptionContent && (
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 mb-8">
-            {descriptionContent}
-          </div>
-        )}
-        
-        {/* Results page actions */}
-        {isGameComplete && onPlayAgain && (
-          <div className="text-center mt-8">
-            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-6">
-              <div className="space-y-4">
-                <p className="text-lg text-white font-semibold">
-                  🎉 Game Complete!
-                </p>
-                
-                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                  <button
-                    onClick={onPlayAgain}
-                    className="px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg"
-                  >
-                    🔄 Play Again
-                  </button>
-                  
-                  <button
-                    onClick={() => {
-                      const currentUrl = window.location.href
-                      navigator.clipboard.writeText(currentUrl)
-                      // Could show toast notification here
-                    }}
-                    className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg"
-                  >
-                    📤 Share Game
-                  </button>
-                </div>
-              </div>
+      {/* 3rd & 4th Position: Compact status/description at bottom if needed */}
+      {(statusContent || descriptionContent) && (
+        <div className="flex-shrink-0 px-4 pb-4 max-h-32 overflow-y-auto">
+          {statusContent && (
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 mb-2 text-sm">
+              {statusContent}
+            </div>
+          )}
+          {descriptionContent && (
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-sm">
+              {descriptionContent}
+            </div>
+          )}
+        </div>
+      )}
+      
+      {/* Results page actions */}
+      {isGameComplete && onPlayAgain && (
+        <div className="flex-shrink-0 p-4">
+          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+              <button
+                onClick={onPlayAgain}
+                className="px-6 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg text-sm"
+              >
+                🔄 Play Again
+              </button>
+              
+              <button
+                onClick={() => {
+                  const currentUrl = window.location.href
+                  navigator.clipboard.writeText(currentUrl)
+                }}
+                className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg text-sm"
+              >
+                📤 Share Game
+              </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }

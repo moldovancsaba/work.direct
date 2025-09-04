@@ -165,9 +165,9 @@ export default function UnifiedRegistration({
   const displayError = error || validationError
   
   return (
-    <div className={`min-h-screen flex items-center justify-center p-6 ${className || ''}`}>
-      <div className="max-w-md mx-auto">
-        <div className={`rounded-xl shadow-lg p-8 border ${themeClasses.container}`}>
+    <div className={`h-screen w-screen flex items-center justify-center p-4 overflow-hidden bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 ${className || ''}`}>
+      <div className="w-full max-w-md mx-auto">
+        <div className={`rounded-xl shadow-2xl p-6 md:p-8 border ${themeClasses.container}`}>
           
           {/* Registration header */}
           <div className="text-center mb-6">

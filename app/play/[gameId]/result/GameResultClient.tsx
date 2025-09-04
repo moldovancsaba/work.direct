@@ -161,7 +161,7 @@ export default function GameResultClient({ gameId, initialGameData }: GameResult
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="h-screen w-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center overflow-hidden">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-xl text-gray-600">Loading results...</p>
@@ -169,10 +169,10 @@ export default function GameResultClient({ gameId, initialGameData }: GameResult
       </div>
     )
   }
-
+  
   if (error || !game || !resultData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-100 flex items-center justify-center">
+      <div className="h-screen w-screen bg-gradient-to-br from-red-50 to-pink-100 flex items-center justify-center overflow-hidden">
         <div className="text-center max-w-md mx-auto px-6">
           <div className="text-6xl mb-4">😞</div>
           <h1 className="text-2xl font-bold text-gray-800 mb-2">Something went wrong</h1>
@@ -193,8 +193,10 @@ export default function GameResultClient({ gameId, initialGameData }: GameResult
   const { won, gameType, message, isTrialMode, starsFound, totalStars, roundsUsed, userScore, opponentScore, rounds } = resultData
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100">
-      <div className="container mx-auto px-4 py-8 max-w-2xl">
+    <div className="h-screen w-screen bg-gradient-to-br from-purple-50 to-pink-100 overflow-hidden">
+      <div className="h-full w-full flex flex-col">
+        <div className="flex-1 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="w-full max-w-2xl mx-auto">
         {/* Result Header */}
         <div className="text-center mb-8">
           <div className="text-8xl mb-4">
@@ -351,6 +353,8 @@ export default function GameResultClient({ gameId, initialGameData }: GameResult
           </div>
         )}
 
+          </div>
+        </div>
       </div>
     </div>
   )
