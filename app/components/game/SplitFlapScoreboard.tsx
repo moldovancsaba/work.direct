@@ -10,13 +10,7 @@ interface SplitFlapScoreboardProps {
 
 /**
  * SplitFlapScoreboard Component - Train-station style score display
- * 
- * Features:
- * - Authentic split-flap animation like old train station boards
- * - Hardware-accelerated CSS animations with 3D perspective
- * - Automatic cycling through digits for realistic effect
- * - Responsive scaling to fit available space
- * - Centered layout with equal space for HOME and VISITOR labels
+ * Implements the exact DOM manipulation approach from the sample code
  */
 export default function SplitFlapScoreboard({ 
   homeScore, 
@@ -24,52 +18,19 @@ export default function SplitFlapScoreboard({
   className = '' 
 }: SplitFlapScoreboardProps) {
   const boardRef = useRef<HTMLDivElement>(null)
-  const [displayScores, setDisplayScores] = useState({ home: 0, visitor: 0 })
   const [isAnimating, setIsAnimating] = useState(false)
 
-  // Update scores with animation
-  useEffect(() => {
-    if (homeScore !== displayScores.home || visitorScore !== displayScores.visitor) {
-      updateScoreDisplay(homeScore, visitorScore)
-    }
-  }, [homeScore, visitorScore])
-
-  const updateScoreDisplay = async (home: number, visitor: number) => {
-    if (!boardRef.current || isAnimating) return
-    
-    setIsAnimating(true)
-    const digits = boardRef.current.querySelectorAll('.digit')
-    
-    // Format scores to 2 digits
-    const homeStr = Math.min(99, Math.max(0, home)).toString().padStart(2, '0')
-    const visitorStr = Math.min(99, Math.max(0, visitor)).toString().padStart(2, '0')
-    const targetValues = [
-      parseInt(homeStr[0]), parseInt(homeStr[1]), 
-      parseInt(visitorStr[0]), parseInt(visitorStr[1])
-    ]
-    
-    // Animate all digits simultaneously
-    await Promise.all(
-      Array.from(digits).map((digit, index) => 
-        cycleTo(digit as HTMLElement, targetValues[index])
-      )
-    )
-    
-    setDisplayScores({ home, visitor })
-    setIsAnimating(false)
-  }
-
-  // Create DOM elements for flip animation
+  // DOM builders - identical to sample code
   const makeValSpan = (val: number) => {
     const span = document.createElement('span')
-    span.className = 'split-flap-val'
+    span.className = 'val'
     span.textContent = val.toString()
     return span
   }
 
   const makeHalf = (which: 'top' | 'bottom', val: number) => {
     const half = document.createElement('div')
-    half.className = `split-flap-half split-flap-half-${which}`
+    half.className = `half ${which}`
     half.appendChild(makeValSpan(val))
     return half
   }
@@ -83,16 +44,16 @@ export default function SplitFlapScoreboard({
 
   const makeFlipPiece = (which: 'top' | 'bottom', val: number) => {
     const piece = document.createElement('div')
-    piece.className = `split-flap-flip split-flap-flip-${which}`
+    piece.className = `flip ${which}`
     piece.appendChild(makeValSpan(val))
     return piece
   }
 
-  // Single digit flip animation
+  // Flip animations - identical to sample code
   const flipOnce = (el: HTMLElement, nextVal: number): Promise<void> => {
     return new Promise(resolve => {
-      const topStatic = el.querySelector('.split-flap-half-top .split-flap-val') as HTMLElement
-      const bottomStatic = el.querySelector('.split-flap-half-bottom .split-flap-val') as HTMLElement
+      const topStatic = el.querySelector('.half.top .val') as HTMLElement
+      const bottomStatic = el.querySelector('.half.bottom .val') as HTMLElement
       
       const curr = parseInt(el.dataset.value || '0')
       
@@ -102,25 +63,20 @@ export default function SplitFlapScoreboard({
       el.appendChild(topFlip)
       el.appendChild(bottomFlip)
       
-      let animationsComplete = 0
-      const onAnimationComplete = () => {
-        animationsComplete++
-        if (animationsComplete === 2) {
-          topStatic.textContent = nextVal.toString()
-          bottomStatic.textContent = nextVal.toString()
-          topFlip.remove()
-          bottomFlip.remove()
-          el.dataset.value = nextVal.toString()
-          resolve()
-        }
-      }
+      topFlip.addEventListener('animationend', () => {
+        topStatic.textContent = nextVal.toString()
+        topFlip.remove()
+      }, { once: true })
       
-      topFlip.addEventListener('animationend', onAnimationComplete, { once: true })
-      bottomFlip.addEventListener('animationend', onAnimationComplete, { once: true })
+      bottomFlip.addEventListener('animationend', () => {
+        bottomStatic.textContent = nextVal.toString()
+        bottomFlip.remove()
+        el.dataset.value = nextVal.toString()
+        resolve()
+      }, { once: true })
     })
   }
 
-  // Cycle through digits like a real split-flap display
   const cycleTo = async (el: HTMLElement, targetVal: number): Promise<void> => {
     const target = targetVal % 10
     let current = parseInt(el.dataset.value || '0') % 10
@@ -134,16 +90,47 @@ export default function SplitFlapScoreboard({
     }
   }
 
+  // Update the score display with animation
+  const updateScore = async (home: number, visitor: number) => {
+    if (!boardRef.current || isAnimating) return
+    
+    setIsAnimating(true)
+    
+    // Format scores to 2 digits
+    const homeStr = Math.min(99, Math.max(0, home)).toString().padStart(2, '0')
+    const visitorStr = Math.min(99, Math.max(0, visitor)).toString().padStart(2, '0')
+    
+    const targetValues = [
+      parseInt(homeStr[0]), parseInt(homeStr[1]),  // Home score
+      parseInt(visitorStr[0]), parseInt(visitorStr[1])  // Visitor score
+    ]
+    
+    const digits = boardRef.current.querySelectorAll('.digit')
+    
+    try {
+      // Animate all digits simultaneously (like in sample code)
+      await Promise.all(
+        Array.from(digits).map((digit, index) => 
+          cycleTo(digit as HTMLElement, targetValues[index])
+        )
+      )
+    } finally {
+      setIsAnimating(false)
+    }
+  }
+
   // Initialize digits on mount
   useEffect(() => {
     if (!boardRef.current) return
     
     const digits = boardRef.current.querySelectorAll('.digit')
     digits.forEach(digit => setupDigit(digit as HTMLElement, 0))
-    
-    // Set initial scores after a short delay
-    setTimeout(() => updateScoreDisplay(homeScore, visitorScore), 200)
   }, [])
+
+  // Update when score changes
+  useEffect(() => {
+    updateScore(homeScore, visitorScore)
+  }, [homeScore, visitorScore])
 
   return (
     <>
@@ -161,59 +148,23 @@ export default function SplitFlapScoreboard({
           --gap-colon: calc(var(--card-width) * 0.24);
           --gap-label: calc(var(--card-width) * 0.22);
           --label-font: calc(var(--card-height) * 0.28);
-          --label-weight: 800;
-          --label-track: 1px;
         }
 
-        .split-flap-board-wrap {
+        .board-wrap {
           display: inline-block;
           transform-origin: center center;
           margin: 4px;
         }
 
-        .split-flap-board {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0;
-          max-width: 100%;
-          padding: 15px;
-        }
-
-        .split-flap-label {
-          flex: 1 1 0;
-          min-width: 0;
-          font-size: var(--label-font);
-          font-weight: var(--label-weight);
-          letter-spacing: var(--label-track);
-          font-family: 'Courier New', Courier, monospace;
-          user-select: none;
-          white-space: nowrap;
-          line-height: 1;
-          opacity: 0.98;
-          color: white;
-          overflow: visible;
-        }
-
-        .split-flap-label-home {
-          text-align: right;
-          padding-right: var(--gap-label);
-        }
-
-        .split-flap-label-visitor {
-          text-align: left;
-          padding-left: var(--gap-label);
-        }
-
-        .split-flap-score {
-          flex: 0 0 auto;
+        .score {
           display: flex;
           align-items: center;
           justify-content: center;
           gap: var(--gap-small);
+          padding: 15px;
         }
 
-        .split-flap-colon {
+        .colon {
           font-variant-numeric: tabular-nums;
           font-weight: 800;
           font-size: calc(var(--digit-font) * 0.9);
@@ -226,7 +177,8 @@ export default function SplitFlapScoreboard({
           margin: 0 var(--gap-colon);
         }
 
-        .split-flap-digit {
+        /* ---------- SPLIT-FLAP DIGIT STYLES ---------- */
+        .digit {
           position: relative;
           width: var(--card-width);
           height: var(--card-height);
@@ -241,8 +193,7 @@ export default function SplitFlapScoreboard({
           overflow: hidden;
           flex: 0 0 auto;
         }
-
-        .split-flap-digit::after {
+        .digit::after {
           content: "";
           position: absolute;
           left: 0;
@@ -251,10 +202,10 @@ export default function SplitFlapScoreboard({
           height: var(--hinge-thickness);
           background: linear-gradient(90deg, rgba(255,255,255,0.08), rgba(0,0,0,0.35), rgba(255,255,255,0.08));
           pointer-events: none;
-          z-index: 10;
+          z-index: 1;
         }
 
-        .split-flap-half {
+        .half {
           position: absolute;
           left: 0;
           right: 0;
@@ -263,18 +214,16 @@ export default function SplitFlapScoreboard({
           display: block;
           background: var(--card-bg);
         }
-
-        .split-flap-half-top {
+        .half.top {
           top: 0;
-          clip-path: inset(0 0 50% 0 round var(--card-radius) var(--card-radius) 0 0);
+          clip-path: inset(0 0 0 0 round var(--card-radius) var(--card-radius) 0 0);
         }
-
-        .split-flap-half-bottom {
+        .half.bottom {
           bottom: 0;
-          clip-path: inset(50% 0 0 0 round 0 0 var(--card-radius) var(--card-radius));
+          clip-path: inset(0 0 0 0 round 0 0 var(--card-radius) var(--card-radius));
         }
 
-        .split-flap-val {
+        .val {
           height: var(--card-height);
           display: flex;
           align-items: center;
@@ -284,21 +233,11 @@ export default function SplitFlapScoreboard({
           line-height: 1;
           font-variant-numeric: tabular-nums;
           user-select: none;
-          position: absolute;
-          left: 0;
-          right: 0;
-          top: 0;
         }
+        .half.top .val { transform: translateY(0); }
+        .half.bottom .val { transform: translateY(-50%); }
 
-        .split-flap-half-top .split-flap-val {
-          transform: translateY(0);
-        }
-
-        .split-flap-half-bottom .split-flap-val {
-          transform: translateY(-100%);
-        }
-
-        .split-flap-flip {
+        .flip {
           position: absolute;
           left: 0;
           right: 0;
@@ -310,8 +249,7 @@ export default function SplitFlapScoreboard({
           transform-style: preserve-3d;
           color: var(--digit-color);
         }
-
-        .split-flap-flip .split-flap-val {
+        .flip .val {
           height: var(--card-height);
           display: flex;
           align-items: center;
@@ -320,44 +258,56 @@ export default function SplitFlapScoreboard({
           font-size: var(--digit-font);
           line-height: 1;
           font-variant-numeric: tabular-nums;
-          position: absolute;
-          left: 0;
-          right: 0;
-          top: 0;
         }
-
-        .split-flap-flip-top {
+        .flip.top {
           top: 0;
           transform-origin: center bottom;
-          clip-path: inset(0 0 50% 0 round var(--card-radius) var(--card-radius) 0 0);
-          animation: split-flap-flip-top 280ms ease-in forwards;
+          clip-path: inset(0 0 0 0 round var(--card-radius) var(--card-radius) 0 0);
+          animation: flip-top 280ms ease-in forwards;
         }
+        .flip.top .val { transform: translateY(0); }
+        @keyframes flip-top { 0% { transform: rotateX(0deg); } 100% { transform: rotateX(-90deg); } }
 
-        .split-flap-flip-top .split-flap-val {
-          transform: translateY(0);
-        }
-
-        @keyframes split-flap-flip-top {
-          0% { transform: rotateX(0deg); }
-          100% { transform: rotateX(-90deg); }
-        }
-
-        .split-flap-flip-bottom {
+        .flip.bottom {
           bottom: 0;
           transform-origin: center top;
-          clip-path: inset(50% 0 0 0 round 0 0 var(--card-radius) var(--card-radius));
+          clip-path: inset(0 0 0 0 round 0 0 var(--card-radius) var(--card-radius));
           transform: rotateX(90deg);
-          animation: split-flap-flip-bottom 320ms ease-out forwards;
+          animation: flip-bottom 320ms ease-out forwards;
           animation-delay: 260ms;
         }
+        .flip.bottom .val { transform: translateY(-50%); }
+        @keyframes flip-bottom { 0% { transform: rotateX(90deg); } 100% { transform: rotateX(0deg); } }
 
-        .split-flap-flip-bottom .split-flap-val {
-          transform: translateY(-100%);
+        /* Labels and layout */
+        .split-flap-board {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0;
+          padding: 15px;
         }
 
-        @keyframes split-flap-flip-bottom {
-          0% { transform: rotateX(90deg); }
-          100% { transform: rotateX(0deg); }
+        .split-flap-label {
+          flex: 1 1 0;
+          font-size: var(--label-font);
+          font-weight: 800;
+          letter-spacing: 1px;
+          font-family: 'Courier New', Courier, monospace;
+          user-select: none;
+          white-space: nowrap;
+          line-height: 1;
+          color: white;
+        }
+
+        .split-flap-label-home {
+          text-align: right;
+          padding-right: var(--gap-label);
+        }
+
+        .split-flap-label-visitor {
+          text-align: left;
+          padding-left: var(--gap-label);
         }
 
         @media (max-width: 768px) {
@@ -372,21 +322,22 @@ export default function SplitFlapScoreboard({
           }
         }
       `}</style>
+      
       <div className={`split-flap-scoreboard ${className}`}>
-        <div className="split-flap-board-wrap" ref={boardRef}>
-          <div className="split-flap-board">
-            <div className="split-flap-label split-flap-label-home">HOME</div>
-            
-            <div className="split-flap-score">
-              <div className="digit split-flap-digit" data-value="0"></div>
-              <div className="digit split-flap-digit" data-value="0"></div>
-              <div className="split-flap-colon">:</div>
-              <div className="digit split-flap-digit" data-value="0"></div>
-              <div className="digit split-flap-digit" data-value="0"></div>
+        <div className="split-flap-board">
+          <div className="split-flap-label split-flap-label-home">HOME</div>
+          
+          <div className="board-wrap" ref={boardRef}>
+            <div className="score">
+              <div className="digit" data-value="0"></div>
+              <div className="digit" data-value="0"></div>
+              <div className="colon">:</div>
+              <div className="digit" data-value="0"></div>
+              <div className="digit" data-value="0"></div>
             </div>
-            
-            <div className="split-flap-label split-flap-label-visitor">VISITOR</div>
           </div>
+          
+          <div className="split-flap-label split-flap-label-visitor">VISITOR</div>
         </div>
       </div>
     </>
