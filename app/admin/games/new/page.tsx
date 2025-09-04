@@ -246,7 +246,8 @@ export default function NewGamePage() {
                   required
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-3 bg-white text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500 caret-black"
+                  style={{ backgroundColor: '#ffffff', color: '#000000', caretColor: '#000000' }}
                   placeholder={`My Awesome ${selectedGameType?.name} Game`}
                 />
               </div>
@@ -255,10 +256,11 @@ export default function NewGamePage() {
                 <select
                   value={isActive ? 'active' : 'inactive'}
                   onChange={(e) => setIsActive(e.target.value === 'active')}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-3 bg-white text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  style={{ backgroundColor: '#ffffff', color: '#000000' }}
                 >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
+                  <option value="active" className="bg-white text-black">Active</option>
+                  <option value="inactive" className="bg-white text-black">Inactive</option>
                 </select>
               </div>
             </div>
@@ -268,7 +270,8 @@ export default function NewGamePage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-3 bg-white text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500 caret-black"
+                style={{ backgroundColor: '#ffffff', color: '#000000', caretColor: '#000000' }}
                 placeholder="Describe your game..."
               />
             </div>
@@ -286,10 +289,11 @@ export default function NewGamePage() {
                     <select
                       value={maxFlipsPerRound}
                       onChange={(e) => setMaxFlipsPerRound(Number(e.target.value))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-4 py-3 bg-white text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      style={{ backgroundColor: '#ffffff', color: '#000000' }}
                     >
                       {[3, 4, 5, 6, 7].map(num => (
-                        <option key={num} value={num}>{num} flip{num !== 1 ? 's' : ''}</option>
+                        <option key={num} value={num} className="bg-white text-black">{num} flip{num !== 1 ? 's' : ''}</option>
                       ))}
                     </select>
                   </div>
@@ -298,10 +302,11 @@ export default function NewGamePage() {
                     <select
                       value={maxRounds}
                       onChange={(e) => setMaxRounds(Number(e.target.value))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-4 py-3 bg-white text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      style={{ backgroundColor: '#ffffff', color: '#000000' }}
                     >
                       {[1, 2, 3, 4, 5].map(num => (
-                        <option key={num} value={num}>{num} round{num !== 1 ? 's' : ''}</option>
+                        <option key={num} value={num} className="bg-white text-black">{num} round{num !== 1 ? 's' : ''}</option>
                       ))}
                     </select>
                   </div>
@@ -310,11 +315,12 @@ export default function NewGamePage() {
                     <select
                       value={theme}
                       onChange={(e) => setTheme(e.target.value as any)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-4 py-3 bg-white text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      style={{ backgroundColor: '#ffffff', color: '#000000' }}
                     >
-                      <option value="default">Default</option>
-                      <option value="colorful">Colorful</option>
-                      <option value="minimal">Minimal</option>
+                      <option value="default" className="bg-white text-black">Default</option>
+                      <option value="colorful" className="bg-white text-black">Colorful</option>
+                      <option value="minimal" className="bg-white text-black">Minimal</option>
                     </select>
                   </div>
                 </div>
@@ -346,7 +352,7 @@ export default function NewGamePage() {
                             type="checkbox"
                             checked={hexagon.hasHiddenStar}
                             onChange={(e) => updateHexagon(index, 'hasHiddenStar', e.target.checked)}
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 bg-white"
                           />
                           <span className="text-sm text-gray-600">
                             {hexagon.hasHiddenStar ? '⭐ Has star' : '🍄 Has mushroom'}
@@ -357,7 +363,8 @@ export default function NewGamePage() {
                         type="text"
                         value={hexagon.text}
                         onChange={(e) => updateHexagon(index, 'text', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 bg-white text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500 caret-black"
+                        style={{ backgroundColor: '#ffffff', color: '#000000', caretColor: '#000000' }}
                         placeholder={`Text for card ${index + 1}`}
                       />
                     </div>

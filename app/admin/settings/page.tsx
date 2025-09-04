@@ -504,11 +504,12 @@ export default function SettingsPage() {
                             setTheme(newTheme)
                             handleInputChange('theme', newTheme)
                           }}
-                          className="w-48 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                          className="w-48 px-3 py-2 bg-white text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          style={{ backgroundColor: '#ffffff', color: '#000000' }}
                         >
-                          <option value="light">Light</option>
-                          <option value="dark">Dark</option>
-                          <option value="auto">Auto (System)</option>
+                          <option value="light" className="bg-white text-black">Light</option>
+                          <option value="dark" className="bg-white text-black">Dark</option>
+                          <option value="auto" className="bg-white text-black">Auto (System)</option>
                         </select>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                           Choose your preferred theme. Auto will follow your system preference.
@@ -524,13 +525,14 @@ export default function SettingsPage() {
                             type="color"
                             value={settings.primaryColor}
                             onChange={(e) => handleInputChange('primaryColor', e.target.value)}
-                            className="w-12 h-10 border border-gray-300 rounded cursor-pointer"
+                            className="w-12 h-10 bg-white border border-gray-300 rounded cursor-pointer"
                           />
                           <input
                             type="text"
                             value={settings.primaryColor}
                             onChange={(e) => handleInputChange('primaryColor', e.target.value)}
-                            className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-32 px-3 py-2 bg-white text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500 caret-black"
+                            style={{ backgroundColor: '#ffffff', color: '#000000', caretColor: '#000000' }}
                           />
                         </div>
                       </div>
