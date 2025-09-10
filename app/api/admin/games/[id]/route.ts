@@ -179,14 +179,37 @@ export async function PUT(
       // Create new rewards
       if (rewards.length > 0) {
         const rewardPromises = rewards.map((reward: any) => {
+          // Map simplified admin reward to full Reward schema
+          let mappedType: any = 'CUSTOM'
+          const configuration: any = {}
+          if (reward.type === 'POINTS') {
+            mappedType = 'POINTS'
+            configuration.points = {
+              amount: Number(reward.value) || 0,
+              currency: 'points'
+            }
+          } else if (reward.type === 'DISCOUNT') {
+            mappedType = 'CUSTOM'
+            configuration.custom = {
+              title: reward.title,
+              description: reward.description || `Discount: ${reward.value}`
+            }
+          } else {
+            configuration.custom = {
+              title: reward.title,
+              description: reward.description || ''
+            }
+          }
           const rewardData = {
             gameId: id,
             title: reward.title,
             description: reward.description || '',
-            type: reward.type,
-            value: reward.value,
-            maxQuantity: reward.maxQuantity,
-            isActive: reward.isActive ?? true
+            type: mappedType,
+            configuration,
+            totalQuantity: reward.maxQuantity ?? null,
+            remainingQuantity: reward.maxQuantity ?? null,
+            isActive: reward.isActive ?? true,
+            createdBy: 'admin'
           }
           const newReward = new RewardModel(rewardData)
           return newReward.save()
