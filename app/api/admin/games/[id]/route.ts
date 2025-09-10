@@ -146,11 +146,14 @@ export async function PUT(
         processedConfiguration.maxAttemptsPerUser = 3 // Default value
       }
       
-      updateData.configuration = processedConfiguration
       // One-time migration: drop legacy general config when platform present
-      if (processedConfiguration.platform) {
-        (updateData as any).$unset = { 'configuration.general': '' }
+      if (processedConfiguration.platform && 'general' in processedConfiguration) {
+        // Remove legacy field directly to avoid MongoDB operator conflicts
+        delete (processedConfiguration as any).general
       }
+
+      // Set cleaned configuration
+      updateData.configuration = processedConfiguration
     } else if (maxAttemptsPerUser !== undefined) {
       // If we only have maxAttemptsPerUser, update just that nested property
       updateData['configuration.maxAttemptsPerUser'] = maxAttemptsPerUser
