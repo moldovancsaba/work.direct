@@ -2,6 +2,39 @@
 
 import React from 'react'
 
+// SimpleTextInput — stable component type (declared at module scope)
+// What: Renders a labeled input/textarea.
+// Why: Avoids redefining component types on every render which caused remounts and focus loss.
+interface SimpleTextInputProps {
+  code: string
+  label: string
+  placeholder?: string
+  multiline?: boolean
+  value: string
+  onChange: (value: string) => void
+}
+
+const SimpleTextInput = ({ code, label, placeholder, multiline, value, onChange }: SimpleTextInputProps) => (
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1">{label} ({code})</label>
+    {multiline ? (
+      <textarea
+        className="w-full px-3 py-2 border rounded-md min-h-20"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder || ''}
+      />
+    ) : (
+      <input
+        className="w-full px-3 py-2 border rounded-md"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder || ''}
+      />
+    )}
+  </div>
+)
+
 interface PlatformSettingsFormProps {
   texts: Record<string, string>
   styles: any
@@ -33,16 +66,8 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
     onStylesChange(next)
   }
 
-  const TextInput = ({ code, label, placeholder, multiline }: { code: string, label: string, placeholder?: string, multiline?: boolean }) => (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label} ({code})</label>
-      {multiline ? (
-        <textarea className="w-full px-3 py-2 border rounded-md min-h-20" value={getT(code)} onChange={e => setT(code, e.target.value)} placeholder={placeholder || ''} />
-      ) : (
-        <input className="w-full px-3 py-2 border rounded-md" value={getT(code)} onChange={e => setT(code, e.target.value)} placeholder={placeholder || ''} />
-      )}
-    </div>
-  )
+  // Removed inline TextInput component to prevent remounts on each render.
+  // Use module-scoped SimpleTextInput instead.
 
   return (
     <div className="space-y-8">
@@ -50,10 +75,10 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
       <div className="bg-slate-50 p-4 rounded-lg">
         <h3 className="text-md font-medium text-gray-800 mb-2">Hero Settings</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <TextInput code="TEXT_10" label="Welcome Title" placeholder="Welcome" />
-          <TextInput code="TEXT_20" label="Rules Title" placeholder="Game Rules" />
-          <TextInput code="TEXT_30" label="Game Title" placeholder="Game" />
-          <TextInput code="TEXT_40" label="Result Title" placeholder="Results" />
+          <SimpleTextInput code="TEXT_10" label="Welcome Title" placeholder="Welcome" value={getT('TEXT_10')} onChange={(v)=> setT('TEXT_10', v)} />
+          <SimpleTextInput code="TEXT_20" label="Rules Title" placeholder="Game Rules" value={getT('TEXT_20')} onChange={(v)=> setT('TEXT_20', v)} />
+          <SimpleTextInput code="TEXT_30" label="Game Title" placeholder="Game" value={getT('TEXT_30')} onChange={(v)=> setT('TEXT_30', v)} />
+          <SimpleTextInput code="TEXT_40" label="Result Title" placeholder="Results" value={getT('TEXT_40')} onChange={(v)=> setT('TEXT_40', v)} />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div>
@@ -71,15 +96,15 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
       <div className="bg-blue-50 p-4 rounded-lg">
         <h3 className="text-md font-medium text-gray-800 mb-2">Welcome Main</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <TextInput code="TEXT_11" label="Description" />
-          <TextInput code="TEXT_12" label="Ask Name (H2)" />
-          <TextInput code="TEXT_13" label="Your Name Placeholder" />
-          <TextInput code="TEXT_14" label="Ask Email (H2)" />
-          <TextInput code="TEXT_15" label="Your Email Placeholder" />
-          <TextInput code="TEXT_16" label="Ask Phone (H2)" />
-          <TextInput code="TEXT_17" label="Your Phone Placeholder" />
-          <TextInput code="TEXT_18" label="Next With Login (Button)" />
-          <TextInput code="TEXT_19" label="Next Without Login (Button)" />
+          <SimpleTextInput code="TEXT_11" label="Description" value={getT('TEXT_11')} onChange={(v)=> setT('TEXT_11', v)} />
+          <SimpleTextInput code="TEXT_12" label="Ask Name (H2)" value={getT('TEXT_12')} onChange={(v)=> setT('TEXT_12', v)} />
+          <SimpleTextInput code="TEXT_13" label="Your Name Placeholder" value={getT('TEXT_13')} onChange={(v)=> setT('TEXT_13', v)} />
+          <SimpleTextInput code="TEXT_14" label="Ask Email (H2)" value={getT('TEXT_14')} onChange={(v)=> setT('TEXT_14', v)} />
+          <SimpleTextInput code="TEXT_15" label="Your Email Placeholder" value={getT('TEXT_15')} onChange={(v)=> setT('TEXT_15', v)} />
+          <SimpleTextInput code="TEXT_16" label="Ask Phone (H2)" value={getT('TEXT_16')} onChange={(v)=> setT('TEXT_16', v)} />
+<SimpleTextInput code="TEXT_17" label="Your Phone Placeholder" value={getT('TEXT_17')} onChange={(v)=> setT('TEXT_17', v)} />
+          <SimpleTextInput code="TEXT_18" label="Next With Login (Button)" value={getT('TEXT_18')} onChange={(v)=> setT('TEXT_18', v)} />
+          <SimpleTextInput code="TEXT_19" label="Next Without Login (Button)" value={getT('TEXT_19')} onChange={(v)=> setT('TEXT_19', v)} />
         </div>
       </div>
 
@@ -87,11 +112,11 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
       <div className="bg-purple-50 p-4 rounded-lg">
         <h3 className="text-md font-medium text-gray-800 mb-2">Rules Main</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <TextInput code="TEXT_21" label="Rules Title (H2)" />
-          <TextInput code="TEXT_22" label="Game Rules (multi-line)" multiline />
-          <TextInput code="TEXT_23" label="Win Title (H2)" />
-          <TextInput code="TEXT_24" label="Win Rules (multi-line)" multiline />
-          <TextInput code="TEXT_25" label="Next Play (Button)" />
+          <SimpleTextInput code="TEXT_21" label="Rules Title (H2)" value={getT('TEXT_21')} onChange={(v)=> setT('TEXT_21', v)} />
+          <SimpleTextInput code="TEXT_22" label="Game Rules (multi-line)" multiline value={getT('TEXT_22')} onChange={(v)=> setT('TEXT_22', v)} />
+          <SimpleTextInput code="TEXT_23" label="Win Title (H2)" value={getT('TEXT_23')} onChange={(v)=> setT('TEXT_23', v)} />
+          <SimpleTextInput code="TEXT_24" label="Win Rules (multi-line)" multiline value={getT('TEXT_24')} onChange={(v)=> setT('TEXT_24', v)} />
+          <SimpleTextInput code="TEXT_25" label="Next Play (Button)" value={getT('TEXT_25')} onChange={(v)=> setT('TEXT_25', v)} />
         </div>
       </div>
 
@@ -99,12 +124,12 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
       <div className="bg-yellow-50 p-4 rounded-lg">
         <h3 className="text-md font-medium text-gray-800 mb-2">Result Main</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <TextInput code="TEXT_41" label="Participated (P)" />
-          <TextInput code="TEXT_42" label="CTA Title (H1)" />
-          <TextInput code="TEXT_43" label="CTA Description (P)" />
-          <TextInput code="TEXT_44" label="CTA Action (Button)" />
-          <TextInput code="TEXT_45" label="Invite Friend (Button)" />
-          <TextInput code="TEXT_46" label="Play Again (Button)" />
+          <SimpleTextInput code="TEXT_41" label="Participated (P)" value={getT('TEXT_41')} onChange={(v)=> setT('TEXT_41', v)} />
+          <SimpleTextInput code="TEXT_42" label="CTA Title (H1)" value={getT('TEXT_42')} onChange={(v)=> setT('TEXT_42', v)} />
+          <SimpleTextInput code="TEXT_43" label="CTA Description (P)" value={getT('TEXT_43')} onChange={(v)=> setT('TEXT_43', v)} />
+          <SimpleTextInput code="TEXT_44" label="CTA Action (Button)" value={getT('TEXT_44')} onChange={(v)=> setT('TEXT_44', v)} />
+          <SimpleTextInput code="TEXT_45" label="Invite Friend (Button)" value={getT('TEXT_45')} onChange={(v)=> setT('TEXT_45', v)} />
+          <SimpleTextInput code="TEXT_46" label="Play Again (Button)" value={getT('TEXT_46')} onChange={(v)=> setT('TEXT_46', v)} />
         </div>
       </div>
 
