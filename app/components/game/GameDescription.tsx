@@ -91,21 +91,21 @@ export default function GameDescription({
     
     return {
       rules: [
-        `🎮 ${starsHexaRules.maxFlipsPerRound} flips per round, ${starsHexaRules.totalRounds} rounds total`,
-        `⭐ Find all ${starsHexaRules.totalStars} hidden stars in a single round to win`,
-        `🔄 Cards flip back after ${starsHexaRules.autoFlipBackDelay / 1000} second if not all stars found`,
-        `⚡ Ultra-fast ${200}ms flip animations for lightning gameplay`
+        `${starsHexaRules.maxFlipsPerRound} flips per round, ${starsHexaRules.totalRounds} rounds total`,
+        `Find all ${starsHexaRules.totalStars} hidden stars in a single round to win`,
+        `Cards flip back after ${starsHexaRules.autoFlipBackDelay / 1000} second if not all stars found`,
+        `Ultra-fast ${200}ms flip animations for lightning gameplay`
       ],
       winConditions: [
-        `🎯 Find ALL ${starsHexaRules.totalStars} stars in a single round`,
-        `⭐ Stars must be found within ${starsHexaRules.maxFlipsPerRound} flips`,
-        `🏆 Win immediately when all stars are revealed`
+        `Find ALL ${starsHexaRules.totalStars} stars in a single round`,
+        `Stars must be found within ${starsHexaRules.maxFlipsPerRound} flips`,
+        `Win immediately when all stars are revealed`
       ],
       currentState: isGameComplete 
-        ? "🎉 Game completed! Check your results." 
+        ? "Game completed! Check your results." 
         : attemptsRemaining > 0 
-          ? `🎲 ${attemptsRemaining} rounds remaining. Find all stars to win!`
-          : "🎮 Game in progress..."
+          ? `${attemptsRemaining} rounds remaining. Find all stars to win!`
+          : "Game in progress..."
     }
   }
   
@@ -115,17 +115,17 @@ export default function GameDescription({
     
     return {
       rules: [
-        `⚽ Select ${penaltyShootoutRules.playersToSelect} players from ${penaltyShootoutRules.totalPlayers} team members`,
-        `⚡ If draw, Visitor WINS!`
+        `Select ${penaltyShootoutRules.playersToSelect} players from ${penaltyShootoutRules.totalPlayers} team members`,
+        `If draw, Visitor WINS!`
       ],
       winConditions: [
-        `🏆 Score more goals than opponent`,
-        `⚽ Select players wisely - you can't see who scores until selected`,
-        `🔥 In overtime: first team to score more wins`
+        `Score more goals than opponent`,
+        `Select players wisely - you can't see who scores until selected`,
+        `In overtime: first team to score more wins`
       ],
       currentState: isGameComplete 
-        ? "🎉 Penalty shootout completed!" 
-        : "⚽ Ready for penalty shootout!"
+        ? "Penalty shootout completed!" 
+        : "Ready for penalty shootout!"
     }
   }
   
@@ -160,7 +160,6 @@ export default function GameDescription({
       {/* Description header */}
       <div className="mb-4">
         <h3 className="text-lg font-semibold text-white text-center flex items-center justify-center space-x-2">
-          <span>📋</span>
           <span>{title || 'How to Play'}</span>
         </h3>
       </div>
@@ -170,7 +169,7 @@ export default function GameDescription({
         {/* Game Rules Section */}
         {showRules && content.rules && content.rules.length > 0 && (
           <div>
-            <h4 className="text-white font-semibold mb-2 text-center">🎮 Game Rules:</h4>
+            <h4 className="text-white font-semibold mb-2 text-center">Game Rules:</h4>
             <div className="bg-white/10 rounded-lg p-4">
               <ul className="space-y-2">
                 {content.rules.map((rule, index) => (
@@ -186,7 +185,7 @@ export default function GameDescription({
         {/* Win Conditions Section */}
         {showWinConditions && content.winConditions && content.winConditions.length > 0 && (
           <div>
-            <h4 className="text-white font-semibold mb-2 text-center">🏆 Win Conditions:</h4>
+            <h4 className="text-white font-semibold mb-2 text-center">Win Conditions:</h4>
             <div className="bg-white/10 rounded-lg p-4">
               <ul className="space-y-2">
                 {content.winConditions.map((condition, index) => (
@@ -205,7 +204,7 @@ export default function GameDescription({
           <div className="mt-4">
             <div className="bg-white/5 rounded-lg p-3 border-l-4 border-blue-400">
               <p className="text-gray-300 text-xs">
-                💡 <strong>Tip:</strong> {gameType === 'STARS_HEXA' 
+<strong>Tip:</strong> {gameType === 'STARS_HEXA'
                   ? "Look for patterns in the hexagon layout to optimize your star-finding strategy."
                   : gameType === 'PENALTY_SHOOTOUT'
                     ? "Remember the formation: top striker, midfield, and defense players might have different scoring chances!"

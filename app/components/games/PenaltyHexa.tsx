@@ -4,6 +4,65 @@ import { useState, useEffect, useRef, useCallback, useReducer } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { PenaltyCard, GameOutcome } from '../../types'
 
+interface PenaltyTexts {
+  // Registration texts
+  gameTitle?: string
+  namePlaceholder?: string
+  emailPlaceholder?: string
+  phonePlaceholder?: string
+  contactRequiredError?: string
+  startPlayingButton?: string
+  tryWithoutRegText?: string
+  tryWithoutRegButton?: string
+  
+  // Game texts
+  gameRulesTitle?: string
+  gameRulesText?: string
+  winConditionsTitle?: string
+  winConditionsText?: string
+  gameDescription?: string
+  playButton?: string
+  
+  // Result texts
+  playAgainButton?: string
+  shareWithFriendsButton?: string
+  shareResultTitle?: string
+  copyLinkButton?: string
+  shareButton?: string
+  inviteFriendsButton?: string
+  
+  // Win/Loss texts
+  defeatIcon?: string
+  defeatTitle?: string
+  trialModeIndicator?: string
+  yourGoalsLabel?: string
+  opponentGoalsLabel?: string
+  visitorWinMessage?: string
+  drawIcon?: string
+  drawMessage?: string
+  visitorPenaltyWinMessage?: string
+  victoryIcon?: string
+  victoryTitle?: string
+  homeWinMessage?: string
+}
+
+interface PenaltyColors {
+  // Background colors
+  pageBackground?: string
+  blockBackground?: string
+  
+  // Button colors
+  primaryButton?: string
+  secondaryButton?: string
+  
+  // Game field colors
+  homeScoreCard?: string
+  visitorScoreCard?: string
+  gameField?: string
+  playerCard?: string
+  failedPenalty?: string
+}
+
 interface PenaltyHexaProps {
   players: PenaltyCard[]
   onFlip?: (playerId: string) => Promise<GameOutcome>
@@ -18,6 +77,8 @@ interface PenaltyHexaProps {
   gameId?: string
   isTrialMode?: boolean
   referralUuid?: string | null
+  customTexts?: Partial<PenaltyTexts>
+  customColors?: Partial<PenaltyColors>
 }
 
 // Game state interface for useReducer
@@ -170,7 +231,9 @@ export default function PenaltyHexa({
   theme = 'football',
   gameId,
   isTrialMode = false,
-  referralUuid
+  referralUuid,
+  customTexts = {},
+  customColors = {}
 }: PenaltyHexaProps) {
   const router = useRouter()
   const params = useParams()
@@ -278,7 +341,7 @@ export default function PenaltyHexa({
         foundAllStars: true,
         value: `${gameState.goalsScored}-${gameState.opponentScore}`,
         rewardIds: [],
-        message: `⚽ HOME won the penalty shootout ${gameState.goalsScored}-${gameState.opponentScore}!`
+        message: customTexts.homeWinMessage || `HOME won the penalty shootout ${gameState.goalsScored}-${gameState.opponentScore}!`
       } : {
         type: isDraw ? 'LOSE' : 'LOSE',
         hexagonId: 'game-complete',
@@ -288,8 +351,8 @@ export default function PenaltyHexa({
         value: `${gameState.goalsScored}-${gameState.opponentScore}`,
         rewardIds: [],
         message: isDraw 
-          ? `🎆 DRAW ${gameState.goalsScored}-${gameState.opponentScore} - VISITOR wins on penalties!`
-          : `💀 VISITOR won the penalty shootout ${gameState.goalsScored}-${gameState.opponentScore}`
+          ? (customTexts.visitorPenaltyWinMessage || `${customTexts.drawIcon || '='} ${customTexts.drawMessage || 'DRAW'} ${gameState.goalsScored}-${gameState.opponentScore} - VISITOR wins on penalties!`)
+          : (customTexts.visitorWinMessage || `VISITOR won the penalty shootout ${gameState.goalsScored}-${gameState.opponentScore}`)
       }
       
       // Complete the game after a short delay to show the flipped cards
@@ -526,8 +589,8 @@ export default function PenaltyHexa({
                 <polygon
                   points={verts.map(p => `${p.x},${p.y}`).join(' ')}
                   fill={player.isRevealed 
-                    ? (player.hasGoal ? '#c00000' : '#ffffff') // Blood red for goals, white for misses
-                    : '#c00000' // Blood red highlight for players at beginning
+                    ? (player.hasGoal ? (customColors.playerCard || '#c00000') : (customColors.failedPenalty || '#ffffff'))
+                    : (customColors.playerCard || '#c00000')
                   }
                   stroke="#ffffff"
                   strokeWidth={strokeW}
@@ -562,7 +625,7 @@ export default function PenaltyHexa({
               // Background hexagon (non-interactive)
               <polygon
                 points={verts.map(p => `${p.x},${p.y}`).join(' ')}
-                fill="#2ecc71" // Grass green background
+                fill={customColors.gameField || '#2ecc71'}
                 stroke="#ffffff"
                 strokeWidth={strokeW}
               />
@@ -582,7 +645,7 @@ export default function PenaltyHexa({
       className="relative w-full h-full"
       style={{
         minHeight: '100%',
-        backgroundColor: '#2ecc71' // Grass green solid background
+        backgroundColor: customColors.gameField || '#2ecc71'
       }}
     >
       {/* SVG Honeycomb Grid - EXACT like reference HTML */}

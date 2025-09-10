@@ -4,10 +4,17 @@ import GameModel from '../../../lib/models/Game'
 import RewardModel from '../../../lib/models/Reward'
 import ParticipantModel from '../../../lib/models/Participant'
 import GameResultModel from '../../../lib/models/GameResult'
+import { getAdminUser } from '../../../lib/auth'
 
-// GET all games
+// GET all games (admin only)
 export async function GET() {
   try {
+    // Admin auth guard — WHAT: ensure only authenticated admins can access; WHY: protect admin data
+    const user = await getAdminUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Admin authentication required' }, { status: 401 })
+    }
+
     await connectDB()
     
     const games = await GameModel.find({})
@@ -17,11 +24,16 @@ export async function GET() {
     // Get stats for each game
     const gamesWithStats = await Promise.all(
       games.map(async (game) => {
-        const [participantCount, gameResultCount, rewards] = await Promise.all([
-          ParticipantModel.countDocuments({ gameId: game._id }),
+        // Use GameResult distinct participants to avoid relying on missing gameId on Participant
+        // WHAT: Count unique participants per game via GameResult participantId distinct.
+        // WHY: Participant documents are global and do not store gameId; GameResult ties participants to games.
+        const [uniqueParticipants, gameResultCount, rewards] = await Promise.all([
+          GameResultModel.distinct('participantId', { gameId: game._id }),
           GameResultModel.countDocuments({ gameId: game._id }),
           RewardModel.find({ gameId: game._id })
         ])
+        
+        const participantCount = Array.isArray(uniqueParticipants) ? uniqueParticipants.length : 0
         
         return {
           ...game,
@@ -45,9 +57,15 @@ export async function GET() {
   }
 }
 
-// POST new game
+// POST new game (admin only)
 export async function POST(request: NextRequest) {
   try {
+    // Admin auth guard — WHAT/WHY as above
+    const user = await getAdminUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Admin authentication required' }, { status: 401 })
+    }
+
     await connectDB()
     
     const body = await request.json()

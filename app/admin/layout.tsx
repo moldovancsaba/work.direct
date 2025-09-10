@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useAdminAuth } from '../hooks/useAdminAuth'
 
 export default function AdminLayout({
   children,
@@ -9,6 +10,10 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+
+  // Allow unauthenticated access specifically to the login page to avoid redirect loops
+  const isLoginPage = pathname === '/admin/login'
+  const { user, loading, logout } = useAdminAuth()
 
   const navigation = [
     {
@@ -36,6 +41,28 @@ export default function AdminLayout({
       current: pathname.startsWith('/admin/settings')
     }
   ]
+
+  // Render login page content directly without gating
+  if (isLoginPage) {
+    return <>{children}</>
+  }
+
+  // Gate all other admin pages
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading admin…</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    // Hook will redirect to /admin/login
+    return null
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -80,6 +107,12 @@ export default function AdminLayout({
               >
                 View Site →
               </Link>
+              <button
+                onClick={logout}
+                className="text-sm text-red-600 hover:text-red-700"
+              >
+                Logout
+              </button>
               <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
                 <span className="text-white text-sm font-medium">A</span>
               </div>

@@ -2,6 +2,7 @@
 
 import React, { ReactNode } from 'react'
 import SplitFlapScoreboard from './SplitFlapScoreboard'
+import { HeroBlock, MainBlock } from '../play/Blocks'
 
 export interface GameLayoutProps {
   // Game identification
@@ -26,6 +27,9 @@ export interface GameLayoutProps {
   theme?: 'default' | 'purple' | 'blue' | 'colorful'
   backgroundGradient?: string
   containerClassName?: string
+  
+  // Penalty scoreboard (optional)
+  penaltyScore?: { home: number; visitor: number; homeBg?: string; visitorBg?: string; digitColor?: string; showLabels?: boolean; homeLabel?: string; visitorLabel?: string }
   
   // State management
   isLoading?: boolean
@@ -64,31 +68,19 @@ export default function GameLayout({
   theme = 'default',
   backgroundGradient,
   containerClassName,
+  penaltyScore,
   isLoading = false,
   isGameComplete = false,
   onPlayAgain
 }: GameLayoutProps) {
   
-  // Theme-based background gradients
-  const getBackgroundGradient = () => {
-    if (backgroundGradient) return backgroundGradient
-    
-    switch (theme) {
-      case 'purple':
-        return 'bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900'
-      case 'blue':
-        return 'bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900'
-      case 'colorful':
-        return 'bg-gradient-to-br from-pink-500 via-purple-600 to-indigo-600'
-      default:
-        return 'bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900'
-    }
-  }
-  
-  // Loading state
+// Loading state
   if (isLoading) {
     return (
-      <div className={`h-screen w-screen ${getBackgroundGradient()} flex flex-col items-center justify-center overflow-hidden`}>
+      <div
+        className="h-screen w-screen flex flex-col items-center justify-center overflow-hidden"
+        style={{ backgroundColor: '#000000FF', color: '#FFFFFFFF', fontFamily: '"Noto Sans", sans-serif' }}
+      >
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white mb-4 mx-auto"></div>
           <p className="text-white text-lg">🎮 Loading game...</p>
@@ -97,102 +89,90 @@ export default function GameLayout({
     )
   }
 
-  // Extract scores from subtitle for penalty shootout
-  const extractScores = () => {
-    if (gameType === 'PENALTY_SHOOTOUT' && subtitle.includes('HOME') && subtitle.includes('VISITOR')) {
-      const match = subtitle.match(/HOME (\d+) - (\d+) VISITOR/)
-      if (match) {
-        return {
-          home: parseInt(match[1], 10),
-          visitor: parseInt(match[2], 10)
-        }
-      }
-    }
-    return { home: 0, visitor: 0 }
-  }
-
-  const scores = extractScores()
+  // No subtitle parsing; use explicit penaltyScore when provided
 
   return (
-    <div className={`h-screen w-screen ${getBackgroundGradient()} flex flex-col overflow-hidden`}>
-      
-      {/* 1st Position: Compact Game Header */}
-      <div className="flex-shrink-0 text-center py-4 px-4">
-        <h1 className="text-2xl md:text-3xl font-bold text-white mb-1">
-          {titleIcon && <span className="mr-2">{titleIcon}</span>}
-          {title}
-        </h1>
-        
-        {/* Show SplitFlapScoreboard for penalty shootout, regular subtitle for others */}
-        {gameType === 'PENALTY_SHOOTOUT' && subtitle.includes('HOME') && subtitle.includes('VISITOR') ? (
-          <div className="flex justify-center mt-2">
-            <SplitFlapScoreboard 
-              homeScore={scores.home} 
-              visitorScore={scores.visitor}
-              className="scale-75 md:scale-90"
-            />
-          </div>
-        ) : (
-          <p className="text-lg md:text-xl text-gray-200">
+    <div
+      className="min-h-screen w-full"
+      style={{ backgroundColor: '#000000FF', color: '#FFFFFFFF', fontFamily: '"Noto Sans", sans-serif' }}
+    >
+{/* HERO (18%) */}
+<HeroBlock
+        title={penaltyScore ? undefined : `${titleIcon ? `${titleIcon} ` : ''}${title}`}
+        {...(penaltyScore ? { scoreboard: {
+          home: penaltyScore.home,
+          visitor: penaltyScore.visitor,
+          showLabels: penaltyScore.showLabels,
+          homeLabel: penaltyScore.homeLabel,
+          visitorLabel: penaltyScore.visitorLabel,
+          homeBg: penaltyScore.homeBg,
+          visitorBg: penaltyScore.visitorBg,
+          digitColor: penaltyScore.digitColor
+        }} : {})}
+      />
+
+      {/* MAIN (76%) */}
+      <MainBlock>
+        {/* Optional subtitle inside main content to keep hero strictly scoreboard cards */}
+        {subtitle && (
+          <p className="text-base md:text-lg mb-4" style={{ color: '#FFFFFFFF' }}>
             {subtitle}
           </p>
         )}
-      </div>
 
-      {/* 2nd Position: MAXIMIZED Game Content Area */}
-      <div className="flex-1 flex items-center justify-center p-2 min-h-0">
-        <div className="w-full h-full max-w-none flex items-center justify-center">
-          <div className={`${
-            gameType === 'PENALTY_SHOOTOUT' 
-              ? 'w-full h-full max-w-6xl max-h-6xl' 
-              : 'w-full h-full max-w-4xl max-h-4xl'
-          }`}>
-            {gameContent}
+        {/* Game content */}
+        <div className={`${
+          gameType === 'PENALTY_SHOOTOUT' 
+            ? 'w-full h-full max-w-6xl max-h-6xl' 
+            : 'w-full h-full max-w-4xl max-h-4xl'
+        }`}>
+          {gameContent}
+        </div>
+
+        {/* Status/Description rendered inside main to respect height contract */}
+        {(statusContent || descriptionContent) && (
+          <div className="mt-4 space-y-2">
+            {statusContent && (
+              <div className="p-3 text-sm" style={{ backgroundColor: '#FFFFFF1A', color: '#FFFFFFFF' }}>
+                {statusContent}
+              </div>
+            )}
+            {descriptionContent && (
+              <div className="p-3 text-sm" style={{ backgroundColor: '#FFFFFF1A', color: '#FFFFFFFF' }}>
+                {descriptionContent}
+              </div>
+            )}
           </div>
-        </div>
-      </div>
+        )}
 
-      {/* 3rd & 4th Position: Compact status/description at bottom if needed */}
-      {(statusContent || descriptionContent) && (
-        <div className="flex-shrink-0 px-4 pb-4 max-h-32 overflow-y-auto">
-          {statusContent && (
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 mb-2 text-sm">
-              {statusContent}
-            </div>
-          )}
-          {descriptionContent && (
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-sm">
-              {descriptionContent}
-            </div>
-          )}
-        </div>
-      )}
-      
-      {/* Results page actions */}
-      {isGameComplete && onPlayAgain && (
-        <div className="flex-shrink-0 p-4">
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4">
-            <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-              <button
-                onClick={onPlayAgain}
-                className="px-6 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg text-sm"
-              >
-                🔄 Play Again
-              </button>
-              
-              <button
-                onClick={() => {
-                  const currentUrl = window.location.href
-                  navigator.clipboard.writeText(currentUrl)
-                }}
-                className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg text-sm"
-              >
-                📤 Share Game
-              </button>
+        {/* Results page actions (when applicable) */}
+        {isGameComplete && onPlayAgain && (
+          <div className="mt-4">
+            <div className="p-4" style={{ backgroundColor: '#FFFFFF33' }}>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+                <button
+                  onClick={onPlayAgain}
+                  className="px-6 py-2 text-white font-bold transition-all duration-200 transform hover:scale-105 shadow-lg text-sm"
+                  style={{ backgroundColor: '#22C55E' }}
+                >
+                  🔄 Play Again
+                </button>
+                
+                <button
+                  onClick={() => {
+                    const currentUrl = window.location.href
+                    navigator.clipboard.writeText(currentUrl)
+                  }}
+                  className="px-6 py-2 text-white font-bold transition-all duration-200 transform hover:scale-105 shadow-lg text-sm"
+                  style={{ backgroundColor: '#4F46E5' }}
+                >
+                  📤 Share Game
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </MainBlock>
     </div>
   )
 }

@@ -17,6 +17,10 @@ interface StarsHexaProps {
   gameId?: string
   isTrialMode?: boolean
   referralUuid?: string | null
+  winEmoji?: string
+  loseEmoji?: string
+  // HUD updater for parent to show stars remaining : flips remaining in hero scoreboard
+  onHUDUpdate?: (starsRemaining: number, flipsRemaining: number) => void
 }
 
 // Game state interface for useReducer
@@ -142,7 +146,10 @@ export default function StarsHexa({
   theme = 'default',
   gameId,
   isTrialMode = false,
-  referralUuid
+  referralUuid,
+  winEmoji = '⭐️',
+  loseEmoji = '🍄',
+  onHUDUpdate
 }: StarsHexaProps) {
   const router = useRouter()
   const params = useParams()
@@ -211,6 +218,15 @@ export default function StarsHexa({
       })
     }
   }, [hexagons])
+
+  // Notify parent HUD of current stars/flips remaining
+  useEffect(() => {
+    if (!onHUDUpdate) return
+    const flipsPerRoundLocal = maxFlipsPerAttempt || maxFlipsPerRound
+    const starsRemaining = Math.max(0, gameState.totalStars - gameState.starsFound)
+    const flipsRemaining = Math.max(0, flipsPerRoundLocal - gameState.flipsUsed)
+    onHUDUpdate(starsRemaining, flipsRemaining)
+  }, [gameState.starsFound, gameState.flipsUsed, gameState.totalStars, maxFlipsPerAttempt, maxFlipsPerRound, onHUDUpdate])
 
   // Layout positioning using axial coordinates
   const getHexagonPosition = (position: number) => {
@@ -467,8 +483,8 @@ export default function StarsHexa({
                       }}
                     >
                       <div className="absolute inset-0 grid place-items-center" style={{ transform: 'rotate(-30deg)' }}>
-                        <div className="text-3xl">
-                          {hexagon.hasHiddenStar ? '⭐' : '🍄'}
+<div className="text-3xl font-bold text-white drop-shadow-lg select-none">
+                          {hexagon.hasHiddenStar ? (winEmoji || '⭐️') : (loseEmoji || '🍄')}
                         </div>
                       </div>
                     </div>
@@ -483,7 +499,7 @@ export default function StarsHexa({
       {/* Game completion indicator */}
       {gameState.isGameComplete && (
         <div className="absolute top-4 right-4 bg-white/90 text-gray-900 px-4 py-2 rounded-lg font-bold text-sm">
-          {gameState.starsFound >= gameState.totalStars ? '🎉 YOU WON!' : '💀 GAME OVER'}
+          {gameState.starsFound >= gameState.totalStars ? 'YOU WON!' : 'GAME OVER'}
         </div>
       )}
     </div>

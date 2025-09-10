@@ -149,6 +149,50 @@ export interface GameDescriptionProps {
 
 export type GameType = 'STARS_HEXA' | 'PENALTY_SHOOTOUT';
 
+// Lucky Wheel segment type used by the wheel component
+// What: Defines a segment with label and probability for spin logic
+// Why: Provides a reusable contract for wheel-based games and UIs.
+export interface WheelSegment {
+  id: string
+  label: string
+  probability?: number // Percentage (should sum to 100 across segments); defaults handled at runtime
+  color?: string
+  backgroundColor?: string
+  isWinning?: boolean
+  isActive?: boolean
+}
+
+// Simple wheel configuration (admin-friendly)
+export interface SimpleWheelConfiguration {
+  jackpotsCount: number // 1..6
+  wheel1Segments: number
+  wheel2Segments: number
+  wheel3Segments: number
+  totalSegmentsToUse: number
+  segmentNames: string[]
+}
+
+// Complete wheel configuration used by runtime/wheel
+export interface WheelOfFortuneConfiguration {
+  segments: WheelSegment[]
+  wheel1Segments: WheelSegment[]
+  wheel2Segments: WheelSegment[]
+  wheel3Segments: WheelSegment[]
+  spins: number
+  spinsPerGame: number
+  durationMs: number
+  pointerAt: 'top' | 'right' | 'bottom' | 'left'
+  size: number
+  theme: 'default' | 'colorful' | 'minimal'
+  allowImmediateReplay: boolean
+  gameRule: {
+    winCondition: string
+    jackpotLabel: string
+    collectionsNeeded: number
+  }
+  simpleConfig: SimpleWheelConfiguration
+}
+
 export type GameStatus = 'DRAFT' | 'ACTIVE' | 'PAUSED' | 'COMPLETED' | 'ARCHIVED'
 
 export interface HexagonCard {
@@ -173,13 +217,175 @@ export interface PenaltyCard {
 }
 
 
+export interface GeneralTexts {
+  // 🎯 Welcome & Registration
+  gameTitle?: string
+  namePlaceholder?: string
+  emailPlaceholder?: string
+  phonePlaceholder?: string
+  contactRequiredError?: string
+  startPlayingButton?: string
+  tryWithoutRegText?: string
+  tryWithoutRegButton?: string
+
+  // 📋 Game Rules & Description
+  gameRulesTitle?: string
+  playButton?: string
+  gameRulesText?: string
+  winConditionsTitle?: string
+  winConditionsText?: string
+  gameDescription?: string
+
+  // 🏆 Result Page & Result Messages
+  gameResultsTitle?: string
+  playAgainButton?: string
+  shareWithFriendsButton?: string
+  victoryResultMessage?: string
+  defeatResultMessage?: string
+
+  // 📊 Win/Loss Messages
+  defeatTitle?: string
+  victoryTitle?: string
+  drawMessage?: string
+
+  // ⚠️ Loading & Error Messages
+  loadingGameText?: string
+  gameNotFoundTitle?: string
+  gameNotFoundMessage?: string
+  tryAgainButton?: string
+  gameTypeNotSupportedTitle?: string
+  gameTypeNotSupportedMessage?: string
+}
+
+export interface GeneralColors {
+  // 🎨 Background Colors
+  pageBackground?: string
+  blockBackground?: string
+
+  // 🔘 Button Colors
+  primaryButton?: string
+  secondaryButton?: string
+
+  // ⚽ Game Field Colors
+  homeScoreCard?: string
+  visitorScoreCard?: string
+  gameField?: string
+  playerCard?: string
+  failedPenalty?: string
+}
+
+export interface PlatformTexts {
+  TEXT_10?: string
+  TEXT_20?: string
+  TEXT_30?: string
+  TEXT_40?: string
+  TEXT_11?: string
+  TEXT_12?: string
+  TEXT_13?: string
+  TEXT_14?: string
+  TEXT_15?: string
+  TEXT_16?: string
+  TEXT_17?: string
+  TEXT_18?: string
+  TEXT_19?: string
+  TEXT_21?: string
+  TEXT_22?: string
+  TEXT_23?: string
+  TEXT_24?: string
+  TEXT_25?: string
+  TEXT_41?: string
+  TEXT_42?: string
+  TEXT_43?: string
+  TEXT_44?: string
+  TEXT_45?: string
+  TEXT_46?: string
+}
+
+export interface PlatformStyles {
+  hero?: {
+    background?: string
+    titleClass?: string
+  }
+  main?: {
+    background?: string
+    h1Class?: string
+    h2Class?: string
+    pClass?: string
+    buttonPrimaryClass?: string
+    buttonSecondaryClass?: string
+  }
+  scoreboard?: {
+    homeBg?: string
+    visitorBg?: string
+    digitColor?: string
+    showLabels?: boolean
+    homeLabel?: string
+    visitorLabel?: string
+  }
+}
+
 export interface GameConfiguration {
+  // Central platform configuration
+  platform?: {
+    texts?: PlatformTexts
+    styles?: PlatformStyles
+  }
+
+  // Global (game-agnostic) settings available to all games
+  general?: {
+    texts?: GeneralTexts
+    colors?: GeneralColors
+  }
+
   // Stars Hexa specific configuration
   starsHexa?: {
     hexagons: HexagonCard[]
     totalStars: number // Number of hidden stars (1-3)
     maxFlipsPerAttempt: number // Maximum flips allowed per attempt
     theme: 'default' | 'colorful' | 'minimal'
+
+    // Optional UI texts for 4-page flow (welcome/rules/game/result)
+    // Why: enable admin customization without breaking existing games
+    texts?: {
+      // Welcome page
+      welcomeTitle?: string
+      welcomeSubtitle?: string
+      ctaStart?: string
+      ctaGuest?: string
+      // Rules page
+      rulesTitle?: string
+      rulesBody?: string
+      // Result page
+      resultTitle?: string
+      resultInviteCTA?: string
+      resultPlayAgainCTA?: string
+      resultPartnerCTA?: string
+      // In-game HUD or auxiliary texts
+      gameHUD?: string
+    }
+
+    // Optional color palette with page-level overrides
+    // Colors validated at schema level; here we only type the shape
+    colors?: {
+      palette?: {
+        primary?: string
+        accent?: string
+        bg?: string
+        text?: string
+      }
+      pageOverrides?: {
+        welcome?: Record<string, string>
+        rules?: Record<string, string>
+        game?: Record<string, string>
+        result?: Record<string, string>
+      }
+    }
+
+    // Emoji customization for win/lose states
+    emojis?: {
+      win?: string // Default: ⭐️
+      lose?: string // Default: 🍄
+    }
   }
   
   // Penalty Shootout specific configuration
@@ -193,9 +399,7 @@ export interface GameConfiguration {
     // Customizable texts
     texts?: {
       // Registration texts
-      joinButton?: string
       gameTitle?: string
-      registrationSubtitle?: string
       namePlaceholder?: string
       emailPlaceholder?: string
       phonePlaceholder?: string
@@ -205,8 +409,6 @@ export interface GameConfiguration {
       tryWithoutRegButton?: string
       
       // Game texts
-      gameIcon?: string
-      howToPlayButton?: string
       gameRulesTitle?: string
       gameRulesText?: string
       winConditionsTitle?: string
@@ -214,20 +416,33 @@ export interface GameConfiguration {
       gameDescription?: string
       playButton?: string
       
-      // Result texts
-      gameSubtitle?: string
+      // Result page texts
+      gameResultsTitle?: string // "GAME RESULTS" in scoreboard
       playAgainButton?: string
       shareWithFriendsButton?: string
       shareResultTitle?: string
       copyLinkButton?: string
       shareButton?: string
+      congratulationsText?: string // "Congratulations!"
+      gameOverText?: string // "Game Over"
+      inviteFriendsButton?: string // "Invite Friends"
       
-      // Win/Loss texts
+      // Result message emojis and texts
+      victoryResultEmoji?: string // "Victory"
+      defeatResultEmoji?: string // "Defeat"
+      victoryResultMessage?: string // "Fantastic! You won the penalty shootout"
+      defeatResultMessage?: string // "Good effort! You lost the penalty shootout. Try again!"
+      
+      // Labels and UI elements
+      yourGoalsLabel?: string
+      opponentGoalsLabel?: string
+      starsFoundLabel?: string // "Stars Found"
+      roundsUsedLabel?: string // "Rounds Used"
+      
+      // Win/Loss texts (legacy - keeping for backwards compatibility)
       defeatIcon?: string
       defeatTitle?: string
       trialModeIndicator?: string
-      yourGoalsLabel?: string
-      opponentGoalsLabel?: string
       visitorWinMessage?: string
       drawIcon?: string
       drawMessage?: string
@@ -235,6 +450,14 @@ export interface GameConfiguration {
       victoryIcon?: string
       victoryTitle?: string
       homeWinMessage?: string
+      
+      // Loading and Error texts
+      loadingGameText?: string // "Loading game..."
+      gameNotFoundTitle?: string // "Game Not Found"
+      gameNotFoundMessage?: string // "The game you're looking for doesn't exist or is no longer available."
+      tryAgainButton?: string // "Try Again"
+      gameTypeNotSupportedTitle?: string // "Game Type Not Supported"
+      gameTypeNotSupportedMessage?: string // "This game type is not yet supported in the play interface."
     }
     
     // Customizable colors
@@ -242,13 +465,15 @@ export interface GameConfiguration {
       // Background colors
       pageBackground?: string
       blockBackground?: string
+      titleField?: string
       
       // Button colors
       primaryButton?: string
       secondaryButton?: string
       
       // Game field colors
-      scoreboardCard?: string
+      homeScoreCard?: string
+      visitorScoreCard?: string
       gameField?: string
       playerCard?: string
       failedPenalty?: string
@@ -338,6 +563,9 @@ export interface GameOutcome {
   type: GameOutcomeType
   // Stars Hexa specific fields
   hexagonId?: string // For Stars Hexa games - which hexagon was revealed
+  // Lucky Wheel specific field
+  segmentId?: string // For wheel games - ID of the winning segment
+  // Common metrics
   starsFound: number // Number of stars discovered in this attempt
   totalStarsInGame: number // Total stars hidden in the game
   foundAllStars: boolean // Whether player found all stars
@@ -405,6 +633,7 @@ export interface RewardConfiguration {
 }
 
 export interface Reward extends BaseDocument {
+  gameId: ObjectId
   title: string
   description?: string
   type: RewardType

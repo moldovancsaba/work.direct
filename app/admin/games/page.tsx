@@ -283,23 +283,23 @@ export default function AdminGamesPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            {game.type === 'STARS_HEXA' ? '🍄⚔️⭐' : game.type}
+                            {game.type === 'STARS_HEXA' ? 'Stars Hexa' : game.type}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {config && (
                             <div className="text-xs text-gray-600 space-y-1">
-                              <div>🎯 {config.flips} flips/round</div>
-                              <div>🔄 {config.rounds} rounds</div>
-                              <div>⭐ {config.stars}/{config.hexagons} stars</div>
+                              <div>{config.flips} flips/round</div>
+                              <div>{config.rounds} rounds</div>
+                              <div>{config.stars}/{config.hexagons} stars</div>
                             </div>
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-xs text-gray-600 space-y-1">
-                            <div>👥 {game._count.participants} players</div>
-                            <div>🎮 {game._count.gameResults} sessions</div>
-                            <div>🏆 {game.rewards.length} rewards</div>
+                            <div>{game._count.participants} players</div>
+                            <div>{game._count.gameResults} sessions</div>
+                            <div>{game.rewards.length} rewards</div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">

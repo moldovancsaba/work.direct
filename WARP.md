@@ -182,6 +182,7 @@ Before creating ANY new component, function, or utility:
 MONGODB_URI=mongodb://localhost:27017/playmass
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_APP_NAME=PlayMass
+ADMIN_PASSWORD=playmass
 ```
 
 ## Game Engine Architecture
@@ -245,8 +246,8 @@ const schema = new Schema({
 
 ---
 
-**Current Version**: 1.0.0  
-**Last Updated**: 2025-08-27T15:50:46.000Z  
+**Current Version**: 1.4.0  
+**Last Updated**: 2025-09-10T13:01:23.000Z
 **Maintainer**: AI Development Team
 
 ## Important Notes for WARP Instances

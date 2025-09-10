@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import GameResultClient from './GameResultClient'
+import { resolvePlayConfig } from '../../../lib/resolvers/playConfigResolver'
 
 // Fetch game data for metadata generation
 // This runs on the server side for proper OpenGraph/Twitter meta tags
@@ -81,10 +82,20 @@ export async function generateMetadata({
 // This allows us to have server-side metadata while keeping interactivity
 export default async function GameResultPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ gameId: string }>
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const { gameId } = await params
+  const searchParamsData = await searchParams
+  
+  // Extract participant UUID from search parameters
+  // This UUID comes from the game play URL when participants share their results
+  const participantUuid = typeof searchParamsData?.participantUuid === 'string' 
+    ? searchParamsData.participantUuid 
+    : undefined
+  
   // Pre-fetch game data on the server for faster initial load
   // The client component will also fetch this data for real-time updates
   const initialGameData = await fetchGameData(gameId)
@@ -94,5 +105,18 @@ export default async function GameResultPage({
     notFound()
   }
 
-  return <GameResultClient gameId={gameId} initialGameData={initialGameData} />
+  // For platformized result page
+  const ResultClientPlatform = (await import('./ResultClientPlatform')).default
+  const wonParam = typeof (await searchParams)?.won === 'string' ? ((await searchParams).won as string) : undefined
+  const won = wonParam === 'true'
+  
+  return (
+    <ResultClientPlatform
+      gameId={gameId}
+      texts={(await resolvePlayConfig(initialGameData as any)).platform?.texts || {}}
+      styles={(await resolvePlayConfig(initialGameData as any)).platform?.styles || {}}
+      won={won}
+      refCode={(await resolvePlayConfig(initialGameData as any)).meta.ref}
+    />
+  )
 }

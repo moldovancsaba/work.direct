@@ -1,11 +1,24 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, CSSProperties } from 'react'
 
 interface SplitFlapScoreboardProps {
-  homeScore: number
-  visitorScore: number
+  // Score mode props
+  homeScore?: number
+  visitorScore?: number
   className?: string
+  showLabels?: boolean
+  homeCardBg?: string
+  visitorCardBg?: string
+  digitColor?: string
+  homeLabel?: string
+  visitorLabel?: string
+
+  // Title mode props (when mode === 'title')
+  mode?: 'score' | 'title'
+  titleText?: string
+  titleAlign?: 'center' | 'left' | 'right'
+  titleClassName?: string
 }
 
 /**
@@ -13,12 +26,24 @@ interface SplitFlapScoreboardProps {
  * Implements the exact DOM manipulation approach from the sample code
  */
 export default function SplitFlapScoreboard({ 
-  homeScore, 
-  visitorScore, 
-  className = '' 
+  homeScore = 0, 
+  visitorScore = 0, 
+  className = '',
+  showLabels = false,
+  // Defaults per centralized spec
+  homeCardBg = '#C00000FF',
+  visitorCardBg = '#C00000FF',
+  digitColor = '#FFFFFFFF',
+  homeLabel = 'HOME',
+  visitorLabel = 'VISITOR',
+  mode = 'score',
+  titleText = '',
+  titleAlign = 'center',
+  titleClassName = ''
 }: SplitFlapScoreboardProps) {
   const boardRef = useRef<HTMLDivElement>(null)
   const [isAnimating, setIsAnimating] = useState(false)
+  const scoreContainerRef = useRef<HTMLDivElement>(null)
 
   // DOM builders - identical to sample code
   const makeValSpan = (val: number) => {
@@ -121,16 +146,132 @@ export default function SplitFlapScoreboard({
 
   // Initialize digits on mount
   useEffect(() => {
+    // Guard: in title mode there are no digits to initialize
+    if (mode !== 'score') return
     if (!boardRef.current) return
     
     const digits = boardRef.current.querySelectorAll('.digit')
     digits.forEach(digit => setupDigit(digit as HTMLElement, 0))
-  }, [])
+  }, [mode])
 
   // Update when score changes
   useEffect(() => {
+    if (mode !== 'score') return
     updateScore(homeScore, visitorScore)
-  }, [homeScore, visitorScore])
+  }, [homeScore, visitorScore, mode])
+
+  // ---------- TITLE MODE (LETTERS) IMPLEMENTATION ----------
+  // Include space at index 0, then digits 0-9, then letters A-Z so numbers in titles flip correctly
+  const CHARSET = ' 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+  const makeValSpanChar = (ch: string) => {
+    const span = document.createElement('span')
+    span.className = 'val'
+    span.textContent = ch
+    return span
+  }
+
+  const makeHalfChar = (which: 'top' | 'bottom', ch: string): HTMLDivElement => {
+    const half = document.createElement('div')
+    half.className = `half ${which}`
+    half.appendChild(makeValSpanChar(ch))
+    return half
+  }
+
+  const setupCharDigit = (el: HTMLElement, index: number) => {
+    el.innerHTML = ''
+    el.dataset.value = index.toString()
+    const ch = CHARSET[index]
+    el.appendChild(makeHalfChar('top', ch))
+    el.appendChild(makeHalfChar('bottom', ch))
+  }
+
+  const flipOnceChar = (el: HTMLElement, nextIndex: number): Promise<void> => {
+    return new Promise(resolve => {
+      const topStatic = el.querySelector('.half.top .val') as HTMLElement
+      const bottomStatic = el.querySelector('.half.bottom .val') as HTMLElement
+
+      const currIndex = parseInt(el.dataset.value || '0')
+      const currChar = CHARSET[currIndex]
+      const nextChar = CHARSET[nextIndex]
+
+      const topFlip = document.createElement('div')
+      topFlip.className = 'flip top'
+      topFlip.appendChild(makeValSpanChar(currChar))
+
+      const bottomFlip = document.createElement('div')
+      bottomFlip.className = 'flip bottom'
+      bottomFlip.appendChild(makeValSpanChar(nextChar))
+
+      el.appendChild(topFlip)
+      el.appendChild(bottomFlip)
+
+      topFlip.addEventListener('animationend', () => {
+        topStatic.textContent = nextChar
+        topFlip.remove()
+      }, { once: true })
+
+      bottomFlip.addEventListener('animationend', () => {
+        bottomStatic.textContent = nextChar
+        bottomFlip.remove()
+        el.dataset.value = nextIndex.toString()
+        resolve()
+      }, { once: true })
+    })
+  }
+
+  const animateTitle = async (text: string) => {
+    if (!boardRef.current) return
+    // Clear existing
+    boardRef.current.innerHTML = ''
+
+    const score = document.createElement('div')
+    score.className = 'score'
+    boardRef.current.appendChild(score)
+
+    const target = (text || '').toUpperCase()
+    const indices = Array.from(target).map(ch => {
+      const idx = CHARSET.indexOf(ch)
+      // Default to space (index 0) for unsupported characters
+      return idx >= 0 ? idx : 0
+    })
+
+    const digits: HTMLElement[] = []
+    indices.forEach((targetIndex) => {
+      const digit = document.createElement('div')
+      digit.className = 'digit'
+      const steps = Math.floor(Math.random() * 5) + 1 // 1..5
+      const startIndex = (targetIndex - steps + CHARSET.length) % CHARSET.length
+      setupCharDigit(digit, startIndex)
+      score.appendChild(digit)
+      digits.push(digit)
+    })
+
+    await Promise.all(digits.map((digit, i) => {
+      const targetIndex = indices[i]
+      let currIndex = parseInt(digit.dataset.value || '0')
+      let steps = (targetIndex - currIndex + CHARSET.length) % CHARSET.length
+      const flips: Promise<void>[] = []
+      for (let s = 1; s <= steps; s++) {
+        const nextIndex = (currIndex + 1) % CHARSET.length
+        flips.push(flipOnceChar(digit, nextIndex))
+        currIndex = nextIndex
+      }
+      return flips.reduce((p, fn) => p.then(() => fn), Promise.resolve())
+    }))
+  }
+
+  const didInitTitle = React.useRef(false)
+  const lastTitle = React.useRef<string | undefined>(undefined)
+  useEffect(() => {
+    if (mode !== 'title') return
+    // Only animate on initial mount or when title actually changes
+    if (!didInitTitle.current || lastTitle.current !== (titleText || '')) {
+      animateTitle(titleText || '')
+      didInitTitle.current = true
+      lastTitle.current = titleText || ''
+    }
+  }, [mode, titleText])
 
   return (
     <>
@@ -162,6 +303,11 @@ export default function SplitFlapScoreboard({
           justify-content: center;
           gap: var(--gap-small);
           padding: 15px;
+        }
+        .team {
+          display: inline-flex;
+          align-items: center;
+          gap: var(--gap-small);
         }
 
         .colon {
@@ -223,7 +369,8 @@ export default function SplitFlapScoreboard({
           clip-path: inset(0 0 0 0 round 0 0 var(--card-radius) var(--card-radius));
         }
 
-        .val {
+.val {
+          font-family: 'Noto Sans', sans-serif;
           height: var(--card-height);
           display: flex;
           align-items: center;
@@ -293,7 +440,7 @@ export default function SplitFlapScoreboard({
           font-size: var(--label-font);
           font-weight: 800;
           letter-spacing: 1px;
-          font-family: 'Courier New', Courier, monospace;
+font-family: 'Noto Sans', sans-serif;
           user-select: none;
           white-space: nowrap;
           line-height: 1;
@@ -323,23 +470,38 @@ export default function SplitFlapScoreboard({
         }
       `}</style>
       
-      <div className={`split-flap-scoreboard ${className}`}>
-        <div className="split-flap-board">
-          <div className="split-flap-label split-flap-label-home">HOME</div>
-          
-          <div className="board-wrap" ref={boardRef}>
-            <div className="score">
-              <div className="digit" data-value="0"></div>
-              <div className="digit" data-value="0"></div>
-              <div className="colon">:</div>
-              <div className="digit" data-value="0"></div>
-              <div className="digit" data-value="0"></div>
+{mode === 'title' ? (
+        // What: Render split-flap characters that flip from random previous letters to target title
+        <div className={`split-flap-scoreboard ${className}`} style={{ ['--card-bg' as any]: '#C00000FF', ['--digit-color' as any]: '#FFFFFFFF' }}>
+          <div className="split-flap-board">
+            <div className="board-wrap" ref={boardRef}>
+              {/* score container built dynamically in animateTitle */}
             </div>
           </div>
-          
-          <div className="split-flap-label split-flap-label-visitor">VISITOR</div>
         </div>
-      </div>
+      ) : (
+        <div className={`split-flap-scoreboard ${className}`}>
+          <div className="split-flap-board">
+{showLabels && (<div className="split-flap-label split-flap-label-home">{homeLabel}</div>)}
+            
+            <div className="board-wrap" ref={boardRef}>
+              <div className="score">
+                <div className="team team-home" style={{ ['--card-bg' as any]: homeCardBg, ['--digit-color' as any]: digitColor } as CSSProperties}>
+                  <div className="digit" data-value="0"></div>
+                  <div className="digit" data-value="0"></div>
+                </div>
+                <div className="colon">:</div>
+                <div className="team team-visitor" style={{ ['--card-bg' as any]: visitorCardBg, ['--digit-color' as any]: digitColor } as CSSProperties}>
+                  <div className="digit" data-value="0"></div>
+                  <div className="digit" data-value="0"></div>
+                </div>
+              </div>
+            </div>
+            
+{showLabels && (<div className="split-flap-label split-flap-label-visitor">{visitorLabel}</div>)}
+          </div>
+        </div>
+      )}
     </>
   )
 }

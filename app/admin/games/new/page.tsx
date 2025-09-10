@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { GameType } from '../../../types'
+import GameEditor from '../../../components/admin/GameEditor'
 
 // Local interface for compatibility
 interface WheelSegment {
@@ -18,7 +19,7 @@ const GAME_TYPES = [
   {
     type: 'STARS_HEXA' as GameType,
     name: 'Stars Hexa',
-    icon: '⭐',
+    icon: '★',
     description: 'Memory card game with hexagon layout - find the hidden stars!',
     color: 'from-blue-500 to-purple-600'
   },
@@ -192,11 +193,34 @@ export default function NewGamePage() {
           </Link>
         </div>
 
+        {/* Game Type Selection */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Game Type</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {GAME_TYPES.map((type) => (
+              <button
+                key={type.type}
+                type="button"
+                onClick={() => router.push(`/admin/games/new/${type.type}`)}
+                className={`p-6 rounded-lg border-2 transition-all text-left ${
+                  false ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                <div className={`text-3xl mb-2 bg-gradient-to-r ${type.color} bg-clip-text text-transparent`}>
+                  {type.icon}
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">{type.name}</h3>
+                <p className="text-sm text-gray-600">{type.description}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Error Display */}
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
             <div className="flex items-center gap-2">
-              <span className="text-red-600">❌</span>
+              <span className="text-red-600">!</span>
               <span className="text-red-800 font-medium">Error</span>
             </div>
             <p className="text-red-700 mt-1">{error}</p>
@@ -326,7 +350,7 @@ export default function NewGamePage() {
                 </div>
                 <div className="mt-4 p-4 bg-blue-50 rounded-lg">
                   <p className="text-blue-800 text-sm">
-                    ℹ️ Player gets <strong>{maxFlipsPerRound} flips per round</strong> and <strong>{maxRounds} total rounds</strong> to find all {starsCount} star{starsCount !== 1 ? 's' : ''}.
+                    Player gets <strong>{maxFlipsPerRound} flips per round</strong> and <strong>{maxRounds} total rounds</strong> to find all {starsCount} star{starsCount !== 1 ? 's' : ''}.
                   </p>
                   <p className="text-blue-700 text-xs mt-1">
                     Note: Minimum 3 flips per round ensures fair gameplay with 7 total hexagon cards.
@@ -339,7 +363,7 @@ export default function NewGamePage() {
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-semibold text-gray-900">Hexagon Cards (7 cards)</h2>
                   <div className="text-sm text-gray-600">
-                    ⭐ {starsCount} stars | 🍄 {7 - starsCount} mushrooms
+                    {starsCount} stars | {7 - starsCount} mushrooms
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -355,7 +379,7 @@ export default function NewGamePage() {
                             className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 bg-white"
                           />
                           <span className="text-sm text-gray-600">
-                            {hexagon.hasHiddenStar ? '⭐ Has star' : '🍄 Has mushroom'}
+                            {hexagon.hasHiddenStar ? 'Has star' : 'Has mushroom'}
                           </span>
                         </label>
                       </div>
@@ -372,7 +396,7 @@ export default function NewGamePage() {
                 </div>
                 {starsCount === 0 && (
                   <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-red-800 text-sm">⚠️ You need at least one card with a hidden star!</p>
+                    <p className="text-red-800 text-sm">You need at least one card with a hidden star!</p>
                   </div>
                 )}
               </div>
@@ -411,7 +435,7 @@ export default function NewGamePage() {
                   </div>
                 </div>
                 <div className="border-t border-green-200 pt-4">
-                  <h3 className="font-semibold text-gray-800 mb-2">⚽ Game Flow:</h3>
+                  <h3 className="font-semibold text-gray-800 mb-2">Game Flow:</h3>
                   <ul className="space-y-1 text-sm text-gray-700">
                     <li>• Players get random jersey numbers (2-22)</li>
                     <li>• Goal/miss distribution is randomized each game</li>

@@ -1,0 +1,176 @@
+/* Penalty Game Global CSS - Exact Copy from PenaltyScoreboard */
+/* This provides the EXACT same styling and animations as the working scoreboard */
+
+:global(.penalty-scoreboard) {
+  --card-height: 130px;
+  --card-width: calc(var(--card-height) * 0.73);
+  --digit-font: calc(var(--card-height) * 0.65);
+  --card-radius: calc(var(--card-height) * 0.09);
+  --hinge-thickness: 2px;
+  --perspective: 900px;
+  --digit-color: #ffffff;
+  --gap-small: calc(var(--card-width) * 0.18);
+  --gap-colon: calc(var(--card-width) * 0.24);
+}
+
+/* Stage for centering and scaling */
+:global(.penalty-scoreboard .stage) {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+:global(.penalty-scoreboard .board-wrap) {
+  display: inline-block;
+  transform-origin: center center;
+  margin: 4px;
+}
+
+:global(.penalty-scoreboard .score) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap-small);
+}
+
+/* Digit/Character Card Styling - EXACT same as scoreboard */
+:global(.penalty-scoreboard .digit) {
+  position: relative;
+  width: var(--card-width);
+  height: var(--card-height);
+  border-radius: var(--card-radius);
+  color: var(--digit-color);
+  perspective: var(--perspective);
+  box-shadow:
+    0 6px 16px rgba(0,0,0,0.45),
+    inset 0 -1px 0 rgba(255,255,255,0.03),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+  overflow: hidden;
+  flex: 0 0 auto;
+}
+
+/* Hinge line across the middle */
+:global(.penalty-scoreboard .digit::after) {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(50% - var(--hinge-thickness)/2);
+  height: var(--hinge-thickness);
+  background: linear-gradient(90deg, rgba(255,255,255,0.08), rgba(0,0,0,0.35), rgba(255,255,255,0.08));
+  pointer-events: none;
+}
+
+/* Static half elements */
+:global(.penalty-scoreboard .half) {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 50%;
+  overflow: hidden;
+  display: block;
+  background: inherit;
+}
+
+:global(.penalty-scoreboard .half.top) {
+  top: 0;
+  clip-path: inset(0 0 0 0 round var(--card-radius) var(--card-radius) 0 0);
+}
+
+:global(.penalty-scoreboard .half.bottom) {
+  bottom: 0;
+  clip-path: inset(0 0 0 0 round 0 0 var(--card-radius) var(--card-radius));
+}
+
+/* Value text styling */
+:global(.penalty-scoreboard .val) {
+  height: var(--card-height);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: var(--digit-font);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+
+:global(.penalty-scoreboard .half.top .val) {
+  transform: translateY(0);
+}
+
+:global(.penalty-scoreboard .half.bottom .val) {
+  transform: translateY(-50%);
+}
+
+/* Flip animation elements */
+:global(.penalty-scoreboard .flip) {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 50%;
+  overflow: hidden;
+  display: block;
+  background: inherit;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+  color: var(--digit-color);
+}
+
+:global(.penalty-scoreboard .flip .val) {
+  height: var(--card-height);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: var(--digit-font);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+:global(.penalty-scoreboard .flip.top) {
+  top: 0;
+  transform-origin: center bottom;
+  clip-path: inset(0 0 0 0 round var(--card-radius) var(--card-radius) 0 0);
+  animation: flip-top 280ms ease-in forwards;
+}
+
+:global(.penalty-scoreboard .flip.top .val) {
+  transform: translateY(0);
+}
+
+@keyframes flip-top {
+  0% { transform: rotateX(0deg); }
+  100% { transform: rotateX(-90deg); }
+}
+
+:global(.penalty-scoreboard .flip.bottom) {
+  bottom: 0;
+  transform-origin: center top;
+  clip-path: inset(0 0 0 0 round 0 0 var(--card-radius) var(--card-radius));
+  transform: rotateX(90deg);
+  animation: flip-bottom 320ms ease-out forwards;
+  animation-delay: 260ms;
+}
+
+:global(.penalty-scoreboard .flip.bottom .val) {
+  transform: translateY(-50%);
+}
+
+@keyframes flip-bottom {
+  0% { transform: rotateX(90deg); }
+  100% { transform: rotateX(0deg); }
+}
+
+/* Spacer for text spaces */
+:global(.penalty-scoreboard .space) {
+  width: calc(var(--card-width) * 0.5);
+  height: var(--card-height);
+  flex: 0 0 auto;
+}

@@ -2,10 +2,20 @@
 
 This document captures implementation insights, technical decisions, and solutions to issues encountered during PlayMass development.
 
-**Current Version**: 1.6.0  
-**Last Updated**: 2025-08-29T19:13:26.000Z
+**Current Version**: 1.4.0
+**Last Updated**: 2025-09-10T13:01:23.000Z
 
 ## Development Learnings
+
+### Standardized 4-Page Flow & Config Resolver (v1.2.12)
+
+### Centralized Hero/Main Defaults Across All Pages (Pending release)
+- What: Enforced a unified 2% / 18% / 2% / 76% / 2% layout and global defaults (page bg #000000FF, hero #000000FF, main #444444FF, text #FFFFFFFF, Noto Sans) via shared Blocks + GameLayout.
+- Why: Guarantees consistent look and feel, lowers duplication, and simplifies future UI changes across Welcome/Rules/Game/Result.
+- Notes: Titles use scoreboard cards (PenaltyCardText); Game hero hosts live SplitFlapScoreboard on penalty games. Adjusted App Router page function signatures (params/searchParams) to match Next.js API.
+- What: Introduced standardized Welcome → Rules → Game → Result flow and a play config resolver that normalizes per-game texts/colors into a single shape.
+- Why: Ensures a single-source UI contract across modules, decouples the play interface from raw DB schema, and preserves backward compatibility.
+- Notes: Kept /result route unchanged; added backward-compat redirect /play/[gameId] → /welcome; propagated ?ref across steps.
 
 ### Performance Optimization: Hexagon Click Responsiveness
 
@@ -242,6 +252,34 @@ This optimization showcases advanced React performance techniques for gaming app
 
 ---
 
+### Basic Admin Login (MVP parity)
+- What: Implemented MessMass-style cookie-based admin login with minimal UI and server guards.
+- Why: Fast path to protect admin tools while maintaining MVP velocity; avoids heavyweight auth integration.
+- Risks: Unsigned token; susceptible to tampering if cookie stolen; no lockouts or rate limiting.
+- Next: Upgrade to signed tokens or JWT, add rate limiting/lockout, audit logging.
+
+### Input Focus Loss Fix in Registration (v1.4.0)
+- What: Welcome registration inputs lost focus on every keystroke.
+- Why: An inline component (Container) inside UnifiedRegistration caused remounts on each render; React treated it as a new type.
+- Fix: Replaced inline component with a stable div wrapper and computed className to keep input nodes stable.
+
+### Result Page CTA Simplification (v1.4.0)
+- What: Removed "Copy Link" and "Share" CTAs on result page.
+- Why: Reduce cognitive load; keep high-intent actions only.
+- Keep: "Invite Friend" (referral share) and "Play Again".
+
+### Admin Counts and Participants Invites (v1.4.0)
+- What: "Total Players" and summary stats were incorrect.
+- Why: Participant documents are global; they do not store gameId; counts must derive from GameResult.
+- Fix: Games API uses GameResult.distinct('participantId') per game; rewards count filtered by Reward.gameId.
+- What: Added "Invites" column on Participants page counting how many participants joined via a participant's referral UUID.
+- Why: Visibility into referral effectiveness.
+
+### Reward Model Linkage (v1.4.0)
+- What: Added gameId to Reward schema with index.
+- Why: Enables fast dashboard counts by game; keeps data relations explicit.
+- Note: Existing rewards remain valid; new rewards must include gameId (admin routes provide it).
+
 ### SVG Game Components: Wheel of Fortune Mathematical Implementation (v1.6.0)
 
 **Challenge**: Integrate a pure React + SVG spinning wheel component with precise mathematical calculations for segment positioning and fair random selection.
@@ -385,3 +423,439 @@ interface WheelSegment {
 6. **Component Design**: Balancing flexibility with integration requirements
 
 This implementation demonstrates advanced SVG manipulation, mathematical precision, and React optimization techniques for creating engaging game components.
+
+---
+
+### Penalty Game Customization: Text and Color Configuration (v1.0.3)
+
+**Issue**: Users could modify penalty game texts and colors in the admin editor, but changes were not reflected in the actual game play interface.
+
+**Root Cause Analysis**:
+
+1. **Field Name Mismatch**: Admin editor was saving customization data with incorrect field names
+   - Saved as `customTexts` and `customColors` in database
+   - Database schema expected `texts` and `colors`
+
+2. **Component Integration Gap**: Penalty game component not receiving customization configuration
+   - `PenaltyHexa` component had no props for custom texts/colors
+   - Game loading logic wasn't passing customization data
+
+3. **Hardcoded Values**: Game component using static text and color values
+   - Win/loss messages were hardcoded strings
+   - Player card colors were static `#c00000` and `#ffffff`
+   - Game field background fixed at `#2ecc71`
+
+**Solution Implemented** (v1.0.3):
+
+#### 1. Database Field Name Correction
+- **Problem**: Mismatch between form submission and database schema
+- **Solution**: Updated admin form to use correct field names
+- **Result**: Customization data properly persisted to MongoDB
+```typescript
+// BEFORE: Incorrect field names
+updateData.configuration.penaltyShootout = {
+  customTexts: penaltyTexts,
+  customColors: penaltyColors
+}
+
+// AFTER: Schema-compliant field names  
+updateData.configuration.penaltyShootout = {
+  texts: penaltyTexts,
+  colors: penaltyColors
+}
+```
+
+#### 2. Component Props Extension
+- **Problem**: `PenaltyHexa` component had no customization interface
+- **Solution**: Added comprehensive text and color prop types
+- **Result**: Component can receive and apply customizations
+```typescript
+interface PenaltyHexaProps {
+  // ... existing props
+  customTexts?: Partial<PenaltyTexts>
+  customColors?: Partial<PenaltyColors>
+}
+
+interface PenaltyTexts {
+  homeWinMessage?: string
+  visitorWinMessage?: string
+  drawMessage?: string
+  // ... 45+ other customizable text fields
+}
+
+interface PenaltyColors {
+  gameField?: string
+  playerCard?: string  
+  failedPenalty?: string
+  // ... other color customizations
+}
+```
+
+#### 3. Data Flow Integration
+- **Problem**: Game loading didn't pass customization to component
+- **Solution**: Extract and pass customization data from database
+- **Result**: Complete data flow from admin → database → game component
+```typescript
+// Extract customization from game configuration
+return (
+  <PenaltyHexa
+    // ... other props
+    customTexts={game.configuration.penaltyShootout?.texts || {}}
+    customColors={game.configuration.penaltyShootout?.colors || {}}
+  />
+)
+```
+
+#### 4. Dynamic Color Application
+- **Problem**: Hardcoded colors in SVG rendering
+- **Solution**: Use customization values with fallbacks
+- **Result**: Visual customizations immediately visible in game
+```typescript
+// BEFORE: Hardcoded colors
+fill={player.isRevealed 
+  ? (player.hasGoal ? '#c00000' : '#ffffff')
+  : '#c00000'
+}
+
+// AFTER: Customizable with fallbacks
+fill={player.isRevealed 
+  ? (player.hasGoal ? (customColors.playerCard || '#c00000') : (customColors.failedPenalty || '#ffffff'))
+  : (customColors.playerCard || '#c00000')
+}
+```
+
+#### 5. Dynamic Text Messages
+- **Problem**: Hardcoded game result messages
+- **Solution**: Use custom texts with intelligent fallback composition
+- **Result**: Personalized win/loss messages
+```typescript
+// BEFORE: Static message
+message: `⚽ HOME won the penalty shootout ${score}!`
+
+// AFTER: Customizable message
+message: customTexts.homeWinMessage || `⚽ HOME won the penalty shootout ${gameState.goalsScored}-${gameState.opponentScore}!`
+```
+
+**Database Schema Alignment**:
+- **Configuration Structure**: `game.configuration.penaltyShootout.texts` and `colors`
+- **Default Values**: Comprehensive fallback system with original game text/colors
+- **Type Safety**: Full TypeScript interfaces for all customizable elements
+
+**Component Architecture Improvements**:
+- **Prop Validation**: Optional props with sensible defaults
+- **Backward Compatibility**: Existing games continue working without customization
+- **Performance**: No impact on render performance with customization checks
+
+**Admin Interface Enhancements**:
+- **Form Validation**: Proper field name mapping in submission
+- **Visual Consistency**: Styled penalty customization section matches other game configs
+- **User Feedback**: Clear indication of customization capabilities
+
+**Key Integration Points Fixed**:
+1. **Admin Form Submission**: `app/admin/games/[id]/page.tsx` - Field name correction
+2. **Game Component Props**: `app/components/games/PenaltyHexa.tsx` - Interface extension
+3. **Game Loading Logic**: `app/play/[gameId]/page.tsx` - Data passing
+4. **Database Schema**: `app/lib/models/Game.ts` - Confirmed proper structure
+5. **Visual Rendering**: SVG color application and text message generation
+
+**Performance Considerations**:
+- **Minimal Overhead**: Customization check adds negligible processing time
+- **Memory Efficient**: Fallback objects created only when needed
+- **Type Optimized**: Interface definitions prevent runtime errors
+
+**User Experience Impact**:
+- **Immediate Reflection**: Changes in admin immediately visible in game
+- **Brand Customization**: Teams can personalize win/loss messages and colors
+- **Visual Consistency**: Customized colors apply across entire game interface
+
+**Testing Approach**:
+- **Build Verification**: TypeScript compilation ensures type correctness
+- **Data Flow Testing**: Manual verification of admin → database → game flow
+- **Fallback Testing**: Verified graceful degradation with missing customizations
+
+**Key Takeaways**:
+1. **Field Name Consistency**: Database schema and form field names must align exactly
+2. **Component Prop Design**: Optional customization props enable backward compatibility
+3. **Data Flow Mapping**: Trace data from input → storage → display for complex features
+4. **Fallback Architecture**: Always provide sensible defaults for customizable elements
+5. **TypeScript Benefits**: Interface definitions catch field name mismatches at compile time
+
+**Implementation Notes**:
+- Used optional chaining (`?.`) for safe customization access
+- Implemented comprehensive fallback system to prevent broken games
+- Maintained exact visual parity when no customizations are applied
+- Added proper TypeScript interfaces for type safety and developer experience
+
+This fix demonstrates the importance of end-to-end testing for customization features and the value of consistent naming conventions across the application stack.
+
+---
+
+### Game Module Architecture: Building Fully Customizable Games (v1.2.6)
+
+**Challenge**: Transform hardcoded penalty shootout game into a fully customizable module that serves as a blueprint for future game development in PlayMass.
+
+**Scope**: Complete elimination of hardcoded text, emojis, and visual elements while creating a reusable architecture pattern for future games.
+
+#### Architecture Transformation Process:
+
+#### 1. Text Customization System Implementation
+
+**Problem**: Over 60 hardcoded text elements scattered across components
+- Hardcoded emojis in fallback values (🏆, ⚽, 🎮, etc.)
+- Fixed button text and UI labels
+- Static error messages and loading states
+- Embedded game rules and win conditions
+
+**Solution**: Comprehensive text customization architecture
+```typescript
+interface PenaltyTexts {
+  // 60 organized fields covering entire user journey:
+  // Basic Info (2) → Registration (10) → Rules (8) → 
+  // Gameplay (11) → Results (9) → Messages (4) → 
+  // Legacy (10) → Errors (6)
+}
+```
+
+**Implementation Pattern**:
+```typescript
+// Clean fallback pattern - no hardcoded emojis
+const displayText = customTexts?.fieldName || 'Clean Default Text'
+
+// Applied across all components:
+// - PenaltyShootout.tsx
+// - GameRulesPage.tsx  
+// - UnifiedRegistration.tsx
+// - GameResultClient.tsx
+```
+
+**Critical Discovery**: Hardcoded emojis were hidden in multiple layers:
+- Component fallback values
+- Database schema defaults
+- Admin interface placeholders
+- HTML templates in GameRulesPage
+
+#### 2. Visual Customization Architecture
+
+**Color System Design**:
+```typescript
+interface PenaltyColors {
+  pageBackground: string     // Gradients and themes
+  blockBackground: string    // Content containers  
+  primaryButton: string      // Action buttons
+  secondaryButton: string    // Secondary actions
+  homeScoreCard: string      // Team-specific colors
+  visitorScoreCard: string   // Opponent colors
+  gameField: string          // Playing surface
+  playerCard: string         // Interactive elements
+  failedPenalty: string      // Error states
+}
+```
+
+**Application Methods**:
+- Direct inline styling for dynamic colors
+- CSS custom properties for theme-based styling  
+- Conditional Tailwind classes for layout variations
+- Responsive color application across all screen sizes
+
+#### 3. Admin Interface Evolution
+
+**Form Organization Strategy**:
+- **Tabbed Interface**: Separate text and color customization
+- **Sequential Numbering**: Fields 1-60 with clear identification
+- **Grouped Sections**: Organized by user experience flow
+- **Real-time Updates**: Immediate reflection of changes
+- **Reset Functionality**: Quick return to defaults
+
+**Field Configuration Pattern**:
+```typescript
+const fieldConfig = {
+  basicInfo: [ /* 2 fields */ ],
+  registration: [ /* 10 fields */ ], 
+  gameRules: [ /* 8 fields */ ],
+  inGameUI: [ /* 11 fields */ ],
+  resultPage: [ /* 9 fields */ ],
+  resultMessages: [ /* 4 fields */ ],
+  legacyWinLoss: [ /* 10 fields */ ],
+  loadingAndErrors: [ /* 6 fields */ ]
+}
+```
+
+**Database Integration**:
+- Extended Game schema with comprehensive customization objects
+- Backward compatibility with existing games
+- Default empty strings to eliminate hardcoded fallbacks
+- Proper field validation and type safety
+
+#### 4. System Resource Integration Patterns
+
+**Shared Module Integration**:
+1. **Login Module** (`UnifiedRegistration.tsx`)
+   - Customizable registration flow
+   - Trial mode support
+   - Flexible validation system
+
+2. **Result Share Module** (`GameResultClient.tsx`) 
+   - Universal results display
+   - Customizable victory/defeat messaging
+   - Social sharing integration
+
+3. **Referral System**
+   - Automatic UUID tracking
+   - Invitation chain management
+   - Analytics integration
+
+4. **Admin Management**
+   - Visual customization tools
+   - Real-time preview system
+   - Configuration versioning
+
+#### 5. Component Architecture Patterns
+
+**Game Component Template**:
+```typescript
+interface GameProps {
+  // Standard system props
+  onFlip: (elementId: string) => Promise<GameOutcome>
+  onResult: (result: GameOutcome) => void
+  gameId?: string
+  isTrialMode?: boolean
+  referralUuid?: string | null
+  
+  // Customization props
+  customTexts?: GameTexts
+  customColors?: GameColors
+  
+  // Game-specific props
+  players?: GameElement[]
+  disabled?: boolean
+}
+```
+
+**Integration Flow Pattern**:
+```
+Registration → Rules → Gameplay → Results → Sharing
+     ↓           ↓        ↓         ↓         ↓
+UnifiedReg → GameRules → Game → Results → ShareModule
+     ↓           ↓        ↓         ↓         ↓
+CustomTexts → Texts → Texts → Texts → Texts
+```
+
+#### Key Technical Discoveries:
+
+#### 1. Hidden Hardcoded Content Locations
+**Most Critical Finding**: `GameRulesPage.tsx` line 77
+```typescript
+// PROBLEM: Hardcoded 🏆 emoji appeared despite admin customization
+<span className="text-2xl">🏆</span>
+{customTexts?.winConditionsTitle || 'Win Conditions:'}
+
+// SOLUTION: Complete removal of hardcoded elements
+{customTexts?.winConditionsTitle || 'Win Conditions:'}
+```
+
+**Other Hidden Locations**:
+- Fallback values in component default parameters
+- HTML templates with embedded emoji spans
+- Result message generation functions
+- Error page placeholder content
+- Registration success messages
+
+#### 2. Three-Layer Customization Architecture
+
+**Layer 1: Component Defaults**
+```typescript
+const text = customTexts?.field || 'Clean Default'
+```
+
+**Layer 2: Database Schema**
+```typescript
+field: { type: String, default: '' }
+```
+
+**Layer 3: Admin Placeholders**
+```typescript
+{ placeholder: 'Example Text', description: 'Usage context' }
+```
+
+#### 3. Performance Optimization Patterns
+
+**Customization Performance**:
+- Optional chaining for safe property access
+- Memoized configuration objects
+- Conditional rendering based on customization presence
+- Lazy loading of customization forms
+
+**Memory Management**:
+- Fallback objects created only when needed
+- Efficient state updates with useReducer
+- Proper cleanup of customization timers
+
+#### Implementation Metrics:
+
+**Customization Coverage**:
+- **60 text fields** covering complete user journey
+- **9 color fields** for comprehensive visual control
+- **Zero hardcoded elements** remaining in user-facing code
+- **100% backward compatibility** with existing games
+
+**Code Organization**:
+- **4 major components** updated with customization
+- **3 database schema** extensions added
+- **1 comprehensive admin form** with organized sections
+- **Multiple utility functions** for customization handling
+
+**User Experience Impact**:
+- **Instant customization** reflection in admin interface
+- **Complete brand control** over game appearance and messaging
+- **Seamless integration** with existing system features
+- **Mobile-responsive** customization across all screen sizes
+
+#### Future Game Development Blueprint:
+
+#### 1. Planning Phase Requirements
+- Map complete user journey for customization points
+- Identify every text element and visual component
+- Define system resource integration needs
+- Plan database schema extensions
+
+#### 2. Implementation Phase Steps
+1. **Create game component** with zero hardcoded elements
+2. **Extend database schema** with customization objects
+3. **Build admin interface** with organized field sections
+4. **Integrate system resources** (login, results, sharing)
+5. **Implement customization patterns** with clean fallbacks
+
+#### 3. Validation Phase Checklist
+- Test every customization field functionality
+- Verify mobile responsiveness across devices
+- Validate system resource integration
+- Confirm zero hardcoded content remains
+
+**Key Architecture Principles Established**:
+1. **Zero Hardcoded Rule**: No user-facing text/emojis in code
+2. **Clean Fallbacks**: Empty strings or descriptive text only
+3. **Comprehensive Coverage**: Every UI element must be customizable
+4. **System Integration**: Reuse shared resources (login, results, referrals)
+5. **Admin Consistency**: Organized, tabbed interface for all games
+6. **Performance First**: Customization shouldn't impact game performance
+7. **Type Safety**: Full TypeScript interface coverage
+8. **Backward Compatibility**: Existing games continue working
+
+**Critical Success Factors**:
+1. **End-to-End Testing**: Verify admin → database → game flow
+2. **Multi-Layer Cleanup**: Remove hardcoded elements from all layers
+3. **Consistent Naming**: Align database, admin, and component field names
+4. **Fallback Architecture**: Provide sensible defaults for every field
+5. **System Resource Reuse**: Leverage existing login, results, sharing modules
+
+**Future Game Module Requirements**:
+Every new game must implement:
+- Comprehensive text customization (minimum 40+ fields)
+- Complete visual customization (colors, themes, layouts)
+- System resource integration (registration, results, sharing, referrals)
+- Admin interface with organized sections and real-time preview
+- Zero hardcoded user-facing elements
+- Full mobile responsiveness
+- Backward compatibility with existing system
+
+This architecture transformation establishes PlayMass as a truly modular game platform where every visual and textual element is under complete administrative control, enabling rapid deployment of fully customized game experiences for different brands and use cases.

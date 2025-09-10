@@ -5,6 +5,7 @@ A Next.js-based platform for creating and distributing interactive games like St
 ## 🎮 Features
 
 - **Stars Hexa Games**: Interactive hexagonal star-finding games with customizable text and hidden stars
+- **Penalty Shootout Games**: Professional football penalty games with split-flap scoreboard animations
 - **Rewards Management**: Complete reward system with points, coupons, physical prizes, and custom rewards
 - **Participant Management**: Track players across multiple games and sessions
 - **Target Groups**: Organize participants into groups for targeted campaigns
@@ -20,6 +21,25 @@ A Next.js-based platform for creating and distributing interactive games like St
 - **Animation**: Framer Motion
 - **Validation**: Built-in Mongoose validation
 - **Linting**: ESLint with TypeScript support
+
+## 🔐 Admin Login (MVP)
+
+PlayMass includes a minimal admin login flow (mirroring MessMass) for MVP:
+- POST /api/admin/login — Provide body { password } to authenticate
+- GET /api/admin/auth — Returns { success, user } if cookie is valid; 401 otherwise
+- DELETE /api/admin/login — Logs out by clearing the cookie
+
+Cookie details:
+- Name: `admin-session`
+- Value: base64-encoded JSON `{ token, expiresAt, userId: 'admin', role: 'super-admin' }`
+- Flags: `httpOnly`, `sameSite=lax`, `secure` (in production)
+- Expiry: 7 days
+
+Environment:
+- Set `ADMIN_PASSWORD` in `.env.local` (example: `ADMIN_PASSWORD=playmass`)
+
+Security note:
+- This is intentionally simple and unsigned for MVP. See ROADMAP for future upgrade to signed tokens/JWT and additional hardening (rate limiting, lockouts, audit logs).
 
 ## 🚀 Getting Started
 
@@ -86,6 +106,20 @@ app/
 - Visual themes (default, colorful, minimal)
 - Limited attempts and flip mechanics
 
+### Penalty Shootout
+- Professional football penalty game simulation
+- Split-flap scoreboard with animated character cards
+- Dynamic card sizing with 20-character maximum optimization
+- Player selection from team roster (11 players)
+- Real-time score tracking with immersive animations
+- Responsive design with mobile optimization
+- **Comprehensive Text Customization**: All visible text is fully customizable through admin interface
+  - In-game UI texts (score display, player actions, game states)
+  - Result page messages with dynamic score interpolation
+  - Loading and error messages
+  - Registration and rules page content
+  - Victory/defeat messages and labels
+
 ## 🏆 Reward System
 
 - **Points**: Configurable point values with custom currencies
@@ -146,6 +180,14 @@ The platform provides detailed analytics including:
 - Secure reward code generation
 - IP-based anti-cheat measures
 
+## 📚 Documentation Links
+
+- ROADMAP.md — Forward-looking milestones and dependencies
+- TASKLIST.md — Active tasks and delivery tracking
+- RELEASE_NOTES.md — Versioned change log
+- LEARNINGS.md — Implementation insights and decisions
+- WARP.DEV_AI_CONVERSATION.md — Planning session logs
+
 ## 📝 License
 
 This project is private and proprietary.
@@ -153,3 +195,9 @@ This project is private and proprietary.
 ## 👥 Contributing
 
 This is a private project. Contact the maintainer for collaboration opportunities.
+
+---
+
+**Current Version**: 1.4.0
+**Last Updated**: 2025-09-10T13:01:23.000Z
+**Maintainer**: AI Development Team

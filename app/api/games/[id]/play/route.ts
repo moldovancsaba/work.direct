@@ -169,6 +169,10 @@ export async function POST(
       playRequest.participant.email,
       playRequest.participant.phone
     )
+
+    // Set referral info from request if available
+    const incomingUuid = (playRequest as any).participant?.uuid as string | undefined
+    const incomingRef = (playRequest as any).ref as string | undefined
     
     if (!participant) {
       // Create new participant
@@ -176,6 +180,8 @@ export async function POST(
         name: playRequest.participant.name,
         email: playRequest.participant.email || undefined,
         phone: playRequest.participant.phone || undefined,
+        uuid: incomingUuid,
+        referrerUuid: incomingRef && incomingUuid !== incomingRef ? incomingRef : undefined,
         groupIds: [],
         gameResults: [],
         totalGamesPlayed: 0,
@@ -184,6 +190,22 @@ export async function POST(
       })
       
       await participant.save()
+
+      // If referrer exists, optionally record the invite count (stored in metadata)
+      if (incomingRef && (!incomingUuid || incomingUuid !== incomingRef)) {
+        await ParticipantModel.updateOne(
+          { uuid: incomingRef },
+          { $inc: { 'metadata.invitedCount': 1 } }
+        )
+      }
+    } else {
+      // Update uuid/referrer if missing
+      const updates: any = {}
+      if (incomingUuid && !participant.uuid) updates.uuid = incomingUuid
+      if (incomingRef && incomingRef !== participant.uuid && !participant.referrerUuid) updates.referrerUuid = incomingRef
+      if (Object.keys(updates).length) {
+        await ParticipantModel.updateOne({ _id: participant._id }, { $set: updates })
+      }
     }
     
     // Check attempt limits
@@ -493,10 +515,10 @@ function calculateHexaResult(
     if (foundStar) {
       if (foundAllStars) {
         outcomeType = 'WIN'
-        message = `🎉 Congratulations! You found the star and revealed: ${flippedHexagon.text}!`
+        message = `Congratulations! You found the star and revealed: ${flippedHexagon.text}!`
       } else {
         outcomeType = 'WIN'
-        message = `⭐ Great! You found a star! ${flippedHexagon.text}`
+        message = `Great! You found a star! ${flippedHexagon.text}`
       }
     }
     
@@ -551,14 +573,14 @@ function calculatePenaltyResult(
     
     // Determine outcome type
     let outcomeType: GameOutcomeType = 'NO_REWARD'
-    let message = `Player #${selectedPlayer.playerNumber}: ${scoredGoal ? 'GOAL! ⚽' : 'MISS! ❌'}`
+    let message = `Player #${selectedPlayer.playerNumber}: ${scoredGoal ? 'GOAL!' : 'MISS!'}`
     
     if (scoredGoal) {
       outcomeType = 'WIN'
-      message = `⚽ GOAL! Player #${selectedPlayer.playerNumber} scores!`
+      message = `GOAL! Player #${selectedPlayer.playerNumber} scores!`
     } else {
       outcomeType = 'NO_REWARD'
-      message = `❌ MISS! Player #${selectedPlayer.playerNumber} missed the shot!`
+      message = `MISS! Player #${selectedPlayer.playerNumber} missed the shot!`
     }
     
     return {

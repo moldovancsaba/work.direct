@@ -1,12 +1,13 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 
 interface PenaltyTexts {
+  // Basic game info
+  title: string
+  description: string
   // Registration texts
-  joinButton: string
   gameTitle: string
-  registrationSubtitle: string
   namePlaceholder: string
   emailPlaceholder: string
   phonePlaceholder: string
@@ -16,29 +17,40 @@ interface PenaltyTexts {
   tryWithoutRegButton: string
   
   // Game texts
-  gameIcon: string
-  howToPlayButton: string
-  gameRulesTitle: string
+  gameRulesTitle: string // Renamed from howToPlayButton
   gameRulesText: string
   winConditionsTitle: string
   winConditionsText: string
   gameDescription: string
   playButton: string
   
-  // Result texts
-  gameSubtitle: string
+  // Result page texts
+  gameResultsTitle: string
   playAgainButton: string
   shareWithFriendsButton: string
   shareResultTitle: string
   copyLinkButton: string
   shareButton: string
+  congratulationsText: string
+  gameOverText: string
+  inviteFriendsButton: string // Add invite friends functionality
   
-  // Win/Loss texts
+  // Result message emojis and texts
+  victoryResultEmoji: string
+  defeatResultEmoji: string
+  victoryResultMessage: string
+  defeatResultMessage: string
+  
+  // Labels and UI elements
+  yourGoalsLabel: string
+  opponentGoalsLabel: string
+  starsFoundLabel: string
+  roundsUsedLabel: string
+  
+  // Win/Loss texts (legacy - keeping for backwards compatibility)
   defeatIcon: string
   defeatTitle: string
   trialModeIndicator: string
-  yourGoalsLabel: string
-  opponentGoalsLabel: string
   visitorWinMessage: string
   drawIcon: string
   drawMessage: string
@@ -46,6 +58,14 @@ interface PenaltyTexts {
   victoryIcon: string
   victoryTitle: string
   homeWinMessage: string
+  
+  // Loading and Error texts
+  loadingGameText: string
+  gameNotFoundTitle: string
+  gameNotFoundMessage: string
+  tryAgainButton: string
+  gameTypeNotSupportedTitle: string
+  gameTypeNotSupportedMessage: string
 }
 
 interface PenaltyColors {
@@ -58,63 +78,98 @@ interface PenaltyColors {
   secondaryButton: string
   
   // Game field colors
-  scoreboardCard: string
+  homeScoreCard: string
+  visitorScoreCard: string
   gameField: string
   playerCard: string
   failedPenalty: string
 }
 
+interface PenaltyGameSettings {
+  totalPlayers: number        // Total team size (11 players in formation)
+  penaltyShots: number        // Number of penalty shots to select (5)
+  successfulShots: number     // Number of hexagons that contain goals (7)
+  missedShots: number         // Number of hexagons that contain misses (4)
+}
+
 interface PenaltyCustomizationFormProps {
   texts?: Partial<PenaltyTexts>
   colors?: Partial<PenaltyColors>
-  onChange: (texts: Partial<PenaltyTexts>, colors: Partial<PenaltyColors>) => void
+  gameSettings?: PenaltyGameSettings
+  gameData?: {
+    title?: string
+    description?: string
+  }
+  onChange: (texts: Partial<PenaltyTexts>, colors: Partial<PenaltyColors>, gameSettings: PenaltyGameSettings) => void
+  onGameDataChange?: (gameData: { title: string; description: string }) => void
+  hideTextAndColors?: boolean
 }
 
 // Default values
 const defaultTexts: PenaltyTexts = {
+  // Basic game info
+  title: 'My Penalty Shootout Game',
+  description: 'An exciting penalty shootout game with customizable rules and rewards',
   // Registration texts
-  joinButton: 'Join',
   gameTitle: 'DVTK Büntető Párbaj',
-  registrationSubtitle: 'Enter your details to play',
   namePlaceholder: 'Enter your name',
   emailPlaceholder: 'your@email.com',
   phonePlaceholder: '+1 (555) 123-4567',
   contactRequiredError: 'Please provide either email or phone number',
-  startPlayingButton: '🎮 Start Playing',
+  startPlayingButton: 'Start Playing',
   tryWithoutRegText: 'Want to try without registration?',
-  tryWithoutRegButton: '🎯 Try Without Registration',
+  tryWithoutRegButton: 'Try Without Registration',
   
   // Game texts
-  gameIcon: '⚽',
-  howToPlayButton: '📋 How to Play',
-  gameRulesTitle: '🎮 Game Rules:',
-  gameRulesText: '⚽ Select 5 players from 11 team members\n⚡ If draw, Visitor WINS!',
-  winConditionsTitle: '🏆 Win Conditions:',
-  winConditionsText: '🏆 Score more goals than opponent\n⚽ Select players wisely - you can\'t see who scores until selected\n🔥 In overtime: first team to score more wins',
-  gameDescription: 'Válaszd ki a büntetőpárbajban résztvevő játékosokat és ha győzöl megkaphatod a DVTK FanZone ajándékok egyikét',
-  playButton: '🎮 PLAY',
+  gameRulesTitle: 'Game Rules:', // Renamed from howToPlayButton
+  gameRulesText: 'Select 5 players from 11 team members\nIf draw, Visitor WINS!',
+  winConditionsTitle: 'Win Conditions:',
+  winConditionsText: 'Score more goals than opponent\nSelect players wisely - you can\'t see who scores until selected\nIn overtime: first team to score more wins',
+  gameDescription: 'Válaszd ki a büntetőpárbajban részt vevő játékosokat és ha győzöl megkaphatod a DVTK FanZone ajándékok egyikét',
+  playButton: 'PLAY',
   
-  // Result texts
-  gameSubtitle: '⚽Penalty Shootout Challenge',
-  playAgainButton: '🎮 Play Again',
-  shareWithFriendsButton: '🚀 Share with Friends',
+  // Result page texts
+  gameResultsTitle: 'GAME RESULTS',
+  playAgainButton: 'Play Again',
+  shareWithFriendsButton: 'Share with Friends',
   shareResultTitle: 'Share Your Result',
-  copyLinkButton: '📋 Copy Link',
-  shareButton: '📱 Share',
+  copyLinkButton: 'Copy Link',
+  shareButton: 'Share',
+  congratulationsText: 'Congratulations!',
+  gameOverText: 'Game Over',
+  inviteFriendsButton: 'Invite Friends',
   
-  // Win/Loss texts
-  defeatIcon: '⚽😕',
-  defeatTitle: 'Defeat!',
-  trialModeIndicator: '👀 Trial Mode',
+  // Result message emojis and texts
+  victoryResultEmoji: '',
+  defeatResultEmoji: '',
+  victoryResultMessage: 'Fantastic! You won the penalty shootout',
+  defeatResultMessage: 'Good effort! You lost the penalty shootout. Try again!',
+  
+  // Labels and UI elements
   yourGoalsLabel: 'Your Goals',
   opponentGoalsLabel: 'Opponent Goals',
-  visitorWinMessage: '💀 VISITOR won the penalty shootout',
-  drawIcon: '🎆',
+  starsFoundLabel: 'Stars Found',
+  roundsUsedLabel: 'Rounds Used',
+  
+  // Win/Loss texts (legacy - keeping for backwards compatibility)
+  defeatIcon: '',
+  defeatTitle: 'Defeat!',
+  trialModeIndicator: 'Trial Mode',
+  visitorWinMessage: 'VISITOR won the penalty shootout',
+  drawIcon: '',
   drawMessage: 'DRAW',
   visitorPenaltyWinMessage: 'VISITOR wins on penalties!',
-  victoryIcon: '⚽🎆',
+  victoryIcon: '',
   victoryTitle: 'Victory! You won',
-  homeWinMessage: '⚽ HOME won the penalty shootout'
+  homeWinMessage: 'HOME won the penalty shootout',
+  
+  // Loading and Error texts
+  loadingGameText: 'Loading game...',
+  gameNotFoundTitle: 'Game Not Found',
+  gameNotFoundMessage: 'The game you\'re looking for doesn\'t exist or is no longer available.',
+  tryAgainButton: 'Try Again',
+  gameTypeNotSupportedTitle: 'Game Type Not Supported',
+  gameTypeNotSupportedMessage: 'This game type is not yet supported in the play interface.'
 }
 
 const defaultColors: PenaltyColors = {
@@ -127,444 +182,430 @@ const defaultColors: PenaltyColors = {
   secondaryButton: 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700',
   
   // Game field colors
-  scoreboardCard: '#000000',
+  homeScoreCard: '#c00000',
+  visitorScoreCard: '#0066cc',
   gameField: '#2ecc71',
   playerCard: '#c00000',
   failedPenalty: '#ffffff'
 }
 
-export default function PenaltyCustomizationForm({ texts = {}, colors = {}, onChange }: PenaltyCustomizationFormProps) {
-  const [currentTexts, setCurrentTexts] = useState<Partial<PenaltyTexts>>({ ...defaultTexts, ...texts })
-  const [currentColors, setCurrentColors] = useState<Partial<PenaltyColors>>({ ...defaultColors, ...colors })
-  const [activeTab, setActiveTab] = useState<'texts' | 'colors'>('texts')
+// Default penalty game settings
+const defaultGameSettings: PenaltyGameSettings = {
+  totalPlayers: 11,       // Total team size (11 players in formation)
+  penaltyShots: 5,        // Number of penalty shots to select
+  successfulShots: 7,     // Number of hexagons that contain goals  
+  missedShots: 4          // Number of hexagons that contain misses (calculated: totalPlayers - successfulShots)
+}
 
-  const updateTexts = (key: keyof PenaltyTexts, value: string) => {
+// Field configuration with proper numbering and organization
+const fieldConfig = {
+  basicInfo: [
+    { key: 'title', label: '1. Game Title *', placeholder: 'My Penalty Shootout Game', description: 'The main title of your game', required: true },
+    { key: 'description', label: '2. Description', placeholder: 'An exciting penalty shootout game with customizable rules and rewards', description: 'Optional description of your game', multiline: true }
+  ],
+  registration: [
+    { key: 'gameTitle', label: '3. Game Title (Scoreboard text)', placeholder: 'DVTK Büntető Párbaj', description: 'Shows in the flip cards at top of screen' },
+    { key: 'namePlaceholder', label: '4. Name Placeholder', placeholder: 'Enter your name', description: 'Placeholder text in name input field' },
+    { key: 'emailPlaceholder', label: '5. Email Placeholder', placeholder: 'your@email.com', description: 'Placeholder text in email input field' },
+    { key: 'phonePlaceholder', label: '6. Phone Placeholder', placeholder: '+1 (555) 123-4567', description: 'Placeholder text in phone input field' },
+    { key: 'contactRequiredError', label: '7. Contact Required Error', placeholder: 'Please provide either email or phone number', description: 'Error message when no contact info provided' },
+    { key: 'startPlayingButton', label: '8. Start Playing Button', placeholder: 'Start Playing', description: 'Main registration submit button text' },
+    { key: 'tryWithoutRegText', label: '9. Try Without Registration Text', placeholder: 'Want to try without registration?', description: 'Text above trial mode button' },
+    { key: 'tryWithoutRegButton', label: '10. Try Without Registration Button', placeholder: 'Try Without Registration', description: 'Trial mode button text' }
+  ],
+  gameRules: [
+    { key: 'gameRulesTitle', label: '11. Game Rules Title', placeholder: 'Game Rules:', description: 'Title for game rules section' },
+    { key: 'gameRulesText', label: '12. Game Rules Text (multi-line)', placeholder: 'Select 5 players from 11 team members\nIf draw, Visitor WINS!', description: 'Detailed game rules text', multiline: true },
+    { key: 'winConditionsTitle', label: '13. Win Conditions Title', placeholder: 'Win Conditions:', description: 'Title for win conditions section' },
+    { key: 'winConditionsText', label: '14. Win Conditions Text (multi-line)', placeholder: 'Score more goals than opponent\nSelect players wisely - you can\'t see who scores until selected\nIn overtime: first team to score more wins', description: 'Detailed win conditions', multiline: true },
+    { key: 'gameDescription', label: '15. Game Description', placeholder: 'Válaszd ki a büntetőpárbajban részt vevő játékosokat és ha győzöl megkaphatod a DVTK FanZone ajándékok egyikét', description: 'Main game description text' },
+    { key: 'playButton', label: '16. Play Button', placeholder: 'PLAY', description: 'Button to start the game' }
+  ],
+  resultPage: [
+    { key: 'gameResultsTitle', label: '17. Game Results Title (Scoreboard text)', placeholder: 'GAME RESULTS', description: 'Title shown on results screen' },
+    { key: 'playAgainButton', label: '18. Play Again Button (Main action button)', placeholder: 'Play Again', description: 'Button to restart game' },
+    { key: 'shareWithFriendsButton', label: '19. Share with Friends Button', placeholder: 'Share with Friends', description: 'Social sharing button' },
+    { key: 'shareResultTitle', label: '20. Share Result Title', placeholder: 'Share Your Result', description: 'Title for sharing section' },
+    { key: 'copyLinkButton', label: '21. Copy Link Button', placeholder: 'Copy Link', description: 'Button to copy game link' },
+    { key: 'shareButton', label: '22. Share Button', placeholder: 'Share', description: 'General share button' },
+    { key: 'congratulationsText', label: '23. Congratulations Text (Victory title)', placeholder: 'Congratulations!', description: 'Victory congratulations text' },
+    { key: 'gameOverText', label: '24. Game Over Text (Defeat title)', placeholder: 'Game Over', description: 'Game over text for defeat' },
+    { key: 'inviteFriendsButton', label: '25. Invite Friends Button', placeholder: 'Invite Friends', description: 'Button to invite friends to play' }
+  ],
+  resultMessages: [
+    { key: 'victoryResultEmoji', label: '26. Victory Result Emoji (Victory icon)', placeholder: '', description: 'Emoji shown on victory results screen' },
+    { key: 'defeatResultEmoji', label: '27. Defeat Result Emoji (Defeat icon)', placeholder: '', description: 'Emoji shown on defeat results screen' },
+    { key: 'victoryResultMessage', label: '28. Victory Result Message (Victory text)', placeholder: 'Fantastic! You won the penalty shootout', description: 'Message shown when user wins (without score)' },
+    { key: 'defeatResultMessage', label: '29. Defeat Result Message (Defeat text)', placeholder: 'Good effort! You lost the penalty shootout. Try again!', description: 'Message shown when user loses (without score)' }
+  ],
+  legacyWinLoss: [
+    { key: 'defeatIcon', label: '30. Defeat Icon', placeholder: '', description: 'Icon shown with defeat' },
+    { key: 'defeatTitle', label: '31. Defeat Title', placeholder: 'Defeat!', description: 'Title for defeat state' },
+    { key: 'trialModeIndicator', label: '32. Trial Mode Indicator', placeholder: 'Trial Mode', description: 'Indicator for trial mode' },
+    { key: 'visitorWinMessage', label: '33. Visitor Win Message', placeholder: 'VISITOR won the penalty shootout', description: 'Message when visitor wins' },
+    { key: 'drawIcon', label: '34. Draw Icon', placeholder: '', description: 'Icon for draw/tie' },
+    { key: 'drawMessage', label: '35. Draw Message', placeholder: 'DRAW', description: 'Message for draw/tie' },
+    { key: 'visitorPenaltyWinMessage', label: '36. Visitor Penalty Win Message', placeholder: 'VISITOR wins on penalties!', description: 'Message when visitor wins on penalties' },
+    { key: 'victoryIcon', label: '37. Victory Icon', placeholder: '', description: 'Icon shown with victory' },
+    { key: 'victoryTitle', label: '38. Victory Title', placeholder: 'Victory! You won', description: 'Title for victory state' },
+    { key: 'homeWinMessage', label: '39. Home Win Message', placeholder: 'HOME won the penalty shootout', description: 'Message when home team wins' }
+  ],
+  loadingAndErrors: [
+    { key: 'loadingGameText', label: '40. Loading Game Text (Loading screen)', placeholder: 'Loading game...', description: 'Text shown while game loads' },
+    { key: 'gameNotFoundTitle', label: '41. Game Not Found Title (Error screen title)', placeholder: 'Game Not Found', description: 'Title for game not found error' },
+    { key: 'gameNotFoundMessage', label: '42. Game Not Found Message (Error description)', placeholder: 'The game you\'re looking for doesn\'t exist or is no longer available.', description: 'Description for game not found error' },
+    { key: 'tryAgainButton', label: '43. Try Again Button (Error retry button)', placeholder: 'Try Again', description: 'Button to retry after error' },
+    { key: 'gameTypeNotSupportedTitle', label: '44. Game Type Not Supported Title (Unsupported game)', placeholder: 'Game Type Not Supported', description: 'Title for unsupported game type' },
+    { key: 'gameTypeNotSupportedMessage', label: '45. Game Type Not Supported Message (Unsupported description)', placeholder: 'This game type is not yet supported in the play interface.', description: 'Description for unsupported game type' }
+  ]
+}
+
+export default function PenaltyCustomizationForm({ texts = {}, colors = {}, gameSettings = defaultGameSettings, gameData = {}, onChange, onGameDataChange, hideTextAndColors = false }: PenaltyCustomizationFormProps) {
+  const [currentTexts, setCurrentTexts] = useState<Partial<PenaltyTexts>>({ 
+    ...defaultTexts, 
+    ...texts,
+    title: gameData.title || texts.title || defaultTexts.title,
+    description: gameData.description || texts.description || defaultTexts.description
+  })
+  const [currentColors, setCurrentColors] = useState<Partial<PenaltyColors>>({ ...defaultColors, ...colors })
+  const [currentGameSettings, setCurrentGameSettings] = useState<PenaltyGameSettings>({ ...defaultGameSettings, ...gameSettings })
+  const [activeTab, setActiveTab] = useState<'rules' | 'texts' | 'colors'>('rules')
+
+  // Update currentTexts when props change
+  useEffect(() => {
+    setCurrentTexts({
+      ...defaultTexts,
+      ...texts,
+      title: gameData.title || texts.title || defaultTexts.title,
+      description: gameData.description || texts.description || defaultTexts.description
+    })
+  }, [texts, gameData.title, gameData.description])
+  
+  // Update currentColors when colors prop changes
+  useEffect(() => {
+    setCurrentColors({ ...defaultColors, ...colors })
+  }, [colors])
+  
+  // Update currentGameSettings when gameSettings prop changes
+  useEffect(() => {
+    setCurrentGameSettings({ ...defaultGameSettings, ...gameSettings })
+  }, [gameSettings])
+
+  const updateTexts = useCallback((key: keyof PenaltyTexts, value: string) => {
+    console.log('🎨 PenaltyForm - Field changed:', key, '=', value)
+    
     const newTexts = { ...currentTexts, [key]: value }
     setCurrentTexts(newTexts)
-    onChange(newTexts, currentColors)
-  }
+    
+    console.log('💾 PenaltyForm - Calling onChange with:', newTexts)
+    onChange(newTexts, currentColors, currentGameSettings)
+    
+    // Handle game data changes for title and description
+    if ((key === 'title' || key === 'description') && onGameDataChange) {
+      console.log('📝 PenaltyForm - Calling onGameDataChange')
+      onGameDataChange({
+        title: key === 'title' ? value : (newTexts.title || ''),
+        description: key === 'description' ? value : (newTexts.description || '')
+      })
+    }
+  }, [currentTexts, currentColors, onChange, onGameDataChange])
 
-  const updateColors = (key: keyof PenaltyColors, value: string) => {
+  const updateColors = useCallback((key: keyof PenaltyColors, value: string) => {
     const newColors = { ...currentColors, [key]: value }
     setCurrentColors(newColors)
-    onChange(currentTexts, newColors)
-  }
+    onChange(currentTexts, newColors, currentGameSettings)
+  }, [currentTexts, currentColors, currentGameSettings, onChange])
+
+  const updateGameSettings = useCallback((key: keyof PenaltyGameSettings, value: number) => {
+    let newSettings = { ...currentGameSettings, [key]: value }
+    
+    // Auto-calculate missedShots when totalPlayers or successfulShots change
+    if (key === 'totalPlayers' || key === 'successfulShots') {
+      const totalPlayers = key === 'totalPlayers' ? value : newSettings.totalPlayers
+      const successfulShots = key === 'successfulShots' ? value : newSettings.successfulShots
+      newSettings.missedShots = Math.max(0, totalPlayers - successfulShots)
+    }
+    
+    setCurrentGameSettings(newSettings)
+    onChange(currentTexts, currentColors, newSettings)
+  }, [currentTexts, currentColors, currentGameSettings, onChange])
 
   const resetToDefaults = () => {
-    if (activeTab === 'texts') {
+    if (activeTab === 'rules') {
+      setCurrentGameSettings(defaultGameSettings)
+      onChange(currentTexts, currentColors, defaultGameSettings)
+    } else if (activeTab === 'texts') {
       setCurrentTexts(defaultTexts)
-      onChange(defaultTexts, currentColors)
-    } else {
+      onChange(defaultTexts, currentColors, currentGameSettings)
+    } else if (activeTab === 'colors') {
       setCurrentColors(defaultColors)
-      onChange(currentTexts, defaultColors)
+      onChange(currentTexts, defaultColors, currentGameSettings)
     }
   }
+
+  const renderTextField = (config: any, value: string) => {
+    // Show the actual saved value or the default value
+    const defaultValue = defaultTexts[config.key as keyof PenaltyTexts] || ''
+    const displayValue = value || defaultValue
+    
+    if (config.multiline) {
+      return (
+        <textarea
+          value={displayValue}
+          onChange={(e) => updateTexts(config.key as keyof PenaltyTexts, e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-20"
+          placeholder={config.placeholder}
+          rows={3}
+        />
+      )
+    }
+
+    return (
+      <input
+        type="text"
+        value={displayValue}
+        onChange={(e) => updateTexts(config.key as keyof PenaltyTexts, e.target.value)}
+        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        placeholder={config.placeholder}
+      />
+    )
+  }
+
+  const renderFieldGroup = (groupKey: string, groupConfig: any[], groupTitle: string, groupDescription: string, bgColor: string) => (
+    <div key={groupKey} className={`${bgColor} p-4 rounded-lg`}>
+      <h4 className="text-md font-medium text-gray-800 mb-2">{groupTitle}</h4>
+      <p className="text-sm text-gray-600 mb-4">{groupDescription}</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {groupConfig.map((fieldConfig) => (
+          <div key={fieldConfig.key}>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {fieldConfig.label}
+            </label>
+            <p className="text-xs text-gray-500 mb-2">{fieldConfig.description}</p>
+            {renderTextField(fieldConfig, currentTexts[fieldConfig.key as keyof PenaltyTexts] || '')}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 
   return (
     <div className="space-y-6">
       <div className="border-b border-gray-200">
         <nav className="flex space-x-8">
           <button
-            onClick={() => setActiveTab('texts')}
+            type="button"
+            onClick={() => setActiveTab('rules')}
             className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'texts'
+              activeTab === 'rules'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            Game Texts
+            Game Settings
           </button>
-          <button
-            onClick={() => setActiveTab('colors')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'colors'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            Colors & Styling
-          </button>
+          {!hideTextAndColors && (
+            <>
+              <button
+                type="button"
+                onClick={() => setActiveTab('texts')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'texts'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Game Texts
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('colors')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'colors'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Colors & Styling
+              </button>
+            </>
+          )}
         </nav>
       </div>
 
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-medium text-gray-900">
-          {activeTab === 'texts' ? 'Customize Game Texts' : 'Customize Colors'}
+          {activeTab === 'rules' ? 'Game Settings & Configuration' : activeTab === 'texts' ? 'Customize Game Texts' : 'Customize Colors'}
         </h3>
-        <button
-          onClick={resetToDefaults}
-          className="px-3 py-1 text-sm text-blue-600 hover:text-blue-500 border border-blue-300 rounded-md hover:bg-blue-50"
-        >
-          Reset to Defaults
-        </button>
+          <button
+            type="button"
+            onClick={resetToDefaults}
+            className="px-3 py-1 text-sm text-blue-600 hover:text-blue-500 border border-blue-300 rounded-md hover:bg-blue-50"
+          >
+            Reset to Defaults
+          </button>
       </div>
 
-      {activeTab === 'texts' && (
-        <div className="space-y-8">
-          {/* Registration Texts */}
-          <div>
-            <h4 className="text-md font-medium text-gray-700 mb-4">Registration Page</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {activeTab === 'rules' && (
+        <div className="space-y-6">
+          {/* Team Configuration */}
+          <div className="bg-blue-50 p-6 rounded-lg">
+            <h4 className="text-lg font-medium text-gray-800 mb-4 flex items-center gap-2">
+              <span className="text-2xl">👥</span>
+              <span>Team Configuration</span>
+            </h4>
+            <p className="text-sm text-gray-600 mb-4">Configure the team size and formation for your penalty game</p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Join Button</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Total Players in Formation
+                </label>
                 <input
-                  type="text"
-                  value={currentTexts.joinButton || ''}
-                  onChange={(e) => updateTexts('joinButton', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  type="number"
+                  min="5"
+                  max="15"
+                  value={currentGameSettings.totalPlayers}
+                  onChange={(e) => updateGameSettings('totalPlayers', parseInt(e.target.value) || 11)}
+                  className="w-full px-4 py-3 bg-white text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
+                <p className="text-xs text-gray-500 mt-1">Number of players displayed in team formation (5-15)</p>
               </div>
+              
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Game Title</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Penalty Shots to Select
+                </label>
                 <input
-                  type="text"
-                  value={currentTexts.gameTitle || ''}
-                  onChange={(e) => updateTexts('gameTitle', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  type="number"
+                  min="1"
+                  max={currentGameSettings.totalPlayers}
+                  value={currentGameSettings.penaltyShots}
+                  onChange={(e) => updateGameSettings('penaltyShots', parseInt(e.target.value) || 5)}
+                  className="w-full px-4 py-3 bg-white text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Registration Subtitle</label>
-                <input
-                  type="text"
-                  value={currentTexts.registrationSubtitle || ''}
-                  onChange={(e) => updateTexts('registrationSubtitle', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name Placeholder</label>
-                <input
-                  type="text"
-                  value={currentTexts.namePlaceholder || ''}
-                  onChange={(e) => updateTexts('namePlaceholder', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email Placeholder</label>
-                <input
-                  type="text"
-                  value={currentTexts.emailPlaceholder || ''}
-                  onChange={(e) => updateTexts('emailPlaceholder', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Placeholder</label>
-                <input
-                  type="text"
-                  value={currentTexts.phonePlaceholder || ''}
-                  onChange={(e) => updateTexts('phonePlaceholder', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Contact Required Error</label>
-                <input
-                  type="text"
-                  value={currentTexts.contactRequiredError || ''}
-                  onChange={(e) => updateTexts('contactRequiredError', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Start Playing Button</label>
-                <input
-                  type="text"
-                  value={currentTexts.startPlayingButton || ''}
-                  onChange={(e) => updateTexts('startPlayingButton', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Try Without Registration Text</label>
-                <input
-                  type="text"
-                  value={currentTexts.tryWithoutRegText || ''}
-                  onChange={(e) => updateTexts('tryWithoutRegText', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Try Without Registration Button</label>
-                <input
-                  type="text"
-                  value={currentTexts.tryWithoutRegButton || ''}
-                  onChange={(e) => updateTexts('tryWithoutRegButton', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                <p className="text-xs text-gray-500 mt-1">How many players the user must select for penalties</p>
               </div>
             </div>
           </div>
 
-          {/* Game Texts */}
-          <div>
-            <h4 className="text-md font-medium text-gray-700 mb-4">Game Rules & Description</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Scoring Configuration */}
+          <div className="bg-green-50 p-6 rounded-lg">
+            <h4 className="text-lg font-medium text-gray-800 mb-4 flex items-center gap-2">
+              <span className="text-2xl">⚽</span>
+              <span>Scoring Distribution</span>
+            </h4>
+            <p className="text-sm text-gray-600 mb-4">Set how many players will score goals vs miss penalties</p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Game Icon</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Successful Penalties (Goals)
+                </label>
                 <input
-                  type="text"
-                  value={currentTexts.gameIcon || ''}
-                  onChange={(e) => updateTexts('gameIcon', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  type="number"
+                  min="0"
+                  max={currentGameSettings.totalPlayers}
+                  value={currentGameSettings.successfulShots}
+                  onChange={(e) => updateGameSettings('successfulShots', parseInt(e.target.value) || 7)}
+                  className="w-full px-4 py-3 bg-white text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
+                <p className="text-xs text-gray-500 mt-1">Number of players who will score if selected</p>
               </div>
+              
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">How to Play Button</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Failed Penalties (Misses)
+                </label>
                 <input
-                  type="text"
-                  value={currentTexts.howToPlayButton || ''}
-                  onChange={(e) => updateTexts('howToPlayButton', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  type="number"
+                  value={currentGameSettings.missedShots}
+                  readOnly
+                  className="w-full px-4 py-3 bg-gray-100 text-gray-700 border border-gray-300 rounded-lg cursor-not-allowed"
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Game Rules Title</label>
-                <input
-                  type="text"
-                  value={currentTexts.gameRulesTitle || ''}
-                  onChange={(e) => updateTexts('gameRulesTitle', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Win Conditions Title</label>
-                <input
-                  type="text"
-                  value={currentTexts.winConditionsTitle || ''}
-                  onChange={(e) => updateTexts('winConditionsTitle', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Play Button</label>
-                <input
-                  type="text"
-                  value={currentTexts.playButton || ''}
-                  onChange={(e) => updateTexts('playButton', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                <p className="text-xs text-gray-500 mt-1">Automatically calculated: Total Players - Successful Penalties</p>
               </div>
             </div>
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Game Rules Text (multi-line)</label>
-              <textarea
-                value={currentTexts.gameRulesText || ''}
-                onChange={(e) => updateTexts('gameRulesText', e.target.value)}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Win Conditions Text (multi-line)</label>
-              <textarea
-                value={currentTexts.winConditionsText || ''}
-                onChange={(e) => updateTexts('winConditionsText', e.target.value)}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Game Description</label>
-              <textarea
-                value={currentTexts.gameDescription || ''}
-                onChange={(e) => updateTexts('gameDescription', e.target.value)}
-                rows={2}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-
-          {/* Result Texts */}
-          <div>
-            <h4 className="text-md font-medium text-gray-700 mb-4">Results & Sharing</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Game Subtitle</label>
-                <input
-                  type="text"
-                  value={currentTexts.gameSubtitle || ''}
-                  onChange={(e) => updateTexts('gameSubtitle', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+            
+            {/* Success Rate Preview */}
+            <div className="mt-6 p-4 bg-white rounded-lg border">
+              <h5 className="font-medium text-gray-800 mb-3">Success Rate Preview</h5>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-green-600 font-medium">
+                  Goals: {currentGameSettings.successfulShots} ({Math.round((currentGameSettings.successfulShots / currentGameSettings.totalPlayers) * 100)}%)
+                </span>
+                <span className="text-red-600 font-medium">
+                  Misses: {currentGameSettings.missedShots} ({Math.round((currentGameSettings.missedShots / currentGameSettings.totalPlayers) * 100)}%)
+                </span>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Play Again Button</label>
-                <input
-                  type="text"
-                  value={currentTexts.playAgainButton || ''}
-                  onChange={(e) => updateTexts('playAgainButton', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Share with Friends Button</label>
-                <input
-                  type="text"
-                  value={currentTexts.shareWithFriendsButton || ''}
-                  onChange={(e) => updateTexts('shareWithFriendsButton', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Share Result Title</label>
-                <input
-                  type="text"
-                  value={currentTexts.shareResultTitle || ''}
-                  onChange={(e) => updateTexts('shareResultTitle', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Copy Link Button</label>
-                <input
-                  type="text"
-                  value={currentTexts.copyLinkButton || ''}
-                  onChange={(e) => updateTexts('copyLinkButton', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Share Button</label>
-                <input
-                  type="text"
-                  value={currentTexts.shareButton || ''}
-                  onChange={(e) => updateTexts('shareButton', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+              
+              {/* Visual bar representation */}
+              <div className="mt-3 h-4 bg-gray-200 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-green-500"
+                  style={{ width: `${(currentGameSettings.successfulShots / currentGameSettings.totalPlayers) * 100}%` }}
+                ></div>
               </div>
             </div>
           </div>
 
-          {/* Win/Loss Texts */}
-          <div>
-            <h4 className="text-md font-medium text-gray-700 mb-4">Win/Loss Messages</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Defeat Icon</label>
-                <input
-                  type="text"
-                  value={currentTexts.defeatIcon || ''}
-                  onChange={(e) => updateTexts('defeatIcon', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+          {/* Validation Warnings */}
+          {currentGameSettings.successfulShots > currentGameSettings.totalPlayers && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-center gap-2">
+                <span className="text-red-600">⚠️</span>
+                <span className="text-red-800 font-medium">Configuration Error</span>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Defeat Title</label>
-                <input
-                  type="text"
-                  value={currentTexts.defeatTitle || ''}
-                  onChange={(e) => updateTexts('defeatTitle', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+              <p className="text-red-700 mt-1">Successful penalties cannot exceed total players in formation.</p>
+            </div>
+          )}
+          
+          {currentGameSettings.penaltyShots > currentGameSettings.totalPlayers && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-center gap-2">
+                <span className="text-red-600">⚠️</span>
+                <span className="text-red-800 font-medium">Configuration Error</span>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Trial Mode Indicator</label>
-                <input
-                  type="text"
-                  value={currentTexts.trialModeIndicator || ''}
-                  onChange={(e) => updateTexts('trialModeIndicator', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Your Goals Label</label>
-                <input
-                  type="text"
-                  value={currentTexts.yourGoalsLabel || ''}
-                  onChange={(e) => updateTexts('yourGoalsLabel', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Opponent Goals Label</label>
-                <input
-                  type="text"
-                  value={currentTexts.opponentGoalsLabel || ''}
-                  onChange={(e) => updateTexts('opponentGoalsLabel', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Visitor Win Message</label>
-                <input
-                  type="text"
-                  value={currentTexts.visitorWinMessage || ''}
-                  onChange={(e) => updateTexts('visitorWinMessage', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Draw Icon</label>
-                <input
-                  type="text"
-                  value={currentTexts.drawIcon || ''}
-                  onChange={(e) => updateTexts('drawIcon', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Draw Message</label>
-                <input
-                  type="text"
-                  value={currentTexts.drawMessage || ''}
-                  onChange={(e) => updateTexts('drawMessage', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Visitor Penalty Win Message</label>
-                <input
-                  type="text"
-                  value={currentTexts.visitorPenaltyWinMessage || ''}
-                  onChange={(e) => updateTexts('visitorPenaltyWinMessage', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Victory Icon</label>
-                <input
-                  type="text"
-                  value={currentTexts.victoryIcon || ''}
-                  onChange={(e) => updateTexts('victoryIcon', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Victory Title</label>
-                <input
-                  type="text"
-                  value={currentTexts.victoryTitle || ''}
-                  onChange={(e) => updateTexts('victoryTitle', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Home Win Message</label>
-                <input
-                  type="text"
-                  value={currentTexts.homeWinMessage || ''}
-                  onChange={(e) => updateTexts('homeWinMessage', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+              <p className="text-red-700 mt-1">Penalty shots to select cannot exceed total players in formation.</p>
+            </div>
+          )}
+          
+          {/* Game Impact Summary */}
+          <div className="bg-indigo-50 p-6 rounded-lg">
+            <h4 className="text-lg font-medium text-gray-800 mb-4 flex items-center gap-2">
+              <span className="text-2xl">📊</span>
+              <span>Game Impact Summary</span>
+            </h4>
+            <div className="space-y-2 text-sm text-gray-700">
+              <p>• Players will choose <strong>{currentGameSettings.penaltyShots} players</strong> from a <strong>{currentGameSettings.totalPlayers}-player formation</strong></p>
+              <p>• Maximum possible user score: <strong>{Math.min(currentGameSettings.penaltyShots, currentGameSettings.successfulShots)} goals</strong></p>
+              <p>• Minimum possible user score: <strong>{Math.max(0, currentGameSettings.penaltyShots - currentGameSettings.missedShots)} goals</strong></p>
+              <p>• Success probability per selection: <strong>{Math.round((currentGameSettings.successfulShots / currentGameSettings.totalPlayers) * 100)}%</strong></p>
             </div>
           </div>
         </div>
       )}
 
-      {activeTab === 'colors' && (
+      {!hideTextAndColors && activeTab === 'texts' && (
         <div className="space-y-8">
-          {/* Background Colors */}
-          <div>
-            <h4 className="text-md font-medium text-gray-700 mb-4">Background Colors</h4>
+          {renderFieldGroup('basicInfo', fieldConfig.basicInfo, '🎯 Basic Information', 'Core game information that appears across your game', 'bg-slate-50')}
+          {renderFieldGroup('registration', fieldConfig.registration, '📝 Registration Page', 'These texts appear on the first screen where players enter their details', 'bg-blue-50')}
+          {renderFieldGroup('gameRules', fieldConfig.gameRules, '📋 Game Rules & Description', 'These texts appear on the rules/how-to-play screen', 'bg-purple-50')}
+          {renderFieldGroup('resultPage', fieldConfig.resultPage, '🏆 Result Page', 'These texts appear on the results screen after the game ends', 'bg-yellow-50')}
+          {renderFieldGroup('resultMessages', fieldConfig.resultMessages, '🏆 Result Messages', 'Emojis and messages shown on the results screen', 'bg-orange-50')}
+          {renderFieldGroup('legacyWinLoss', fieldConfig.legacyWinLoss, '📊 Win/Loss Messages', 'Legacy win/loss messages kept for backwards compatibility', 'bg-gray-50')}
+          {renderFieldGroup('loadingAndErrors', fieldConfig.loadingAndErrors, '⚠️ Loading & Error Messages', 'These texts appear during loading states and error conditions', 'bg-red-50')}
+        </div>
+      )}
+
+      {!hideTextAndColors && activeTab === 'colors' && (
+        <div className="space-y-8">
+          <div className="bg-purple-50 p-4 rounded-lg">
+            <h4 className="text-md font-medium text-gray-800 mb-2">🎨 Background Colors</h4>
+            <p className="text-sm text-gray-600 mb-4">Colors for backgrounds and containers</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Page Background (CSS class)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Page Background</label>
                 <input
                   type="text"
                   value={currentColors.pageBackground || ''}
@@ -574,7 +615,7 @@ export default function PenaltyCustomizationForm({ texts = {}, colors = {}, onCh
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Block Background (CSS class)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Block Background</label>
                 <input
                   type="text"
                   value={currentColors.blockBackground || ''}
@@ -586,12 +627,12 @@ export default function PenaltyCustomizationForm({ texts = {}, colors = {}, onCh
             </div>
           </div>
 
-          {/* Button Colors */}
-          <div>
-            <h4 className="text-md font-medium text-gray-700 mb-4">Button Colors</h4>
-            <div className="space-y-4">
+          <div className="bg-green-50 p-4 rounded-lg">
+            <h4 className="text-md font-medium text-gray-800 mb-2">🔘 Button Colors</h4>
+            <p className="text-sm text-gray-600 mb-4">Colors for buttons and interactive elements</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Primary Button (CSS class)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Primary Button</label>
                 <input
                   type="text"
                   value={currentColors.primaryButton || ''}
@@ -601,7 +642,7 @@ export default function PenaltyCustomizationForm({ texts = {}, colors = {}, onCh
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Secondary Button (CSS class)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Secondary Button</label>
                 <input
                   type="text"
                   value={currentColors.secondaryButton || ''}
@@ -613,81 +654,54 @@ export default function PenaltyCustomizationForm({ texts = {}, colors = {}, onCh
             </div>
           </div>
 
-          {/* Game Field Colors */}
-          <div>
-            <h4 className="text-md font-medium text-gray-700 mb-4">Game Field Colors</h4>
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <h4 className="text-md font-medium text-gray-800 mb-2">⚽ Game Field Colors</h4>
+            <p className="text-sm text-gray-600 mb-4">Colors for game elements and scoreboards</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Scoreboard Card (hex color)</label>
-                <div className="flex">
-                  <input
-                    type="color"
-                    value={currentColors.scoreboardCard || '#000000'}
-                    onChange={(e) => updateColors('scoreboardCard', e.target.value)}
-                    className="h-10 w-16 border border-gray-300 rounded-l-md"
-                  />
-                  <input
-                    type="text"
-                    value={currentColors.scoreboardCard || ''}
-                    onChange={(e) => updateColors('scoreboardCard', e.target.value)}
-                    className="flex-1 px-3 py-2 border border-l-0 border-gray-300 rounded-r-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="#000000"
-                  />
-                </div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Home Score Card</label>
+                <input
+                  type="color"
+                  value={currentColors.homeScoreCard || '#c00000'}
+                  onChange={(e) => updateColors('homeScoreCard', e.target.value)}
+                  className="w-full h-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Game Field (hex color)</label>
-                <div className="flex">
-                  <input
-                    type="color"
-                    value={currentColors.gameField || '#2ecc71'}
-                    onChange={(e) => updateColors('gameField', e.target.value)}
-                    className="h-10 w-16 border border-gray-300 rounded-l-md"
-                  />
-                  <input
-                    type="text"
-                    value={currentColors.gameField || ''}
-                    onChange={(e) => updateColors('gameField', e.target.value)}
-                    className="flex-1 px-3 py-2 border border-l-0 border-gray-300 rounded-r-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="#2ecc71"
-                  />
-                </div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Visitor Score Card</label>
+                <input
+                  type="color"
+                  value={currentColors.visitorScoreCard || '#0066cc'}
+                  onChange={(e) => updateColors('visitorScoreCard', e.target.value)}
+                  className="w-full h-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Player Card (hex color)</label>
-                <div className="flex">
-                  <input
-                    type="color"
-                    value={currentColors.playerCard || '#c00000'}
-                    onChange={(e) => updateColors('playerCard', e.target.value)}
-                    className="h-10 w-16 border border-gray-300 rounded-l-md"
-                  />
-                  <input
-                    type="text"
-                    value={currentColors.playerCard || ''}
-                    onChange={(e) => updateColors('playerCard', e.target.value)}
-                    className="flex-1 px-3 py-2 border border-l-0 border-gray-300 rounded-r-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="#c00000"
-                  />
-                </div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Game Field</label>
+                <input
+                  type="color"
+                  value={currentColors.gameField || '#2ecc71'}
+                  onChange={(e) => updateColors('gameField', e.target.value)}
+                  className="w-full h-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Failed Penalty (hex color)</label>
-                <div className="flex">
-                  <input
-                    type="color"
-                    value={currentColors.failedPenalty || '#ffffff'}
-                    onChange={(e) => updateColors('failedPenalty', e.target.value)}
-                    className="h-10 w-16 border border-gray-300 rounded-l-md"
-                  />
-                  <input
-                    type="text"
-                    value={currentColors.failedPenalty || ''}
-                    onChange={(e) => updateColors('failedPenalty', e.target.value)}
-                    className="flex-1 px-3 py-2 border border-l-0 border-gray-300 rounded-r-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="#ffffff"
-                  />
-                </div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Player Card</label>
+                <input
+                  type="color"
+                  value={currentColors.playerCard || '#c00000'}
+                  onChange={(e) => updateColors('playerCard', e.target.value)}
+                  className="w-full h-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Failed Penalty</label>
+                <input
+                  type="color"
+                  value={currentColors.failedPenalty || '#ffffff'}
+                  onChange={(e) => updateColors('failedPenalty', e.target.value)}
+                  className="w-full h-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
               </div>
             </div>
           </div>

@@ -170,6 +170,116 @@ const gameSchema = new Schema<Game>({
   
   // Game configuration object with type-specific settings
   configuration: {
+    // Central platform configuration for 4-page flow
+    platform: {
+      texts: {
+        TEXT_10: { type: String, default: '' },
+        TEXT_20: { type: String, default: '' },
+        TEXT_30: { type: String, default: '' },
+        TEXT_40: { type: String, default: '' },
+        TEXT_11: { type: String, default: '' },
+        TEXT_12: { type: String, default: '' },
+        TEXT_13: { type: String, default: '' },
+        TEXT_14: { type: String, default: '' },
+        TEXT_15: { type: String, default: '' },
+        TEXT_16: { type: String, default: '' },
+        TEXT_17: { type: String, default: '' },
+        TEXT_18: { type: String, default: '' },
+        TEXT_19: { type: String, default: '' },
+        TEXT_21: { type: String, default: '' },
+        TEXT_22: { type: String, default: '' },
+        TEXT_23: { type: String, default: '' },
+        TEXT_24: { type: String, default: '' },
+        TEXT_25: { type: String, default: '' },
+        TEXT_41: { type: String, default: '' },
+        TEXT_42: { type: String, default: '' },
+        TEXT_43: { type: String, default: '' },
+        TEXT_44: { type: String, default: '' },
+        TEXT_45: { type: String, default: '' },
+        TEXT_46: { type: String, default: '' }
+      },
+      styles: {
+        hero: {
+          background: { type: String, default: '' },
+          titleClass: { type: String, default: '' }
+        },
+        main: {
+          background: { type: String, default: '' },
+          h1Class: { type: String, default: '' },
+          h2Class: { type: String, default: '' },
+          pClass: { type: String, default: '' },
+          buttonPrimaryClass: { type: String, default: '' },
+          buttonSecondaryClass: { type: String, default: '' }
+        },
+        scoreboard: {
+          homeBg: { type: String, default: '' },
+          visitorBg: { type: String, default: '' },
+          digitColor: { type: String, default: '' },
+          showLabels: { type: Boolean, default: false },
+          homeLabel: { type: String, default: '' },
+          visitorLabel: { type: String, default: '' }
+        }
+      }
+    },
+
+    // General (global) texts and colors for all games
+    general: {
+      texts: {
+        // 🎯 Welcome & Registration
+        gameTitle: { type: String, default: '' },
+        namePlaceholder: { type: String, default: '' },
+        emailPlaceholder: { type: String, default: '' },
+        phonePlaceholder: { type: String, default: '' },
+        contactRequiredError: { type: String, default: '' },
+        startPlayingButton: { type: String, default: '' },
+        tryWithoutRegText: { type: String, default: '' },
+        tryWithoutRegButton: { type: String, default: '' },
+
+        // 📋 Game Rules & Description
+        gameRulesTitle: { type: String, default: '' },
+        playButton: { type: String, default: '' },
+        gameRulesText: { type: String, default: '' },
+        winConditionsTitle: { type: String, default: '' },
+        winConditionsText: { type: String, default: '' },
+        gameDescription: { type: String, default: '' },
+
+        // 🏆 Result Page & Result Messages
+        gameResultsTitle: { type: String, default: '' },
+        playAgainButton: { type: String, default: '' },
+        shareWithFriendsButton: { type: String, default: '' },
+        victoryResultMessage: { type: String, default: '' },
+        defeatResultMessage: { type: String, default: '' },
+
+        // 📊 Win/Loss Messages
+        defeatTitle: { type: String, default: '' },
+        victoryTitle: { type: String, default: '' },
+        drawMessage: { type: String, default: '' },
+
+        // ⚠️ Loading & Error Messages
+        loadingGameText: { type: String, default: '' },
+        gameNotFoundTitle: { type: String, default: '' },
+        gameNotFoundMessage: { type: String, default: '' },
+        tryAgainButton: { type: String, default: '' },
+        gameTypeNotSupportedTitle: { type: String, default: '' },
+        gameTypeNotSupportedMessage: { type: String, default: '' }
+      },
+      colors: {
+        // 🎨 Background Colors
+        pageBackground: { type: String, default: 'bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900' },
+        blockBackground: { type: String, default: 'bg-white/10 backdrop-blur-sm' },
+
+        // 🔘 Button Colors
+        primaryButton: { type: String, default: 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700' },
+        secondaryButton: { type: String, default: 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700' },
+
+        // ⚽ Game Field Colors
+        homeScoreCard: { type: String, default: '#c00000' },
+        visitorScoreCard: { type: String, default: '#0066cc' },
+        gameField: { type: String, default: '#2ecc71' },
+        playerCard: { type: String, default: '#c00000' },
+        failedPenalty: { type: String, default: '#ffffff' }
+      }
+    },
     // Stars Hexa specific configuration
     starsHexa: {
       hexagons: {
@@ -188,6 +298,35 @@ const gameSchema = new Schema<Game>({
         type: String,
         enum: ['default', 'colorful', 'minimal'],
         default: 'default'
+      },
+      // Optional UI texts for the 4-page flow
+      // Why: allows clean admin customization while preserving backwards compatibility
+      texts: {
+        welcomeTitle: { type: String, default: '' },
+        welcomeSubtitle: { type: String, default: '' },
+        ctaStart: { type: String, default: '' },
+        ctaGuest: { type: String, default: '' },
+        rulesTitle: { type: String, default: '' },
+        rulesBody: { type: String, default: '' },
+        resultTitle: { type: String, default: '' },
+        resultInviteCTA: { type: String, default: '' },
+        resultPlayAgainCTA: { type: String, default: '' },
+        resultPartnerCTA: { type: String, default: '' },
+        gameHUD: { type: String, default: '' }
+      },
+      // Optional color palette with strict hex validation
+      colors: {
+        palette: {
+          primary: { type: String, match: [/^#[0-9A-Fa-f]{6}$/, 'Color must be a valid hex color'], default: '#0EA5E9' },
+          accent: { type: String, match: [/^#[0-9A-Fa-f]{6}$/, 'Color must be a valid hex color'], default: '#F59E0B' },
+          bg: { type: String, match: [/^#[0-9A-Fa-f]{6}$/, 'Color must be a valid hex color'], default: '#0B1220' },
+          text: { type: String, match: [/^#[0-9A-Fa-f]{6}$/, 'Color must be a valid hex color'], default: '#FFFFFF' }
+        }
+      },
+      // Emoji customization for Stars Hexa
+      emojis: {
+        win: { type: String, default: '⭐️' },
+        lose: { type: String, default: '🍄' }
       }
     },
     
@@ -212,49 +351,70 @@ const gameSchema = new Schema<Game>({
       },
       // Customizable texts
       texts: {
-        // Registration texts
-        joinButton: { type: String, default: 'Join' },
+        // Basic game info
+        title: { type: String, default: 'My Penalty Shootout Game' },
+        description: { type: String, default: 'An exciting penalty shootout game with customizable rules and rewards' },
+        
+        // Registration texts  
         gameTitle: { type: String, default: 'DVTK Büntető Párbaj' },
-        registrationSubtitle: { type: String, default: 'Enter your details to play' },
         namePlaceholder: { type: String, default: 'Enter your name' },
         emailPlaceholder: { type: String, default: 'your@email.com' },
         phonePlaceholder: { type: String, default: '+1 (555) 123-4567' },
         contactRequiredError: { type: String, default: 'Please provide either email or phone number' },
-        startPlayingButton: { type: String, default: '🎮 Start Playing' },
+        startPlayingButton: { type: String, default: 'Start Playing' },
         tryWithoutRegText: { type: String, default: 'Want to try without registration?' },
-        tryWithoutRegButton: { type: String, default: '🎯 Try Without Registration' },
+        tryWithoutRegButton: { type: String, default: 'Try Without Registration' },
         
         // Game texts
-        gameIcon: { type: String, default: '⚽' },
-        howToPlayButton: { type: String, default: '📋 How to Play' },
-        gameRulesTitle: { type: String, default: '🎮 Game Rules:' },
-        gameRulesText: { type: String, default: '⚽ Select 5 players from 11 team members\n⚡ If draw, Visitor WINS!' },
-        winConditionsTitle: { type: String, default: '🏆 Win Conditions:' },
-        winConditionsText: { type: String, default: '🏆 Score more goals than opponent\n⚽ Select players wisely - you can\'t see who scores until selected\n🔥 In overtime: first team to score more wins' },
-        gameDescription: { type: String, default: 'Válaszd ki a büntetőpárbajban résztvevő játékosokat és ha győzöl megkaphatod a DVTK FanZone ajándékok egyikét' },
-        playButton: { type: String, default: '🎮 PLAY' },
+        gameRulesTitle: { type: String, default: 'Game Rules:' },
+        gameRulesText: { type: String, default: 'Select 5 players from 11 team members\nIf draw, Visitor WINS!' },
+        winConditionsTitle: { type: String, default: 'Win Conditions:' },
+        winConditionsText: { type: String, default: 'Score more goals than opponent\nSelect players wisely - you can\'t see who scores until selected\nIn overtime: first team to score more wins' },
+        gameDescription: { type: String, default: 'Válaszd ki a büntetőpárbajban részt vevő játékosokat és ha győzöl megkaphatod a DVTK FanZone ajándékok egykét' },
+        playButton: { type: String, default: 'PLAY' },
         
-        // Result texts
-        gameSubtitle: { type: String, default: '⚽Penalty Shootout Challenge' },
-        playAgainButton: { type: String, default: '🎮 Play Again' },
-        shareWithFriendsButton: { type: String, default: '🚀 Share with Friends' },
+        // Result page texts
+        gameResultsTitle: { type: String, default: 'GAME RESULTS' },
+        playAgainButton: { type: String, default: 'Play Again' },
+        shareWithFriendsButton: { type: String, default: 'Share with Friends' },
         shareResultTitle: { type: String, default: 'Share Your Result' },
-        copyLinkButton: { type: String, default: '📋 Copy Link' },
-        shareButton: { type: String, default: '📱 Share' },
+        copyLinkButton: { type: String, default: 'Copy Link' },
+        shareButton: { type: String, default: 'Share' },
+        congratulationsText: { type: String, default: 'Congratulations!' },
+        gameOverText: { type: String, default: 'Game Over' },
+        inviteFriendsButton: { type: String, default: 'Invite Friends' },
         
-        // Win/Loss texts
-        defeatIcon: { type: String, default: '⚽😕' },
-        defeatTitle: { type: String, default: 'Defeat!' },
-        trialModeIndicator: { type: String, default: '👀 Trial Mode' },
+        // Result message emojis and texts
+        victoryResultEmoji: { type: String, default: '' },
+        defeatResultEmoji: { type: String, default: '' },
+        victoryResultMessage: { type: String, default: 'Fantastic! You won the penalty shootout' },
+        defeatResultMessage: { type: String, default: 'Good effort! You lost the penalty shootout. Try again!' },
+        
+        // Labels and UI elements
         yourGoalsLabel: { type: String, default: 'Your Goals' },
         opponentGoalsLabel: { type: String, default: 'Opponent Goals' },
-        visitorWinMessage: { type: String, default: '💀 VISITOR won the penalty shootout' },
-        drawIcon: { type: String, default: '🎆' },
+        starsFoundLabel: { type: String, default: 'Stars Found' },
+        roundsUsedLabel: { type: String, default: 'Rounds Used' },
+        
+        // Win/Loss texts (legacy - keeping for backwards compatibility)
+        defeatIcon: { type: String, default: '' },
+        defeatTitle: { type: String, default: 'Defeat!' },
+        trialModeIndicator: { type: String, default: 'Trial Mode' },
+        visitorWinMessage: { type: String, default: 'VISITOR won the penalty shootout' },
+        drawIcon: { type: String, default: '' },
         drawMessage: { type: String, default: 'DRAW' },
         visitorPenaltyWinMessage: { type: String, default: 'VISITOR wins on penalties!' },
-        victoryIcon: { type: String, default: '⚽🎆' },
+        victoryIcon: { type: String, default: '' },
         victoryTitle: { type: String, default: 'Victory! You won' },
-        homeWinMessage: { type: String, default: '⚽ HOME won the penalty shootout' }
+        homeWinMessage: { type: String, default: 'HOME won the penalty shootout' },
+        
+        // Loading and Error texts
+        loadingGameText: { type: String, default: 'Loading game...' },
+        gameNotFoundTitle: { type: String, default: 'Game Not Found' },
+        gameNotFoundMessage: { type: String, default: 'The game you\'re looking for doesn\'t exist or is no longer available.' },
+        tryAgainButton: { type: String, default: 'Try Again' },
+        gameTypeNotSupportedTitle: { type: String, default: 'Game Type Not Supported' },
+        gameTypeNotSupportedMessage: { type: String, default: 'This game type is not yet supported in the play interface.' }
       },
       
       // Customizable colors
@@ -262,13 +422,19 @@ const gameSchema = new Schema<Game>({
         // Background colors
         pageBackground: { type: String, default: 'bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900' },
         blockBackground: { type: String, default: 'bg-white/10 backdrop-blur-sm' },
+        titleField: { type: String, default: '#444444' },
         
         // Button colors
         primaryButton: { type: String, default: 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700' },
         secondaryButton: { type: String, default: 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700' },
         
         // Game field colors
-        scoreboardCard: { type: String, default: '#000000' },
+        // Home team score card background color
+        // Why: we persist explicit per-team colors to avoid a third, global scoreboard color as per design rules
+        homeScoreCard: { type: String, default: '#c00000' },
+        // Visitor team score card background color
+        // Why: ensures only two scorecard backgrounds (home/visitor) are used in the UI
+        visitorScoreCard: { type: String, default: '#0066cc' },
         gameField: { type: String, default: '#2ecc71' },
         playerCard: { type: String, default: '#c00000' },
         failedPenalty: { type: String, default: '#ffffff' }

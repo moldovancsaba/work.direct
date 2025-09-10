@@ -159,9 +159,8 @@ export default function GameStatus({
       {/* Game status header */}
       <div className="mb-4">
         <h3 className="text-lg font-semibold text-white text-center flex items-center justify-center space-x-2">
-          <span>📊</span>
           <span>Game Status</span>
-          {isGameComplete && <span className="text-green-400">✓</span>}
+          {isGameComplete && <span className="text-green-400">Complete</span>}
         </h3>
       </div>
       
@@ -174,7 +173,7 @@ export default function GameStatus({
         <div className="mt-4 text-center">
           <div className="bg-green-500/20 border border-green-400 rounded-lg p-3">
             <p className="text-green-300 font-semibold">
-              🎉 Game Complete!
+              Game Complete!
             </p>
           </div>
         </div>

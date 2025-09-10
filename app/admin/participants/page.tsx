@@ -14,6 +14,7 @@ interface Participant {
   totalGamesPlayed: number
   totalRewardsEarned: number
   isActive: boolean
+  invitesCount?: number
 }
 
 interface ParticipantsStats {
@@ -319,6 +320,9 @@ export default function ParticipantsPage() {
                     Total Score
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Invites
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -365,6 +369,9 @@ export default function ParticipantsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {participant.totalRewardsEarned}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {participant.invitesCount ?? 0}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${

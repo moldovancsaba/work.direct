@@ -12,6 +12,17 @@ interface PenaltyShootoutProps {
   theme?: 'default' | 'colorful' | 'football'
   gameId?: string
   isTrialMode?: boolean
+  customTexts?: {
+    penaltyShootoutTitle?: string
+    youLabel?: string
+    opponentLabel?: string
+    suddenDeathText?: string
+    selectPlayersText?: string
+    goalText?: string
+    missText?: string
+    youWonText?: string
+    youLostText?: string
+  }
 }
 
 // Game state interface for useReducer
@@ -155,7 +166,8 @@ export default function PenaltyShootout({
   disabled = false,
   theme = 'default',
   gameId,
-  isTrialMode = false
+  isTrialMode = false,
+  customTexts = {}
 }: PenaltyShootoutProps) {
   const router = useRouter()
   const params = useParams()
@@ -291,8 +303,8 @@ export default function PenaltyShootout({
           value: `${finalUserScore}-${finalOpponentScore}`,
           rewardIds: [],
           message: won 
-            ? `🎉 You won the penalty shootout ${finalUserScore}-${finalOpponentScore}!`
-            : `😞 You lost the penalty shootout ${finalUserScore}-${finalOpponentScore}`
+            ? `You won the penalty shootout ${finalUserScore}-${finalOpponentScore}!`
+            : `You lost the penalty shootout ${finalUserScore}-${finalOpponentScore}`
         }
         
         dispatch({ type: 'COMPLETE_GAME', payload: { result } })
@@ -383,12 +395,12 @@ export default function PenaltyShootout({
       {/* Score display */}
       <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-white/90 text-gray-900 px-6 py-3 rounded-lg font-bold">
         <div className="text-center">
-          <div className="text-lg">⚽ PENALTY SHOOTOUT</div>
+          <div className="text-lg">{customTexts.penaltyShootoutTitle || 'PENALTY SHOOTOUT'}</div>
           <div className="text-xl mt-1">
-            YOU {gameState.userScore} - {gameState.opponentScore} OPPONENT
+            {customTexts.youLabel || 'YOU'} {gameState.userScore} - {gameState.opponentScore} {customTexts.opponentLabel || 'OPPONENT'}
           </div>
           {gameState.isOvertime && (
-            <div className="text-sm text-orange-600 mt-1">🔥 SUDDEN DEATH</div>
+            <div className="text-sm text-orange-600 mt-1">{customTexts.suddenDeathText || 'SUDDEN DEATH'}</div>
           )}
         </div>
       </div>
@@ -396,7 +408,7 @@ export default function PenaltyShootout({
       {/* Selection counter */}
       <div className="absolute top-24 left-1/2 transform -translate-x-1/2 bg-blue-500/20 backdrop-blur text-white px-4 py-2 rounded-lg border border-blue-400">
         <div className="text-center text-sm">
-          ⚽ Select 5 players: {gameState.selectedPlayers.length}/5
+          {customTexts.selectPlayersText || 'Select 5 players:'} {gameState.selectedPlayers.length}/5
         </div>
       </div>
 
@@ -460,7 +472,7 @@ export default function PenaltyShootout({
                           <div className="text-lg">#{player.playerNumber}</div>
                           {isSelected && (
                             <div className="text-xs mt-1">
-                              {player.hasGoal ? '⚽ GOAL' : '❌ MISS'}
+                              {player.hasGoal ? (customTexts.goalText || 'GOAL') : (customTexts.missText || 'MISS')}
                             </div>
                           )}
                         </div>
@@ -477,7 +489,10 @@ export default function PenaltyShootout({
       {/* Game completion indicator */}
       {gameState.isGameComplete && (
         <div className="absolute bottom-4 right-4 bg-white/90 text-gray-900 px-4 py-2 rounded-lg font-bold text-sm">
-          {gameState.userScore > gameState.opponentScore ? '🎉 YOU WON!' : '💀 YOU LOST!'}
+          {gameState.userScore > gameState.opponentScore 
+            ? (customTexts.youWonText || 'YOU WON!') 
+            : (customTexts.youLostText || 'YOU LOST!')
+          }
         </div>
       )}
     </div>

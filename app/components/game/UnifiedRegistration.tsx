@@ -17,6 +17,19 @@ export interface UnifiedRegistrationProps {
   gameTitle?: string
   gameName?: string
   
+  // Custom texts for penalty games
+  customTexts?: {
+    registrationSubtitle?: string
+    namePlaceholder?: string
+    emailPlaceholder?: string
+    phonePlaceholder?: string
+    contactRequiredError?: string
+    startPlayingButton?: string
+    registeringText?: string
+    tryWithoutRegText?: string
+    tryWithoutRegButton?: string
+  }
+  
   // State management
   isLoading?: boolean
   error?: string | null
@@ -29,6 +42,10 @@ export interface UnifiedRegistrationProps {
   // Styling
   theme?: 'default' | 'light' | 'dark'
   className?: string
+  
+  // Layout control
+  hideHeader?: boolean
+  containerMode?: 'fullscreen' | 'embedded'
 }
 
 /**
@@ -56,13 +73,16 @@ export default function UnifiedRegistration({
   onTrialMode,
   gameTitle = 'Game',
   gameName = 'this game',
+  customTexts,
   isLoading = false,
   error = null,
   requireEmail = false,
   requirePhone = false,
   showTrialOption = true,
   theme = 'default',
-  className
+  className,
+  hideHeader = false,
+  containerMode = 'fullscreen'
 }: UnifiedRegistrationProps) {
   
   // Form state management
@@ -164,20 +184,32 @@ export default function UnifiedRegistration({
   const themeClasses = getThemeClasses()
   const displayError = error || validationError
   
+  // IMPORTANT: Avoid nested component definitions that change identity on every render
+  // WHAT: Previously we defined a <Container> component inside this component.
+  // WHY: Defining a component inline creates a new function identity each render.
+  //      React treats that as a different component type, unmounting/remounting its subtree
+  //      on every state update (e.g. each keystroke), which drops input focus.
+  // FIX: Use a stable div wrapper with computed classes instead of an inline component.
+  const containerClass = containerMode === 'embedded'
+    ? `w-full ${className || ''}`
+    : `h-screen w-screen flex items-center justify-center p-4 overflow-hidden bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 ${className || ''}`
+
   return (
-    <div className={`h-screen w-screen flex items-center justify-center p-4 overflow-hidden bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 ${className || ''}`}>
+    <div className={containerClass}>
       <div className="w-full max-w-md mx-auto">
         <div className={`rounded-xl shadow-2xl p-6 md:p-8 border ${themeClasses.container}`}>
           
           {/* Registration header */}
-          <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Join {gameTitle || 'the Game'}
-            </h2>
-            <p className="text-gray-600">
-              Enter your details to play {gameName}
-            </p>
-          </div>
+          {!hideHeader && (
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                {`Join ${gameTitle || 'the Game'}`}
+              </h2>
+              <p className="text-gray-600">
+                {`Enter your details to play ${gameName}`}
+              </p>
+            </div>
+          )}
           
           {/* Registration form */}
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -190,7 +222,7 @@ export default function UnifiedRegistration({
                 onChange={(e) => setParticipant({ ...participant, name: e.target.value })}
                 className={`w-full px-4 py-3 rounded-lg transition-colors ${themeClasses.input}`}
                 style={{ color: '#000000', backgroundColor: '#ffffff', caretColor: '#000000' }}
-                placeholder="Enter your name"
+                placeholder={customTexts?.namePlaceholder || "Enter your name"}
                 required
                 disabled={isLoading || isSubmitting}
               />
@@ -204,7 +236,7 @@ export default function UnifiedRegistration({
                 onChange={(e) => setParticipant({ ...participant, email: e.target.value })}
                 className={`w-full px-4 py-3 rounded-lg transition-colors ${themeClasses.input}`}
                 style={{ color: '#000000', backgroundColor: '#ffffff', caretColor: '#000000' }}
-                placeholder={requireEmail ? "your@email.com (required)" : "your@email.com"}
+                placeholder={customTexts?.emailPlaceholder || (requireEmail ? "your@email.com (required)" : "your@email.com")}
                 required={requireEmail}
                 disabled={isLoading || isSubmitting}
               />
@@ -218,7 +250,7 @@ export default function UnifiedRegistration({
                 onChange={(e) => setParticipant({ ...participant, phone: e.target.value })}
                 className={`w-full px-4 py-3 rounded-lg transition-colors ${themeClasses.input}`}
                 style={{ color: '#000000', backgroundColor: '#ffffff', caretColor: '#000000' }}
-                placeholder={requirePhone ? "+1 (555) 123-4567 (required)" : "+1 (555) 123-4567"}
+                placeholder={customTexts?.phonePlaceholder || (requirePhone ? "+1 (555) 123-4567 (required)" : "+1 (555) 123-4567")}
                 required={requirePhone}
                 disabled={isLoading || isSubmitting}
               />
@@ -228,7 +260,7 @@ export default function UnifiedRegistration({
             {!requireEmail && !requirePhone && (
               <div className="text-center">
                 <p className="text-sm text-gray-500">
-                  Please provide either email or phone number
+                  {customTexts?.contactRequiredError || "Please provide either email or phone number"}
                 </p>
               </div>
             )}
@@ -246,7 +278,7 @@ export default function UnifiedRegistration({
               disabled={isLoading || isSubmitting}
               className={`w-full text-white py-3 px-4 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${themeClasses.button}`}
             >
-              {isSubmitting ? '🔄 Registering...' : '🎮 Start Playing'}
+              {isSubmitting ? 'Registering...' : (customTexts?.startPlayingButton || 'Start Playing')}
             </button>
           </form>
           
@@ -254,14 +286,14 @@ export default function UnifiedRegistration({
           {showTrialOption && (
             <div className="mt-6 pt-6 border-t border-gray-200">
               <p className="text-center text-sm text-gray-600 mb-4">
-                Want to try without registration?
+                {customTexts?.tryWithoutRegText || "Want to try without registration?"}
               </p>
               <button
                 onClick={handleTrialMode}
                 disabled={isLoading}
                 className={`w-full text-white py-3 px-4 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${themeClasses.trialButton}`}
               >
-                🎯 Try Without Registration
+                {customTexts?.tryWithoutRegButton || 'Try Without Registration'}
               </button>
             </div>
           )}

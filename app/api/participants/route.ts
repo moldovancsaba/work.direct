@@ -159,24 +159,47 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     }
     
     // Execute query
+    // Fetch participants (lean objects for augmentation)
     const participantsPromise = ParticipantModel.find(query)
       .sort(searchText ? { score: { $meta: 'textScore' } } : { lastActivityAt: -1 })
       .skip(skip)
       .limit(limit)
       .select('-metadata') // Exclude metadata for list view
+      .lean()
       .exec()
     
     const countPromise = ParticipantModel.countDocuments(query)
     
     const [participants, totalCount] = await Promise.all([participantsPromise, countPromise])
     
+    // Compute invites count per participant based on referrerUuid linkage
+    // WHAT: Count how many participants joined via each participant's referral (uuid)
+    // WHY: Admin requested visibility into referral effectiveness per participant
+    const uuids = participants.map((p: any) => p.uuid).filter(Boolean)
+    let invitesByReferrer: Record<string, number> = {}
+    if (uuids.length > 0) {
+      const inviteAgg = await ParticipantModel.aggregate([
+        { $match: { referrerUuid: { $in: uuids } } },
+        { $group: { _id: '$referrerUuid', count: { $sum: 1 } } }
+      ])
+      invitesByReferrer = inviteAgg.reduce((acc: Record<string, number>, row: any) => {
+        acc[row._id] = row.count
+        return acc
+      }, {})
+    }
+
+    const augmented = participants.map((p: any) => ({
+      ...p,
+      invitesCount: p.uuid ? (invitesByReferrer[p.uuid] || 0) : 0
+    }))
+    
     // Calculate pagination metadata
     const totalPages = Math.ceil(totalCount / limit)
     
     return NextResponse.json({
       success: true,
-      data: participants,
-      message: `Retrieved ${participants.length} participants`,
+      data: augmented,
+      message: `Retrieved ${augmented.length} participants`,
       pagination: {
         page,
         limit,

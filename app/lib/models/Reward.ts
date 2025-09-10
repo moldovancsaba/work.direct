@@ -101,6 +101,15 @@ const rewardConfigurationSchema = new Schema<RewardConfiguration>({
 // Main Reward schema
 // This defines the complete structure for reward documents in MongoDB
 const rewardSchema = new Schema<Reward>({
+  // Reference to the game this reward belongs to
+  // WHAT: Link rewards to a game for admin queries and counts
+  // WHY: Enables dashboard counts like "rewards per game" and filtered retrieval
+  gameId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Game',
+    required: [true, 'Game ID is required for reward linkage'],
+    index: true
+  },
   title: {
     type: String,
     required: [true, 'Reward title is required'],
@@ -191,6 +200,9 @@ const rewardSchema = new Schema<Reward>({
 
 // Index for type-based queries
 rewardSchema.index({ type: 1, isActive: 1 })
+
+// Index for game-based queries (dashboard and admin counts)
+rewardSchema.index({ gameId: 1, isActive: 1 })
 
 // Index for creator-based queries
 rewardSchema.index({ createdBy: 1, createdAt: -1 })

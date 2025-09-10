@@ -1,9 +1,48 @@
 # 📝 RELEASE_NOTES.md - PlayMass
 
-**Current Version**: 1.6.0  
-**Last Updated**: 2025-08-29T19:13:26.000Z
+**Current Version**: 1.4.0
+**Last Updated**: 2025-09-10T13:01:23.000Z
 
 ## 🔹 Version History
+
+### [v1.4.0] — 2025-09-10
+- Fix: Welcome registration inputs kept losing focus due to remounts. Replaced inline wrapper with stable div in UnifiedRegistration for continuous typing.
+- UX: Result page simplified — removed "Copy Link" and "Share" CTAs; kept "Invite Friend" and "Play Again".
+- Admin: Games dashboard stats fixed — unique players per game from GameResult.distinct('participantId'); rewards per game via Reward.gameId.
+- Admin: Participants page now shows an "Invites" column counting joins via each participant’s referral UUID.
+- Data: Reward model now links to game via required gameId with index for fast queries.
+- Docs: Synchronized documentation and bumped version per protocol.
+
+### [v1.3.1] — 2025-09-10
+- Admin: Added basic password login flow (MVP parity with MessMass)
+  - Endpoints: POST/DELETE /api/admin/login, GET /api/admin/auth
+  - Cookie: httpOnly `admin-session` (base64 JSON token, 7 days)
+  - UI: /admin/login page with redirect to /admin after success
+  - Guarded all admin API routes and admin layout (except /admin/login)
+- Notes: Simple, unsigned token for MVP; ROADMAP includes upgrade to signed tokens/JWT, rate limiting, and audit logging.
+
+### [v1.3.0] — 2025-09-07
+- Centralized Platform for 4-State games (Welcome, Rules, Game, Result)
+  - Introduced configuration.platform.texts (TEXT_10..46) and styles (hero/main/scoreboard)
+  - Refactored pages to use Hero + Main blocks; modules provide only the PLAY UI
+  - Scoreboard colors + labels now admin-configured (styles.scoreboard.*)
+- Admin
+  - New type selection → redirect to /admin/games/new/[type]
+  - PlatformSettingsForm integrated in GameEditor
+  - Legacy configuration.general removed on save (migrated to platform)
+- Runtime
+  - Hero uses TEXT_30 for Game page
+  - Resolver exposes platform and derives from legacy when missing
+- Manual verification performed; tests prohibited per WARP policy.
+
+### [v1.2.12] — 2025-09-06
+
+- Standardized 4-page play flow foundation:
+  - Added routes: /play/[gameId]/welcome, /rules, /game (kept /result unchanged)
+  - Backward-compat redirect: /play/[gameId] → /welcome (preserves ?ref)
+  - Added resolver to normalize per-game texts/colors into unified shape
+- Admin: Unified /admin/games/[id]/page.tsx to reuse the shared GameEditor (mode="edit")
+- Notes: No breaking changes. Manual verification required; tests prohibited.
 
 ### [v1.6.0] — 2025-08-29
 

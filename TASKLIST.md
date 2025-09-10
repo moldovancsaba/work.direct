@@ -1,10 +1,23 @@
-# 📋 TASKLIST.md - PlayMass v1.8.0
+# 📋 TASKLIST.md - PlayMass v1.4.0
 
-**Last Updated**: 2025-09-01T07:10:49.000Z
+**Last Updated**: 2025-09-10T13:01:23.000Z
 
 ## 🔹 Priority Task Queue
 
 ### ✅ Recently Completed
+- **Centralized Hero/Main Defaults Across All Play Pages** - Completed: 2025-09-08T08:56:53.000Z | Owner: AI Developer | Priority: CRITICAL
+  - ✅ Enforced 2% / 18% / 2% / 76% / 2% page structure in shared blocks
+  - ✅ Default page bg #000000FF; hero bg #000000FF; main bg #444444FF
+  - ✅ Text color #FFFFFFFF; font family Noto Sans globally
+  - ✅ Scoreboard cards style for titles via PenaltyCardText across pages
+  - ✅ Game page hero renders live SplitFlapScoreboard for penalty when provided
+- **Penalty Card Text Component Optimization** - Completed: 2025-01-27T16:45:23.000Z | Owner: AI Developer | Priority: HIGH
+  - ✅ Optimize PenaltyCardText component for dynamic card sizing
+  - ✅ Implement 20-character maximum width optimization for consistent card sizes
+  - ✅ Add responsive design adjustments for mobile and tablet devices
+  - ✅ Update CSS variables for container constraints and proper text layout
+  - ✅ Maintain split-flap animation functionality with EXACT PenaltyScoreboard styling
+  - ✅ Ensure proper centering and flex layout for variable text lengths
 - **Wheel of Fortune Game Type Integration** - Completed: 2025-08-29T19:13:26.000Z | Owner: AI Developer | Priority: HIGH
   - ✅ Create WheelOfFortune React component with pure SVG implementation
   - ✅ Implement mathematical polar coordinate system for segment positioning
@@ -52,6 +65,31 @@
   - ✅ Update type definitions and maintain backward compatibility
 
 ### 🚧 In Progress
+
+- Basic Admin Login Integration — Owner: AI Developer — Expected: 2025-09-10T18:00:00.000Z — Priority: CRITICAL
+  - Implement MVP auth: /api/admin/login (POST/DELETE), /api/admin/auth (GET)
+  - Add /admin/login page, admin layout gating, and API guards
+  - Set ADMIN_PASSWORD in .env.local and document usage
+
+- Platform 4-State Centralization — Owner: AI Developer — Expected: 2025-09-10T18:00:00.000Z — Priority: CRITICAL
+  - Platform texts/styles (TEXT_10..46) wired across Welcome/Rules/Result
+  - Scoreboard styling and labels from admin
+  - Type-based create flow routing to type-specific editor
+  - Remove legacy general config (migrated to platform on save)
+
+- Standardized 4-Page Flow — Owner: AI Developer — Expected: 2025-09-13T18:00:00.000Z — Priority: HIGH
+  - Implement routes /play/[gameId]/welcome, /rules, /game; preserve /result
+  - Redirect /play/[gameId] to /welcome and propagate ?ref
+  - Hero/Main centralized blocks used across Welcome/Rules/Game/Result with unified defaults (DONE: 2025-09-08T08:56:53.000Z)
+
+- Stars Hexa Modular Refactor — Owner: AI Developer — Expected: 2025-09-11T18:00:00.000Z — Priority: CRITICAL
+  - Refactor Stars Hexa into a module (no new type, no duplication)
+  - Config-driven rules/texts/colors; maintain performance semantics
+- Core Module System (Registry + Config Resolver) — Owner: AI Developer — Expected: 2025-09-09T18:00:00.000Z — Priority: CRITICAL
+  - Module registry and deep-merge resolver (defaults → playmass → overrides)
+  - Config endpoints: /api/config/get and /api/config/update
+- Admin Setup Tabs (Stars Hexa) — Owner: AI Developer — Expected: 2025-09-12T18:00:00.000Z — Priority: HIGH
+  - Rules, Texts, Colors tabs with validation and preview
 
 ### 📅 Upcoming Tasks
 
@@ -186,7 +224,7 @@
 
 ## 🔹 Version Control
 
-**Current Version**: 1.8.0
+**Current Version**: 1.4.0
 **Last Commit**: Centralized game environment architecture - unified layout, registration, status, and description components
 **Branch**: main
 **Status**: Active Development

@@ -5,13 +5,20 @@ import RewardModel from '../../../../lib/models/Reward'
 import ParticipantModel from '../../../../lib/models/Participant'
 import GameResultModel from '../../../../lib/models/GameResult'
 import mongoose from 'mongoose'
+import { getAdminUser } from '../../../../lib/auth'
 
-// GET single game
+// GET single game (admin only)
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Admin guard
+    const user = await getAdminUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Admin authentication required' }, { status: 401 })
+    }
+
     await connectDB()
     
     const { id } = await params
@@ -60,12 +67,18 @@ export async function GET(
   }
 }
 
-// PUT update game
+// PUT update game (admin only)
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Admin guard
+    const user = await getAdminUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Admin authentication required' }, { status: 401 })
+    }
+
     await connectDB()
     
     const { id } = await params
@@ -79,6 +92,8 @@ export async function PUT(
     
     const body = await request.json()
     
+    console.log('🚀 API PUT /games/[id] - Received body:', JSON.stringify(body, null, 2))
+    
     const {
       title,
       description,
@@ -88,6 +103,8 @@ export async function PUT(
       maxAttemptsPerUser,
       isActive
     } = body
+    
+    console.log('💾 API - Extracted configuration:', configuration)
 
     // Check if game exists
     const existingGame = await GameModel.findById(id)
@@ -130,6 +147,10 @@ export async function PUT(
       }
       
       updateData.configuration = processedConfiguration
+      // One-time migration: drop legacy general config when platform present
+      if (processedConfiguration.platform) {
+        (updateData as any).$unset = { 'configuration.general': '' }
+      }
     } else if (maxAttemptsPerUser !== undefined) {
       // If we only have maxAttemptsPerUser, update just that nested property
       updateData['configuration.maxAttemptsPerUser'] = maxAttemptsPerUser
@@ -139,12 +160,16 @@ export async function PUT(
       updateData.status = isActive ? 'ACTIVE' : 'DRAFT'
     }
 
+    console.log('📋 API - Final updateData before DB:', JSON.stringify(updateData, null, 2))
+    
     // Update the game
     const updatedGame = await GameModel.findByIdAndUpdate(
       id,
       updateData,
       { new: true }
     )
+    
+    console.log('✅ API - Game updated successfully:', updatedGame?.configuration?.penaltyShootout)
 
     // Handle rewards update if provided
     if (rewards !== undefined) {
@@ -203,12 +228,18 @@ export async function PUT(
   }
 }
 
-// DELETE game
+// DELETE game (admin only)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Admin guard
+    const user = await getAdminUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Admin authentication required' }, { status: 401 })
+    }
+
     await connectDB()
     
     const { id } = await params
