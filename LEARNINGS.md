@@ -792,6 +792,15 @@ field: { type: String, default: '' }
 
 #### Implementation Metrics:
 
+#### 6. Localization & Typography – Scoreboard Title Diacritics (hu-HU)
+- Problem: Scoreboard title didn’t display Hungarian uppercase diacritics (Í/Ő/Ű)
+- Solution:
+  - Use toLocaleUpperCase('hu-HU') for correct uppercase mapping
+  - Extend split-flap charset with ÁÉÍÓÖŐÚÜŰ and dynamically include any unseen characters at runtime
+  - Load Noto Sans (latin-ext) globally to guarantee glyph coverage
+- Why: Ensures correct rendering for Hungarian and exotic languages across UI elements (titles, cards, admin forms)
+- Outcome: Titles and UI texts render correctly with “ÁÉÍÓŐÚŰ”; no missing glyphs or fallback squares
+
 **Customization Coverage**:
 - **60 text fields** covering complete user journey
 - **9 color fields** for comprehensive visual control

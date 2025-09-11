@@ -9,6 +9,19 @@ const config: Config = {
   darkMode: 'class', // Enable dark mode with class strategy
   theme: {
     extend: {
+      fontFamily: {
+        // Map Tailwind font-sans to next/font variables for global consistency
+        sans: [
+          'var(--font-noto-sans)',
+          'var(--font-inter)',
+          'system-ui',
+          '-apple-system',
+          'Segoe UI',
+          'Roboto',
+          'Arial',
+          'sans-serif',
+        ],
+      },
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",

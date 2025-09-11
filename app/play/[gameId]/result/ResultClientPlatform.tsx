@@ -65,6 +65,17 @@ return (
             <button onClick={onInviteReferral} className='px-6 py-3 bg-purple-600 text-white rounded-lg'>
               {texts?.TEXT_45 || 'Invite Friend'}
             </button>
+            {/* CTA Action (TEXT_44) opens per-game URL if provided */}
+            {texts?.TEXT_44_URL && texts.TEXT_44_URL.trim().length > 0 && (
+              <button
+                type="button"
+                onClick={() => { window.location.href = texts.TEXT_44_URL }}
+                className={styles?.main?.buttonPrimaryClass || 'px-6 py-3 bg-blue-600 text-white rounded-lg'}
+                aria-label={texts?.TEXT_44 || 'Open CTA'}
+              >
+                {texts?.TEXT_44 || 'Open CTA'}
+              </button>
+            )}
             <button onClick={() => window.location.href = `/play/${gameId}`} className={styles?.main?.buttonPrimaryClass || 'px-6 py-3 bg-green-600 text-white rounded-lg'}>
               {texts?.TEXT_46 || 'Play Again'}
             </button>

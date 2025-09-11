@@ -17,8 +17,13 @@ export interface UnifiedRegistrationProps {
   gameTitle?: string
   gameName?: string
   
-  // Custom texts for penalty games
+  // Custom texts for platformized games
   customTexts?: {
+    // Headings (H2) shown above the respective inputs
+    nameHeading?: string
+    emailHeading?: string
+    phoneHeading?: string
+
     registrationSubtitle?: string
     namePlaceholder?: string
     emailPlaceholder?: string
@@ -42,6 +47,8 @@ export interface UnifiedRegistrationProps {
   // Styling
   theme?: 'default' | 'light' | 'dark'
   className?: string
+  // H2 headings style (platform main.h2Class)
+  headingClass?: string
   
   // Layout control
   hideHeader?: boolean
@@ -81,6 +88,7 @@ export default function UnifiedRegistration({
   showTrialOption = true,
   theme = 'default',
   className,
+  headingClass,
   hideHeader = false,
   containerMode = 'fullscreen'
 }: UnifiedRegistrationProps) {
@@ -214,6 +222,10 @@ export default function UnifiedRegistration({
           {/* Registration form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             
+            {/* Name heading (H2) */}
+            {customTexts?.nameHeading && (
+              <h2 className={`${headingClass ? headingClass + ' ' : ''}text-xl font-semibold mb-1 text-black`}>{customTexts.nameHeading}</h2>
+            )}
             {/* Name field - always required */}
             <div>
               <input
@@ -228,6 +240,10 @@ export default function UnifiedRegistration({
               />
             </div>
             
+            {/* Email heading (H2) */}
+            {customTexts?.emailHeading && (
+              <h2 className={`${headingClass ? headingClass + ' ' : ''}text-xl font-semibold mb-1 text-black`}>{customTexts.emailHeading}</h2>
+            )}
             {/* Email field */}
             <div>
               <input
@@ -242,6 +258,10 @@ export default function UnifiedRegistration({
               />
             </div>
             
+            {/* Phone heading (H2) */}
+            {customTexts?.phoneHeading && (
+              <h2 className={`${headingClass ? headingClass + ' ' : ''}text-xl font-semibold mb-1 text-black`}>{customTexts.phoneHeading}</h2>
+            )}
             {/* Phone field */}
             <div>
               <input

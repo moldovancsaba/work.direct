@@ -1,9 +1,19 @@
 # 📝 RELEASE_NOTES.md - PlayMass
 
-**Current Version**: 1.4.0
-**Last Updated**: 2025-09-10T13:01:23.000Z
+**Current Version**: 1.5.0
+**Last Updated**: 2025-09-11T05:00:11.000Z
 
 ## 🔹 Version History
+
+### [v1.5.0] — 2025-09-11
+- Welcome: Show H2 headings for Name/Email/Phone (TEXT_12/TEXT_14/TEXT_16) and per-game helper texts
+  - TEXT_26: Contact required hint (email or phone)
+  - TEXT_27: Try without registration tagline
+- Result: CTA Action (TEXT_44) as button wired to per-game TEXT_44_URL
+- Fonts: Global Noto Sans (primary) + Inter (secondary) with latin-ext coverage for “ÁÉÍÓŐÚŰ” and other extended characters
+- Scoreboard: Title flip now supports hu-HU uppercase and extended charset (Í/Ő/Ű visible)
+- Admin: Removed duplicate legacy Game Type selector from new game page
+- Fix: Welcome headings readable (no more white-on-white)
 
 ### [v1.4.0] — 2025-09-10
 - Fix: Welcome registration inputs kept losing focus due to remounts. Replaced inline wrapper with stable div in UnifiedRegistration for continuous typing.

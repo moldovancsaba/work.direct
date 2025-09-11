@@ -275,10 +275,12 @@ export interface GeneralColors {
 }
 
 export interface PlatformTexts {
+  // Hero titles
   TEXT_10?: string
   TEXT_20?: string
   TEXT_30?: string
   TEXT_40?: string
+  // Welcome - description + headings and placeholders
   TEXT_11?: string
   TEXT_12?: string
   TEXT_13?: string
@@ -288,17 +290,25 @@ export interface PlatformTexts {
   TEXT_17?: string
   TEXT_18?: string
   TEXT_19?: string
+  // Rules
   TEXT_21?: string
   TEXT_22?: string
   TEXT_23?: string
   TEXT_24?: string
   TEXT_25?: string
+  // Result
   TEXT_41?: string
   TEXT_42?: string
   TEXT_43?: string
   TEXT_44?: string
   TEXT_45?: string
   TEXT_46?: string
+  // New per-game platformized fields
+  // What: Contact helper + try-without-registration tagline + CTA Action URL for result
+  // Why: Ensure platformized flow texts are fully configurable per game without hardcoding
+  TEXT_26?: string // Please provide either email or phone number
+  TEXT_27?: string // Want to try without registration?
+  TEXT_44_URL?: string // Target URL for CTA Action button on result page
 }
 
 export interface PlatformStyles {

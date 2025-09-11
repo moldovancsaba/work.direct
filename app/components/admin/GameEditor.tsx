@@ -123,15 +123,21 @@ const [platformStyles, setPlatformStyles] = useState<Record<string, any>>({})
             TEXT_17: plat.texts?.TEXT_17 || '+1 (555) 123-4567',
             TEXT_18: plat.texts?.TEXT_18 || penalty.texts?.startPlayingButton || 'Start',
             TEXT_19: plat.texts?.TEXT_19 || 'Try Without Registration',
+            // Registration helpers
+            TEXT_26: plat.texts?.TEXT_26 || 'Please provide either email or phone number',
+            TEXT_27: plat.texts?.TEXT_27 || 'Want to try without registration?',
+            // Rules
             TEXT_21: plat.texts?.TEXT_21 || (stars.texts?.rulesTitle || penalty.texts?.gameRulesTitle) || 'Game Rules',
             TEXT_22: plat.texts?.TEXT_22 || (stars.texts?.rulesBody || penalty.texts?.gameRulesText) || '',
             TEXT_23: plat.texts?.TEXT_23 || (penalty.texts?.winConditionsTitle || 'Win Conditions'),
             TEXT_24: plat.texts?.TEXT_24 || (penalty.texts?.winConditionsText || ''),
             TEXT_25: plat.texts?.TEXT_25 || 'Play',
+            // Result
             TEXT_41: plat.texts?.TEXT_41 || 'Thanks for participating!',
             TEXT_42: plat.texts?.TEXT_42 || 'Challenge your friends!',
             TEXT_43: plat.texts?.TEXT_43 || 'Share the game or play again!',
             TEXT_44: plat.texts?.TEXT_44 || 'Open CTA',
+            TEXT_44_URL: plat.texts?.TEXT_44_URL || '',
             TEXT_45: plat.texts?.TEXT_45 || 'Invite Friend',
             TEXT_46: plat.texts?.TEXT_46 || 'Play Again'
           }

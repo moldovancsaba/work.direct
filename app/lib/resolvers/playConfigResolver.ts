@@ -44,15 +44,21 @@ function derivePlatform(game: any) {
     TEXT_17: platTexts.TEXT_17 || '+1 (555) 123-4567',
     TEXT_18: platTexts.TEXT_18 || penalty.texts?.startPlayingButton || 'Start',
     TEXT_19: platTexts.TEXT_19 || 'Try Without Registration',
+    // Registration helper texts (per-game configurable)
+    TEXT_26: platTexts.TEXT_26 || 'Please provide either email or phone number',
+    TEXT_27: platTexts.TEXT_27 || 'Want to try without registration?',
+    // Rules
     TEXT_21: platTexts.TEXT_21 || (stars.texts?.rulesTitle || penalty.texts?.gameRulesTitle) || 'Game Rules',
     TEXT_22: platTexts.TEXT_22 || (stars.texts?.rulesBody || penalty.texts?.gameRulesText) || '',
     TEXT_23: platTexts.TEXT_23 || (penalty.texts?.winConditionsTitle || 'Win Conditions'),
     TEXT_24: platTexts.TEXT_24 || (penalty.texts?.winConditionsText || ''),
     TEXT_25: platTexts.TEXT_25 || 'Play',
+    // Result
     TEXT_41: platTexts.TEXT_41 || 'Thanks for participating!',
-    TEXT_42: platTexts.TEXT_42 || 'Challenge your friends!'
-    ,TEXT_43: platTexts.TEXT_43 || 'Share the game or play again!',
+    TEXT_42: platTexts.TEXT_42 || 'Challenge your friends!',
+    TEXT_43: platTexts.TEXT_43 || 'Share the game or play again!',
     TEXT_44: platTexts.TEXT_44 || 'Open CTA',
+    TEXT_44_URL: platTexts.TEXT_44_URL || '',
     TEXT_45: platTexts.TEXT_45 || 'Invite Friend',
     TEXT_46: platTexts.TEXT_46 || 'Play Again'
   }

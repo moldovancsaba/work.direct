@@ -102,9 +102,12 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
           <SimpleTextInput code="TEXT_14" label="Ask Email (H2)" value={getT('TEXT_14')} onChange={(v)=> setT('TEXT_14', v)} />
           <SimpleTextInput code="TEXT_15" label="Your Email Placeholder" value={getT('TEXT_15')} onChange={(v)=> setT('TEXT_15', v)} />
           <SimpleTextInput code="TEXT_16" label="Ask Phone (H2)" value={getT('TEXT_16')} onChange={(v)=> setT('TEXT_16', v)} />
-<SimpleTextInput code="TEXT_17" label="Your Phone Placeholder" value={getT('TEXT_17')} onChange={(v)=> setT('TEXT_17', v)} />
+          <SimpleTextInput code="TEXT_17" label="Your Phone Placeholder" value={getT('TEXT_17')} onChange={(v)=> setT('TEXT_17', v)} />
           <SimpleTextInput code="TEXT_18" label="Next With Login (Button)" value={getT('TEXT_18')} onChange={(v)=> setT('TEXT_18', v)} />
           <SimpleTextInput code="TEXT_19" label="Next Without Login (Button)" value={getT('TEXT_19')} onChange={(v)=> setT('TEXT_19', v)} />
+          {/* Registration helper texts */}
+          <SimpleTextInput code="TEXT_26" label="Contact Required (TEXT_26)" placeholder="Please provide either email or phone number" value={getT('TEXT_26')} onChange={(v)=> setT('TEXT_26', v)} />
+          <SimpleTextInput code="TEXT_27" label="Try Without Registration Text (TEXT_27)" placeholder="Want to try without registration?" value={getT('TEXT_27')} onChange={(v)=> setT('TEXT_27', v)} />
         </div>
       </div>
 
@@ -130,6 +133,8 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
           <SimpleTextInput code="TEXT_44" label="CTA Action (Button)" value={getT('TEXT_44')} onChange={(v)=> setT('TEXT_44', v)} />
           <SimpleTextInput code="TEXT_45" label="Invite Friend (Button)" value={getT('TEXT_45')} onChange={(v)=> setT('TEXT_45', v)} />
           <SimpleTextInput code="TEXT_46" label="Play Again (Button)" value={getT('TEXT_46')} onChange={(v)=> setT('TEXT_46', v)} />
+          {/* CTA Action URL - only used when provided */}
+          <SimpleTextInput code="TEXT_44_URL" label="CTA Action URL (TEXT_44_URL)" placeholder="https://example.com" value={getT('TEXT_44_URL')} onChange={(v)=> setT('TEXT_44_URL', v)} />
         </div>
       </div>
 

@@ -61,7 +61,6 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
       <MainBlock backgroundClass={mainBg}>
         {description && <p className={styles?.main?.pClass || 'text-base mb-4'} style={{ color: '#FFFFFFFF' }}>{description}</p>}
         <div className="space-y-3">
-          <h2 className={styles?.main?.h2Class || 'text-xl font-semibold'}>{texts?.TEXT_12 || 'Your Name'}</h2>
           <UnifiedRegistration
             onRegister={async (p) => { saveSession(p, false); onNext(`/play/${gameId}/rules`) }}
             onTrialMode={() => { saveSession({ name: 'Guest' }, true); onNext(`/play/${gameId}/rules`) }}
@@ -70,13 +69,21 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
             showTrialOption={true}
             hideHeader={true}
             containerMode="embedded"
+            headingClass={styles?.main?.h2Class || 'text-xl font-semibold'}
             customTexts={{
+              // Headings (H2)
+              nameHeading: texts?.TEXT_12 || 'Your Name',
+              emailHeading: texts?.TEXT_14 || 'Your Email',
+              phoneHeading: texts?.TEXT_16 || 'Your Phone',
+              // Placeholders and buttons
               startPlayingButton: btnLogin,
-              tryWithoutRegText: '',
               tryWithoutRegButton: btnTrial,
               namePlaceholder: namePh,
               emailPlaceholder: emailPh,
-              phonePlaceholder: phonePh
+              phonePlaceholder: phonePh,
+              // Helper texts
+              contactRequiredError: texts?.TEXT_26 || 'Please provide either email or phone number',
+              tryWithoutRegText: texts?.TEXT_27 || 'Want to try without registration?'
             }}
           />
         </div>

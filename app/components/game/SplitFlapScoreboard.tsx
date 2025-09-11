@@ -161,8 +161,8 @@ export default function SplitFlapScoreboard({
   }, [homeScore, visitorScore, mode])
 
   // ---------- TITLE MODE (LETTERS) IMPLEMENTATION ----------
-  // Include space at index 0, then digits 0-9, then letters A-Z so numbers in titles flip correctly
-  const CHARSET = ' 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+  // Base charset includes space, digits, A-Z, and Hungarian uppercase diacritics for scoreboard titles
+  const BASE_CHARSET = ' 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZÁÉÍÓÖŐÚÜŰ'
 
   const makeValSpanChar = (ch: string) => {
     const span = document.createElement('span')
@@ -178,22 +178,22 @@ export default function SplitFlapScoreboard({
     return half
   }
 
-  const setupCharDigit = (el: HTMLElement, index: number) => {
+  const setupCharDigit = (el: HTMLElement, index: number, charset: string) => {
     el.innerHTML = ''
     el.dataset.value = index.toString()
-    const ch = CHARSET[index]
+    const ch = charset[index]
     el.appendChild(makeHalfChar('top', ch))
     el.appendChild(makeHalfChar('bottom', ch))
   }
 
-  const flipOnceChar = (el: HTMLElement, nextIndex: number): Promise<void> => {
+  const flipOnceChar = (el: HTMLElement, nextIndex: number, charset: string): Promise<void> => {
     return new Promise(resolve => {
       const topStatic = el.querySelector('.half.top .val') as HTMLElement
       const bottomStatic = el.querySelector('.half.bottom .val') as HTMLElement
 
       const currIndex = parseInt(el.dataset.value || '0')
-      const currChar = CHARSET[currIndex]
-      const nextChar = CHARSET[nextIndex]
+      const currChar = charset[currIndex]
+      const nextChar = charset[nextIndex]
 
       const topFlip = document.createElement('div')
       topFlip.className = 'flip top'
@@ -229,9 +229,19 @@ export default function SplitFlapScoreboard({
     score.className = 'score'
     boardRef.current.appendChild(score)
 
-    const target = (text || '').toUpperCase()
+    // Use locale-aware uppercase for Hungarian
+    const target = (text || '').toLocaleUpperCase('hu-HU')
+
+    // Build a runtime charset that includes all characters used in target
+    let charset = BASE_CHARSET
+    for (const ch of target) {
+      if (!charset.includes(ch)) {
+        charset += ch
+      }
+    }
+
     const indices = Array.from(target).map(ch => {
-      const idx = CHARSET.indexOf(ch)
+      const idx = charset.indexOf(ch)
       // Default to space (index 0) for unsupported characters
       return idx >= 0 ? idx : 0
     })
@@ -241,8 +251,8 @@ export default function SplitFlapScoreboard({
       const digit = document.createElement('div')
       digit.className = 'digit'
       const steps = Math.floor(Math.random() * 5) + 1 // 1..5
-      const startIndex = (targetIndex - steps + CHARSET.length) % CHARSET.length
-      setupCharDigit(digit, startIndex)
+      const startIndex = (targetIndex - steps + charset.length) % charset.length
+      setupCharDigit(digit, startIndex, charset)
       score.appendChild(digit)
       digits.push(digit)
     })
@@ -250,11 +260,11 @@ export default function SplitFlapScoreboard({
     await Promise.all(digits.map((digit, i) => {
       const targetIndex = indices[i]
       let currIndex = parseInt(digit.dataset.value || '0')
-      let steps = (targetIndex - currIndex + CHARSET.length) % CHARSET.length
+      let steps = (targetIndex - currIndex + charset.length) % charset.length
       const flips: Promise<void>[] = []
       for (let s = 1; s <= steps; s++) {
-        const nextIndex = (currIndex + 1) % CHARSET.length
-        flips.push(flipOnceChar(digit, nextIndex))
+        const nextIndex = (currIndex + 1) % charset.length
+        flips.push(flipOnceChar(digit, nextIndex, charset))
         currIndex = nextIndex
       }
       return flips.reduce((p, fn) => p.then(() => fn), Promise.resolve())
