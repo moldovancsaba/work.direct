@@ -7,17 +7,24 @@ export default async function PrivacyPage({
 }) {
   const { gameId } = await params
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-  const res = await fetch(`${baseUrl}/api/games/${gameId}`, { cache: 'no-store' })
-  const data = await res.json()
-  if (!res.ok || !data?.success) return null
+  let texts: any = {}
+  let styles: any = {}
+  try {
+    const res = await fetch(`${baseUrl}/api/games/${gameId}`, { cache: 'no-store' })
+    const data = await res.json()
+    if (res.ok && data?.success) {
+      const cfg = await resolvePlayConfig(data.data)
+      texts = (cfg as any).platform?.texts || {}
+      styles = (cfg as any).platform?.styles || {}
+    }
+  } catch {}
 
-  const cfg = await resolvePlayConfig(data.data)
   const PrivacyClientPlatform = (await import('./PrivacyClientPlatform')).default
   return (
     <PrivacyClientPlatform
       gameId={gameId}
-      texts={(cfg as any).platform?.texts || {}}
-      styles={(cfg as any).platform?.styles || {}}
+      texts={texts}
+      styles={styles}
     />
   )
 }
