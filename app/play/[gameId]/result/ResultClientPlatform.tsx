@@ -64,26 +64,60 @@ return (
           <div className="w-full max-w-sm flex flex-col gap-3 pt-2">
             {/* CTA Buttons (vertical stack) */}
             {Array.isArray(texts?.CTA_BUTTONS) && texts.CTA_BUTTONS.length > 0 ? (
-              texts.CTA_BUTTONS.filter((btn: any) => (btn?.text || '').trim() && (btn?.url || '').trim()).map((btn: any, idx: number) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => { window.location.href = btn.url }}
-                  className={styles?.main?.buttonPrimaryClass || 'px-6 py-3 bg-blue-600 text-white rounded-lg'}
-                >
-                  {btn.text}
-                </button>
-              ))
+              texts.CTA_BUTTONS
+                .filter((btn: any) => (btn?.text || '').trim() && (btn?.url || '').trim())
+                .map((btn: any, idx: number) => (
+                  <a
+                    key={idx}
+                    href={btn.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onMouseDown={(e) => {
+                      if (styles?.main?.buttonSecondaryClass) {
+                        (e.currentTarget as HTMLAnchorElement).className = styles.main.buttonSecondaryClass
+                      }
+                    }}
+                    onMouseUp={(e) => {
+                      if (styles?.main?.buttonPrimaryClass) {
+                        (e.currentTarget as HTMLAnchorElement).className = styles.main.buttonPrimaryClass
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (styles?.main?.buttonPrimaryClass) {
+                        (e.currentTarget as HTMLAnchorElement).className = styles.main.buttonPrimaryClass
+                      }
+                    }}
+                    className={styles?.main?.buttonPrimaryClass || 'px-6 py-3 bg-blue-600 text-white rounded-lg'}
+                  >
+                    {btn.text}
+                  </a>
+                ))
             ) : (
               // Back-compat single CTA
               (texts?.TEXT_44_URL && texts.TEXT_44_URL.trim().length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => { window.location.href = texts.TEXT_44_URL }}
+                <a
+                  href={texts.TEXT_44_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onMouseDown={(e) => {
+                    if (styles?.main?.buttonSecondaryClass) {
+                      (e.currentTarget as HTMLAnchorElement).className = styles.main.buttonSecondaryClass
+                    }
+                  }}
+                  onMouseUp={(e) => {
+                    if (styles?.main?.buttonPrimaryClass) {
+                      (e.currentTarget as HTMLAnchorElement).className = styles.main.buttonPrimaryClass
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (styles?.main?.buttonPrimaryClass) {
+                      (e.currentTarget as HTMLAnchorElement).className = styles.main.buttonPrimaryClass
+                    }
+                  }}
                   className={styles?.main?.buttonPrimaryClass || 'px-6 py-3 bg-blue-600 text-white rounded-lg'}
                 >
                   {texts?.TEXT_44 || 'Open CTA'}
-                </button>
+                </a>
               ))
             )}
 

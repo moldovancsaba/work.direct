@@ -1,9 +1,16 @@
 # 📝 RELEASE_NOTES.md - PlayMass
 
-**Current Version**: 1.5.0
-**Last Updated**: 2025-09-11T05:00:11.000Z
+**Current Version**: 1.6.0
+**Last Updated**: 2025-09-11T08:35:10.000Z
 
 ## 🔹 Version History
+
+### [v1.6.0] — 2025-09-11
+- Admin: Unified new-game page to reuse GameEditor (create mode) so platform texts/styles save consistently for all games.
+- Admin: PlatformSettingsForm CTA fields fixed — use TEXT_44 and TEXT_44_URL; duplicate labels removed.
+- Result: CTA buttons open in new tab and show pressed background style (uses main.buttonSecondaryClass on press; reverts on release).
+- Welcome: Email and Phone H2 headings are rendered via UnifiedRegistration (TEXT_14, TEXT_16) with styles.main.h2Class.
+- Typography: Inter now loads with latin-ext subset globally; Noto Sans fallback kept.
 
 ### [v1.5.0] — 2025-09-11
 - Welcome: Show H2 headings for Name/Email/Phone (TEXT_12/TEXT_14/TEXT_16) and per-game helper texts

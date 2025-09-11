@@ -131,9 +131,9 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
           <SimpleTextInput code="CTA_TITLE" label="CTA Title (H1)" value={getT('CTA_TITLE')} onChange={(v)=> setT('CTA_TITLE', v)} />
           <SimpleTextInput code="CTA_DESCRIPTION" label="CTA Description (P)" value={getT('CTA_DESCRIPTION')} onChange={(v)=> setT('CTA_DESCRIPTION', v)} />
 
-          {/* Primary CTA (CTA1) */}
-          <SimpleTextInput code="CTA1_BUTTON_TEXT" label="CTA Action1 Button (CTA1_BUTTON_TEXT)" value={getT('CTA1_BUTTON_TEXT')} onChange={(v)=> setT('CTA1_BUTTON_TEXT', v)} />
-          <SimpleTextInput code="CTA1_URL" label="CTA Action1 URL (CTA1_URL)" value={getT('CTA1_URL')} onChange={(v)=> setT('CTA1_URL', v)} />
+          {/* Primary CTA */}
+          <SimpleTextInput code="TEXT_44" label="CTA Action (Button)" value={getT('TEXT_44')} onChange={(v)=> setT('TEXT_44', v)} />
+          <SimpleTextInput code="TEXT_44_URL" label="CTA Action URL" value={getT('TEXT_44_URL')} onChange={(v)=> setT('TEXT_44_URL', v)} />
 
           {/* Additional CTAs manager */}
           <div className="md:col-span-2">
@@ -162,7 +162,7 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
                 const list = Array.isArray(texts.CTA_BUTTONS) ? [...texts.CTA_BUTTONS] : []
                 if (list.length === 0) {
                   // Seed list with CTA1 from fields if present
-                  const first = { text: texts.CTA1_BUTTON_TEXT || texts.TEXT_44 || '', url: texts.CTA1_URL || texts.TEXT_44_URL || '' }
+const first = { text: texts.TEXT_44 || '', url: texts.TEXT_44_URL || '' }
                   list.push(first)
                 }
                 list.push({ text: '', url: '' })

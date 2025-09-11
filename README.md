@@ -1,7 +1,7 @@
 # PlayMass - Interactive Game Platform
 
-Current Version: 1.5.0
-Last Updated: 2025-09-11T05:00:11.000Z
+Current Version: 1.6.0
+Last Updated: 2025-09-11T08:35:10.000Z
 
 A Next.js-based platform for creating and distributing interactive games like Stars Hexa with comprehensive rewards management.
 
