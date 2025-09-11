@@ -18,6 +18,15 @@ export default function ResultClientPlatform({ gameId, texts, styles, won, refCo
 
   const title = texts?.TEXT_40 || (won ? 'Victory!' : 'Result')
 
+  const extractBackgroundValue = (css?: string): string | undefined => {
+    if (!css) return undefined
+    const grad = css.match(/linear-gradient\([^\)]+\)/i)
+    if (grad) return grad[0]
+    const bg = css.match(/background:\s*([^;]+);?/i)
+    if (bg && bg[1]) return bg[1].trim()
+    return undefined
+  }
+
   const getReferralUuid = (): string | undefined => {
     try {
       const raw = localStorage.getItem(`playmass:session:${gameId}`)
@@ -57,7 +66,16 @@ return (
       <HeroBlock backgroundClass={heroBg} title={title} />
       <MainBlock backgroundClass={mainBg}>
         <div className="space-y-6 text-center flex flex-col items-center justify-center">
-          {texts?.TEXT_41 && <p className={styles?.main?.pClass || 'text-base'}>{texts.TEXT_41}</p>}
+          {/* Participated note (Markdown-like, multiline) */}
+          {texts?.TEXT_41 && (
+            <p className={styles?.main?.pClass || 'text-base'} style={{ whiteSpace: 'pre-wrap' }}>{texts.TEXT_41}</p>
+          )}
+          {/* Result headline based on win/lose */}
+          {typeof won !== 'undefined' && (
+            <h1 className={styles?.main?.h1Class || 'text-3xl font-bold'} style={{ whiteSpace: 'pre-wrap' }}>
+              {won ? (texts?.WON_TEXT || 'Congratulations!') : (texts?.LOST_TEXT || 'Game Over')}
+            </h1>
+          )}
           <h1 className={styles?.main?.h1Class || 'text-3xl font-bold'}>{texts?.CTA_TITLE || texts?.TEXT_42 || 'Share Your Result'}</h1>
           <p className={styles?.main?.pClass || 'text-base'}>{texts?.CTA_DESCRIPTION || texts?.TEXT_43 || 'Copy or share your result with friends.'}</p>
 
@@ -88,6 +106,7 @@ return (
                       }
                     }}
                     className={styles?.main?.buttonPrimaryClass || 'px-6 py-3 bg-blue-600 text-white rounded-lg'}
+                    style={{ background: extractBackgroundValue(texts?.CTA1_BG) }}
                   >
                     {btn.text}
                   </a>
@@ -115,6 +134,7 @@ return (
                     }
                   }}
                   className={styles?.main?.buttonPrimaryClass || 'px-6 py-3 bg-blue-600 text-white rounded-lg'}
+                  style={{ background: extractBackgroundValue(texts?.CTA1_BG) }}
                 >
                   {texts?.TEXT_44 || 'Open CTA'}
                 </a>

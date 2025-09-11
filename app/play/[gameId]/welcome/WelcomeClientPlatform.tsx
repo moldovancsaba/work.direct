@@ -59,7 +59,14 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
     >
       <HeroBlock backgroundClass={heroBg} title={title} />
       <MainBlock backgroundClass={mainBg}>
-        {description && <p className={styles?.main?.pClass || 'text-base mb-4'} style={{ color: '#FFFFFFFF' }}>{description}</p>}
+        {description && (
+          <p
+            className={(styles?.main?.pClass || 'text-base mb-4') + ' text-center'}
+            style={{ color: '#FFFFFFFF', whiteSpace: 'pre-wrap' }}
+          >
+            {description}
+          </p>
+        )}
         <div className="space-y-3">
           <UnifiedRegistration
             onRegister={async (p) => { saveSession(p, false); onNext(`/play/${gameId}/rules`) }}

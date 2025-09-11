@@ -203,6 +203,9 @@ const gameSchema = new Schema<Game>({
         TEXT_44_URL: { type: String, default: '' },
         CTA_TITLE: { type: String, default: '' },
         CTA_DESCRIPTION: { type: String, default: '' },
+        WON_TEXT: { type: String, default: '' },
+        LOST_TEXT: { type: String, default: '' },
+        CTA1_BG: { type: String, default: '' },
         CTA_BUTTONS: {
           type: [
             new Schema({

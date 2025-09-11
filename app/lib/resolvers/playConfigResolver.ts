@@ -62,6 +62,10 @@ function derivePlatform(game: any) {
     TEXT_44_URL: platTexts.TEXT_44_URL || '',
     TEXT_45: platTexts.TEXT_45 || 'Invite Friend',
     TEXT_46: platTexts.TEXT_46 || 'Play Again',
+    // New result fields
+    WON_TEXT: platTexts.WON_TEXT || 'Congratulations! You won!',
+    LOST_TEXT: platTexts.LOST_TEXT || 'Good try! Better luck next time.',
+    CTA1_BG: platTexts.CTA1_BG || '',
     // New CTA fields
     CTA_TITLE: platTexts.CTA_TITLE || platTexts.TEXT_42 || 'Share Your Result',
     CTA_DESCRIPTION: platTexts.CTA_DESCRIPTION || platTexts.TEXT_43 || 'Copy or share your result with friends.',

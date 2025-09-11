@@ -1,9 +1,17 @@
 # 📝 RELEASE_NOTES.md - PlayMass
 
 **Current Version**: 1.6.0
-**Last Updated**: 2025-09-11T08:35:10.000Z
+**Last Updated**: {NOW}
 
 ## 🔹 Version History
+
+### [v1.7.0] — 2025-09-11
+- Admin Editor: Welcome section restructured — TEXT_11, TEXT_26, TEXT_27 are multiline (Markdown-capable). Paired Ask/Placeholder fields aligned side-by-side (TEXT_12+TEXT_13, TEXT_14+TEXT_15, TEXT_16+TEXT_17). Single-row controls for TEXT_18 and TEXT_19.
+- Admin Editor: Result section enhanced — WON_TEXT and LOST_TEXT (H1, Markdown), TEXT_41 multiline (Markdown), TEXT_44 + TEXT_44_URL side-by-side, CTA1_BG multiline CSS.
+- Admin Editor: All color setup fields now support multiline CSS (Hero/Main/Scoreboard BG & Digit Color) with the exact code format requested.
+- Runtime: Main block width set to 100% of screen.
+- Runtime: Welcome description (TEXT_11) centered and preserves line breaks.
+- Runtime: Result page shows win/lose headline (WON_TEXT/LOST_TEXT) and applies CTA background (CTA1_BG) while keeping pressed-style behavior.
 
 ### [v1.6.0] — 2025-09-11
 - Admin: Unified new-game page to reuse GameEditor (create mode) so platform texts/styles save consistently for all games.

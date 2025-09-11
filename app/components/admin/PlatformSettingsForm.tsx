@@ -82,8 +82,8 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Hero Background</label>
-            <input className="w-full px-3 py-2 border rounded-md" value={getS('hero.background')} onChange={e => setS('hero.background', e.target.value)} placeholder="bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900" />
+            <label className="block text-sm font-medium text-gray-700 mb-1">Hero Background (CSS)</label>
+            <textarea className="w-full px-3 py-2 border rounded-md min-h-20" value={getS('hero.background')} onChange={e => setS('hero.background', e.target.value)} placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Hero Title Class</label>
@@ -95,19 +95,39 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
       {/* Welcome Main */}
       <div className="bg-blue-50 p-4 rounded-lg">
         <h3 className="text-md font-medium text-gray-800 mb-2">Welcome Main</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <SimpleTextInput code="TEXT_11" label="Description" value={getT('TEXT_11')} onChange={(v)=> setT('TEXT_11', v)} />
-          <SimpleTextInput code="TEXT_12" label="Ask Name (H2)" value={getT('TEXT_12')} onChange={(v)=> setT('TEXT_12', v)} />
-          <SimpleTextInput code="TEXT_13" label="Your Name Placeholder" value={getT('TEXT_13')} onChange={(v)=> setT('TEXT_13', v)} />
-          <SimpleTextInput code="TEXT_14" label="Ask Email (H2)" value={getT('TEXT_14')} onChange={(v)=> setT('TEXT_14', v)} />
-          <SimpleTextInput code="TEXT_15" label="Your Email Placeholder" value={getT('TEXT_15')} onChange={(v)=> setT('TEXT_15', v)} />
-          <SimpleTextInput code="TEXT_16" label="Ask Phone (H2)" value={getT('TEXT_16')} onChange={(v)=> setT('TEXT_16', v)} />
-          <SimpleTextInput code="TEXT_17" label="Your Phone Placeholder" value={getT('TEXT_17')} onChange={(v)=> setT('TEXT_17', v)} />
+        <div className="space-y-4">
+          {/* Description (Markdown-capable) - single full-width, multiline */}
+          <SimpleTextInput code="TEXT_11" label="Description (Markdown)" placeholder="Supports Markdown. Use line breaks and **bold** as needed." multiline value={getT('TEXT_11')} onChange={(v)=> setT('TEXT_11', v)} />
+
+          {/* Name pair */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <SimpleTextInput code="TEXT_12" label="Ask Name (H2)" value={getT('TEXT_12')} onChange={(v)=> setT('TEXT_12', v)} />
+            <SimpleTextInput code="TEXT_13" label="Your Name Placeholder" value={getT('TEXT_13')} onChange={(v)=> setT('TEXT_13', v)} />
+          </div>
+
+          {/* Email pair */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <SimpleTextInput code="TEXT_14" label="Ask Email (H2)" value={getT('TEXT_14')} onChange={(v)=> setT('TEXT_14', v)} />
+            <SimpleTextInput code="TEXT_15" label="Your Email Placeholder" value={getT('TEXT_15')} onChange={(v)=> setT('TEXT_15', v)} />
+          </div>
+
+          {/* Phone pair */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <SimpleTextInput code="TEXT_16" label="Ask Phone (H2)" value={getT('TEXT_16')} onChange={(v)=> setT('TEXT_16', v)} />
+            <SimpleTextInput code="TEXT_17" label="Your Phone Placeholder" value={getT('TEXT_17')} onChange={(v)=> setT('TEXT_17', v)} />
+          </div>
+
+          {/* Contact required (Markdown-capable) - single full-width, multiline */}
+          <SimpleTextInput code="TEXT_26" label="Contact Required (Markdown)" placeholder="Please provide either email or phone number" multiline value={getT('TEXT_26')} onChange={(v)=> setT('TEXT_26', v)} />
+
+          {/* Next with login - single line */}
           <SimpleTextInput code="TEXT_18" label="Next With Login (Button)" value={getT('TEXT_18')} onChange={(v)=> setT('TEXT_18', v)} />
+
+          {/* Try without registration (Markdown-capable) - single full-width, multiline */}
+          <SimpleTextInput code="TEXT_27" label="Try Without Registration Text (Markdown)" placeholder="Want to try without registration?" multiline value={getT('TEXT_27')} onChange={(v)=> setT('TEXT_27', v)} />
+
+          {/* Next without login - single line */}
           <SimpleTextInput code="TEXT_19" label="Next Without Login (Button)" value={getT('TEXT_19')} onChange={(v)=> setT('TEXT_19', v)} />
-          {/* Registration helper texts */}
-          <SimpleTextInput code="TEXT_26" label="Contact Required (TEXT_26)" placeholder="Please provide either email or phone number" value={getT('TEXT_26')} onChange={(v)=> setT('TEXT_26', v)} />
-          <SimpleTextInput code="TEXT_27" label="Try Without Registration Text (TEXT_27)" placeholder="Want to try without registration?" value={getT('TEXT_27')} onChange={(v)=> setT('TEXT_27', v)} />
         </div>
       </div>
 
@@ -126,14 +146,26 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
       {/* Result Main */}
       <div className="bg-yellow-50 p-4 rounded-lg">
         <h3 className="text-md font-medium text-gray-800 mb-2">Result Main</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <SimpleTextInput code="TEXT_41" label="Participated (P)" value={getT('TEXT_41')} onChange={(v)=> setT('TEXT_41', v)} />
+        <div className="space-y-4">
+          {/* Result headline texts (Markdown-capable) */}
+          <SimpleTextInput code="WON_TEXT" label="WON_TEXT (H1, Markdown)" multiline value={getT('WON_TEXT')} onChange={(v)=> setT('WON_TEXT', v)} />
+          <SimpleTextInput code="LOST_TEXT" label="LOST_TEXT (H1, Markdown)" multiline value={getT('LOST_TEXT')} onChange={(v)=> setT('LOST_TEXT', v)} />
+
+          {/* CTA Title / Description */}
           <SimpleTextInput code="CTA_TITLE" label="CTA Title (H1)" value={getT('CTA_TITLE')} onChange={(v)=> setT('CTA_TITLE', v)} />
           <SimpleTextInput code="CTA_DESCRIPTION" label="CTA Description (P)" value={getT('CTA_DESCRIPTION')} onChange={(v)=> setT('CTA_DESCRIPTION', v)} />
 
-          {/* Primary CTA */}
-          <SimpleTextInput code="TEXT_44" label="CTA Action (Button)" value={getT('TEXT_44')} onChange={(v)=> setT('TEXT_44', v)} />
-          <SimpleTextInput code="TEXT_44_URL" label="CTA Action URL" value={getT('TEXT_44_URL')} onChange={(v)=> setT('TEXT_44_URL', v)} />
+          {/* Participated note (Markdown-capable) */}
+          <SimpleTextInput code="TEXT_41" label="Participated (P, Markdown)" multiline value={getT('TEXT_41')} onChange={(v)=> setT('TEXT_41', v)} />
+
+          {/* Primary CTA pair on same line */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <SimpleTextInput code="TEXT_44" label="CTA Action (Button)" value={getT('TEXT_44')} onChange={(v)=> setT('TEXT_44', v)} />
+            <SimpleTextInput code="TEXT_44_URL" label="CTA Action URL" value={getT('TEXT_44_URL')} onChange={(v)=> setT('TEXT_44_URL', v)} />
+          </div>
+
+          {/* CTA Background (Markdown-like CSS) */}
+          <SimpleTextInput code="CTA1_BG" label="CTA BG (CSS)" multiline placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} value={getT('CTA1_BG')} onChange={(v)=> setT('CTA1_BG', v)} />
 
           {/* Additional CTAs manager */}
           <div className="md:col-span-2">
@@ -181,8 +213,8 @@ const first = { text: texts.TEXT_44 || '', url: texts.TEXT_44_URL || '' }
         <h3 className="text-md font-medium text-gray-800 mb-2">Main Styles</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Main Background</label>
-            <input className="w-full px-3 py-2 border rounded-md" value={getS('main.background')} onChange={e => setS('main.background', e.target.value)} placeholder="bg-white/10 backdrop-blur-sm" />
+            <label className="block text-sm font-medium text-gray-700 mb-1">Main Background (CSS)</label>
+            <textarea className="w-full px-3 py-2 border rounded-md min-h-20" value={getS('main.background')} onChange={e => setS('main.background', e.target.value)} placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">H1 Class</label>
@@ -212,16 +244,16 @@ const first = { text: texts.TEXT_44 || '', url: texts.TEXT_44_URL || '' }
         <h3 className="text-md font-medium text-gray-800 mb-2">Scoreboard Styles</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Home Card BG</label>
-            <input className="w-full px-3 py-2 border rounded-md" value={getS('scoreboard.homeBg')} onChange={e => setS('scoreboard.homeBg', e.target.value)} placeholder="#c00000" />
+            <label className="block text-sm font-medium text-gray-700 mb-1">Home Card BG (CSS)</label>
+            <textarea className="w-full px-3 py-2 border rounded-md min-h-20" value={getS('scoreboard.homeBg')} onChange={e => setS('scoreboard.homeBg', e.target.value)} placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Visitor Card BG</label>
-            <input className="w-full px-3 py-2 border rounded-md" value={getS('scoreboard.visitorBg')} onChange={e => setS('scoreboard.visitorBg', e.target.value)} placeholder="#0066cc" />
+            <label className="block text-sm font-medium text-gray-700 mb-1">Visitor Card BG (CSS)</label>
+            <textarea className="w-full px-3 py-2 border rounded-md min-h-20" value={getS('scoreboard.visitorBg')} onChange={e => setS('scoreboard.visitorBg', e.target.value)} placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Digit Color</label>
-            <input className="w-full px-3 py-2 border rounded-md" value={getS('scoreboard.digitColor')} onChange={e => setS('scoreboard.digitColor', e.target.value)} placeholder="#ffffff" />
+            <label className="block text-sm font-medium text-gray-700 mb-1">Digit Color (CSS)</label>
+            <textarea className="w-full px-3 py-2 border rounded-md min-h-20" value={getS('scoreboard.digitColor')} onChange={e => setS('scoreboard.digitColor', e.target.value)} placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} />
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 items-center">

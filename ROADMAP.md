@@ -1,6 +1,6 @@
 # ROADMAP.md — PlayMass
 
-Last Updated: 2025-09-11T08:35:10.000Z
+Last Updated: {NOW}
 
 Purpose
 - Forward-looking plan for modular game architecture and Stars Hexa refactor within PlayMass.

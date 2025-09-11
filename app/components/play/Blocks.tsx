@@ -53,8 +53,9 @@ HeroBlock.displayName = 'HeroBlock'
 function MainBlockInner({ backgroundClass, children }: { backgroundClass?: string; children: React.ReactNode }) {
   return (
     <div
-      className={`w-full ${backgroundClass || ''} max-w-4xl mx-auto`}
+      className={`w-full ${backgroundClass || ''}`}
       style={{
+        width: '100vw',
         height: '76vh',
         marginBottom: '2vh',
         backgroundColor: '#444444FF',

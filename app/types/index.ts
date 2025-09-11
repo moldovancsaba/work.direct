@@ -313,6 +313,9 @@ export interface PlatformTexts {
   // New CTA structure
   CTA_TITLE?: string
   CTA_DESCRIPTION?: string
+  WON_TEXT?: string
+  LOST_TEXT?: string
+  CTA1_BG?: string
   CTA_BUTTONS?: Array<{ text: string; url: string }>
 }
 
