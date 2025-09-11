@@ -5,6 +5,12 @@
 
 ## 🔹 Version History
 
+### [v1.9.0] — 2025-09-11
+- Legal Docs: Added publicly available Terms & Conditions and Privacy Policy pages under /play/[gameId]/terms and /play/[gameId]/privacy, using HeroBlock/MainBlock layout.
+- Admin: New Legal Documents section with multiline fields for TERMS_TITLE, TERMS_BODY, PRIVACY_TITLE, PRIVACY_BODY.
+- Footer: Terms & Privacy links added to Welcome, Rules, Game, and Result pages.
+- Game Page: Game content centered in the main block.
+
 ### [v1.8.0] — 2025-09-11
 - Result CTAs: Per-button unique background support (CTA_BUTTONS[].bg). Admin editor includes BG input per CTA; runtime prefers per-CTA bg and falls back to CTA1_BG.
 - UI Alignment: All MainBlock content center-aligned across play pages.

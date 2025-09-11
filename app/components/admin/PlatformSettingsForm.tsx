@@ -244,6 +244,17 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
         </div>
       </div>
 
+      {/* Legal Documents */}
+      <div className="bg-white p-4 rounded-lg">
+        <h3 className="text-md font-medium text-gray-800 mb-2">Legal Documents</h3>
+        <div className="space-y-4">
+          <SimpleTextInput code="TERMS_TITLE" label="Terms & Conditions Title" value={getT('TERMS_TITLE')} onChange={(v)=> setT('TERMS_TITLE', v)} />
+          <SimpleTextInput code="TERMS_BODY" label="Terms & Conditions Body (multiline)" multiline value={getT('TERMS_BODY')} onChange={(v)=> setT('TERMS_BODY', v)} />
+          <SimpleTextInput code="PRIVACY_TITLE" label="Privacy Policy Title" value={getT('PRIVACY_TITLE')} onChange={(v)=> setT('PRIVACY_TITLE', v)} />
+          <SimpleTextInput code="PRIVACY_BODY" label="Privacy Policy Body (multiline)" multiline value={getT('PRIVACY_BODY')} onChange={(v)=> setT('PRIVACY_BODY', v)} />
+        </div>
+      </div>
+
       {/* Scoreboard Styles */}
       <div className="bg-white p-4 rounded-lg">
         <h3 className="text-md font-medium text-gray-800 mb-2">Scoreboard Styles</h3>

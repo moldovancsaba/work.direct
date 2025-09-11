@@ -73,7 +73,12 @@ function derivePlatform(game: any) {
       ? platTexts.CTA_BUTTONS.map((b: any) => ({ text: b?.text || '', url: b?.url || '', bg: b?.bg || '' }))
       : (platTexts.TEXT_44 || platTexts.TEXT_44_URL
           ? [{ text: platTexts.TEXT_44 || 'Open CTA', url: platTexts.TEXT_44_URL || '', bg: platTexts.CTA1_BG || '' }]
-          : [])
+          : []),
+    // Legal documents with defaults
+    TERMS_TITLE: platTexts.TERMS_TITLE || 'General Terms & Conditions',
+    TERMS_BODY: platTexts.TERMS_BODY || `Welcome to PlayMass. By participating in our games, you agree to the following terms:\n\n1) Eligibility — You must comply with all applicable laws and age requirements.\n2) Fair Play — Cheating, automated participation, or abuse is prohibited.\n3) Rewards — Prizes, coupons, and points are subject to availability and expiration.\n4) Data — We process necessary data to operate games; see Privacy Policy for details.\n5) Liability — PlayMass is not liable for indirect, incidental, or consequential damages.\n6) Changes — We may update these Terms; continued use constitutes acceptance.\n7) Contact — For support, contact the game organizer or PlayMass support.`,
+    PRIVACY_TITLE: platTexts.PRIVACY_TITLE || 'Privacy Policy',
+    PRIVACY_BODY: platTexts.PRIVACY_BODY || `This Privacy Policy describes how PlayMass collects and processes personal data:\n\n1) Data Collected — Name and contact details (email/phone) provided during registration.\n2) Purpose — To operate the game, manage rewards, and improve the experience.\n3) Legal Basis — Consent and/or legitimate interests.\n4) Retention — Kept only as long as necessary for the purposes stated.\n5) Sharing — Limited to service providers and legal requirements; no unauthorized sale of data.\n6) Security — Technical and organizational measures to protect data.\n7) Rights — Access, rectification, deletion, and objection where applicable.\n8) Contact — For privacy inquiries, contact the game organizer or PlayMass support.`
   }
   return { texts: mergedTexts, styles: platStyles }
 }

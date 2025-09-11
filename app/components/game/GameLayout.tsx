@@ -3,6 +3,7 @@
 import React, { ReactNode } from 'react'
 import SplitFlapScoreboard from './SplitFlapScoreboard'
 import { HeroBlock, MainBlock } from '../play/Blocks'
+import FooterLinks from '../play/FooterLinks'
 
 export interface GameLayoutProps {
   // Game identification
@@ -172,6 +173,7 @@ export default function GameLayout({
             </div>
           </div>
         )}
+        <FooterLinks gameId={gameId} />
       </MainBlock>
     </div>
   )

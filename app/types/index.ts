@@ -317,6 +317,11 @@ export interface PlatformTexts {
   LOST_TEXT?: string
   CTA1_BG?: string
   CTA_BUTTONS?: Array<{ text: string; url: string; bg?: string }>
+  // Legal docs
+  TERMS_TITLE?: string
+  TERMS_BODY?: string
+  PRIVACY_TITLE?: string
+  PRIVACY_BODY?: string
 }
 
 export interface PlatformStyles {

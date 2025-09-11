@@ -3,6 +3,7 @@
 import React from 'react'
 import { HeroBlock, MainBlock } from '../../../components/play/Blocks'
 import UnifiedRegistration from '../../../components/game/UnifiedRegistration'
+import FooterLinks from '../../../components/play/FooterLinks'
 
 interface WelcomeClientPlatformProps {
   gameId: string
@@ -94,6 +95,7 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
             }}
           />
         </div>
+        <FooterLinks gameId={gameId} />
       </MainBlock>
     </div>
   )

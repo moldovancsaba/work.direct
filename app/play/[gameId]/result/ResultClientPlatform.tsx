@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { HeroBlock, MainBlock } from '../../../components/play/Blocks'
+import FooterLinks from '../../../components/play/FooterLinks'
 
 interface ResultClientPlatformProps {
   gameId: string
@@ -151,6 +152,7 @@ return (
             </button>
           </div>
         </div>
+        <FooterLinks gameId={gameId} />
       </MainBlock>
     </div>
   )

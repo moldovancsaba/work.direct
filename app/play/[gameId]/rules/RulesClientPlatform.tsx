@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { HeroBlock, MainBlock } from '../../../components/play/Blocks'
+import FooterLinks from '../../../components/play/FooterLinks'
 
 interface RulesClientPlatformProps {
   gameId: string
@@ -49,6 +50,7 @@ export default function RulesClientPlatform({ gameId, texts, styles, refCode }: 
             </button>
           </div>
         </div>
+        <FooterLinks gameId={gameId} />
       </MainBlock>
     </div>
   )

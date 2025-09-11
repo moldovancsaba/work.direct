@@ -215,7 +215,12 @@ const gameSchema = new Schema<Game>({
             }, { _id: false })
           ],
           default: []
-        }
+        },
+        // Public documents
+        TERMS_TITLE: { type: String, default: '' },
+        TERMS_BODY: { type: String, default: '' },
+        PRIVACY_TITLE: { type: String, default: '' },
+        PRIVACY_BODY: { type: String, default: '' }
       },
       styles: {
         hero: {
