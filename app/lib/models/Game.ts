@@ -200,7 +200,18 @@ const gameSchema = new Schema<Game>({
         // Extended per-game platform texts
         TEXT_26: { type: String, default: '' },
         TEXT_27: { type: String, default: '' },
-        TEXT_44_URL: { type: String, default: '' }
+        TEXT_44_URL: { type: String, default: '' },
+        CTA_TITLE: { type: String, default: '' },
+        CTA_DESCRIPTION: { type: String, default: '' },
+        CTA_BUTTONS: {
+          type: [
+            new Schema({
+              text: { type: String, default: '' },
+              url: { type: String, default: '' }
+            }, { _id: false })
+          ],
+          default: []
+        }
       },
       styles: {
         hero: {

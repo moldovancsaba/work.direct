@@ -30,6 +30,7 @@ function derivePlatform(game: any) {
   const platStyles = game.configuration?.platform?.styles || {}
   const stars = game.configuration?.starsHexa || {}
   const penalty = game.configuration?.penaltyShootout || {}
+  // Merge platform texts and provide back-compat fallbacks
   const mergedTexts = {
     TEXT_10: platTexts.TEXT_10 || stars.texts?.welcomeTitle || game.title || 'Welcome',
     TEXT_20: platTexts.TEXT_20 || (stars.texts?.rulesTitle || penalty.texts?.gameRulesTitle) || 'Game Rules',
@@ -60,7 +61,15 @@ function derivePlatform(game: any) {
     TEXT_44: platTexts.TEXT_44 || 'Open CTA',
     TEXT_44_URL: platTexts.TEXT_44_URL || '',
     TEXT_45: platTexts.TEXT_45 || 'Invite Friend',
-    TEXT_46: platTexts.TEXT_46 || 'Play Again'
+    TEXT_46: platTexts.TEXT_46 || 'Play Again',
+    // New CTA fields
+    CTA_TITLE: platTexts.CTA_TITLE || platTexts.TEXT_42 || 'Share Your Result',
+    CTA_DESCRIPTION: platTexts.CTA_DESCRIPTION || platTexts.TEXT_43 || 'Copy or share your result with friends.',
+    CTA_BUTTONS: Array.isArray(platTexts.CTA_BUTTONS) && platTexts.CTA_BUTTONS.length > 0
+      ? platTexts.CTA_BUTTONS
+      : (platTexts.TEXT_44 || platTexts.TEXT_44_URL
+          ? [{ text: platTexts.TEXT_44 || 'Open CTA', url: platTexts.TEXT_44_URL || '' }]
+          : [])
   }
   return { texts: mergedTexts, styles: platStyles }
 }

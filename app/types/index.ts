@@ -304,11 +304,16 @@ export interface PlatformTexts {
   TEXT_45?: string
   TEXT_46?: string
   // New per-game platformized fields
-  // What: Contact helper + try-without-registration tagline + CTA Action URL for result
+  // What: Contact helper + try-without-registration tagline + CTA Title/Description + CTA Buttons with URLs
   // Why: Ensure platformized flow texts are fully configurable per game without hardcoding
   TEXT_26?: string // Please provide either email or phone number
   TEXT_27?: string // Want to try without registration?
-  TEXT_44_URL?: string // Target URL for CTA Action button on result page
+  // Back-compat single CTA
+  TEXT_44_URL?: string // Deprecated in favor of CTA_BUTTONS, still supported as first CTA
+  // New CTA structure
+  CTA_TITLE?: string
+  CTA_DESCRIPTION?: string
+  CTA_BUTTONS?: Array<{ text: string; url: string }>
 }
 
 export interface PlatformStyles {

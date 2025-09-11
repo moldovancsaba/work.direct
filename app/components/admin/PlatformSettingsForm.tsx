@@ -36,9 +36,9 @@ const SimpleTextInput = ({ code, label, placeholder, multiline, value, onChange 
 )
 
 interface PlatformSettingsFormProps {
-  texts: Record<string, string>
+  texts: Record<string, any>
   styles: any
-  onTextsChange: (next: Record<string, string>) => void
+  onTextsChange: (next: Record<string, any>) => void
   onStylesChange: (next: any) => void
 }
 
@@ -128,13 +128,51 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
         <h3 className="text-md font-medium text-gray-800 mb-2">Result Main</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <SimpleTextInput code="TEXT_41" label="Participated (P)" value={getT('TEXT_41')} onChange={(v)=> setT('TEXT_41', v)} />
-          <SimpleTextInput code="TEXT_42" label="CTA Title (H1)" value={getT('TEXT_42')} onChange={(v)=> setT('TEXT_42', v)} />
-          <SimpleTextInput code="TEXT_43" label="CTA Description (P)" value={getT('TEXT_43')} onChange={(v)=> setT('TEXT_43', v)} />
-          <SimpleTextInput code="TEXT_44" label="CTA Action (Button)" value={getT('TEXT_44')} onChange={(v)=> setT('TEXT_44', v)} />
+          <SimpleTextInput code="CTA_TITLE" label="CTA Title (H1)" value={getT('CTA_TITLE')} onChange={(v)=> setT('CTA_TITLE', v)} />
+          <SimpleTextInput code="CTA_DESCRIPTION" label="CTA Description (P)" value={getT('CTA_DESCRIPTION')} onChange={(v)=> setT('CTA_DESCRIPTION', v)} />
+
+          {/* Primary CTA (CTA1) */}
+          <SimpleTextInput code="CTA1_BUTTON_TEXT" label="CTA Action1 Button (CTA1_BUTTON_TEXT)" value={getT('CTA1_BUTTON_TEXT')} onChange={(v)=> setT('CTA1_BUTTON_TEXT', v)} />
+          <SimpleTextInput code="CTA1_URL" label="CTA Action1 URL (CTA1_URL)" value={getT('CTA1_URL')} onChange={(v)=> setT('CTA1_URL', v)} />
+
+          {/* Additional CTAs manager */}
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Additional CTAs</label>
+            <div className="space-y-2">
+              {(texts.CTA_BUTTONS as Array<{text:string;url:string}>)?.slice(1)?.map((cta, idx) => (
+                <div key={idx} className="grid grid-cols-1 md:grid-cols-3 gap-2 items-end">
+                  <input className="w-full px-3 py-2 border rounded-md" value={cta.text} onChange={e => {
+                    const list = Array.isArray(texts.CTA_BUTTONS) ? [...texts.CTA_BUTTONS] : []
+                    list[idx+1] = { ...list[idx+1], text: e.target.value }
+                    onTextsChange({ ...texts, CTA_BUTTONS: list })
+                  }} placeholder={`CTA Action${idx+2} Button`} />
+                  <input className="w-full px-3 py-2 border rounded-md" value={cta.url} onChange={e => {
+                    const list = Array.isArray(texts.CTA_BUTTONS) ? [...texts.CTA_BUTTONS] : []
+                    list[idx+1] = { ...list[idx+1], url: e.target.value }
+                    onTextsChange({ ...texts, CTA_BUTTONS: list })
+                  }} placeholder={`CTA Action${idx+2} URL`} />
+                  <button type="button" className="px-3 py-2 bg-red-600 text-white rounded-md" onClick={() => {
+                    const list = Array.isArray(texts.CTA_BUTTONS) ? [...texts.CTA_BUTTONS] : []
+                    list.splice(idx+1, 1)
+                    onTextsChange({ ...texts, CTA_BUTTONS: list })
+                  }}>Delete CTA</button>
+                </div>
+              ))}
+              <button type="button" className="px-4 py-2 bg-blue-600 text-white rounded-md" onClick={() => {
+                const list = Array.isArray(texts.CTA_BUTTONS) ? [...texts.CTA_BUTTONS] : []
+                if (list.length === 0) {
+                  // Seed list with CTA1 from fields if present
+                  const first = { text: texts.CTA1_BUTTON_TEXT || texts.TEXT_44 || '', url: texts.CTA1_URL || texts.TEXT_44_URL || '' }
+                  list.push(first)
+                }
+                list.push({ text: '', url: '' })
+                onTextsChange({ ...texts, CTA_BUTTONS: list })
+              }}>ADD CTA</button>
+            </div>
+          </div>
+
           <SimpleTextInput code="TEXT_45" label="Invite Friend (Button)" value={getT('TEXT_45')} onChange={(v)=> setT('TEXT_45', v)} />
           <SimpleTextInput code="TEXT_46" label="Play Again (Button)" value={getT('TEXT_46')} onChange={(v)=> setT('TEXT_46', v)} />
-          {/* CTA Action URL - only used when provided */}
-          <SimpleTextInput code="TEXT_44_URL" label="CTA Action URL (TEXT_44_URL)" placeholder="https://example.com" value={getT('TEXT_44_URL')} onChange={(v)=> setT('TEXT_44_URL', v)} />
         </div>
       </div>
 

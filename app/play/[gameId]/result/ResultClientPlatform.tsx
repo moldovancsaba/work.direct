@@ -56,26 +56,42 @@ return (
     >
       <HeroBlock backgroundClass={heroBg} title={title} />
       <MainBlock backgroundClass={mainBg}>
-        <div className="space-y-4 text-center">
+        <div className="space-y-6 text-center flex flex-col items-center justify-center">
           {texts?.TEXT_41 && <p className={styles?.main?.pClass || 'text-base'}>{texts.TEXT_41}</p>}
-          <h1 className={styles?.main?.h1Class || 'text-3xl font-bold'}>{texts?.TEXT_42 || 'Share Your Result'}</h1>
-          <p className={styles?.main?.pClass || 'text-base'}>{texts?.TEXT_43 || 'Copy or share your result with friends.'}</p>
+          <h1 className={styles?.main?.h1Class || 'text-3xl font-bold'}>{texts?.CTA_TITLE || texts?.TEXT_42 || 'Share Your Result'}</h1>
+          <p className={styles?.main?.pClass || 'text-base'}>{texts?.CTA_DESCRIPTION || texts?.TEXT_43 || 'Copy or share your result with friends.'}</p>
 
-          <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
+          <div className="w-full max-w-sm flex flex-col gap-3 pt-2">
+            {/* CTA Buttons (vertical stack) */}
+            {Array.isArray(texts?.CTA_BUTTONS) && texts.CTA_BUTTONS.length > 0 ? (
+              texts.CTA_BUTTONS.filter((btn: any) => (btn?.text || '').trim() && (btn?.url || '').trim()).map((btn: any, idx: number) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => { window.location.href = btn.url }}
+                  className={styles?.main?.buttonPrimaryClass || 'px-6 py-3 bg-blue-600 text-white rounded-lg'}
+                >
+                  {btn.text}
+                </button>
+              ))
+            ) : (
+              // Back-compat single CTA
+              (texts?.TEXT_44_URL && texts.TEXT_44_URL.trim().length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => { window.location.href = texts.TEXT_44_URL }}
+                  className={styles?.main?.buttonPrimaryClass || 'px-6 py-3 bg-blue-600 text-white rounded-lg'}
+                >
+                  {texts?.TEXT_44 || 'Open CTA'}
+                </button>
+              ))
+            )}
+
+            {/* Invite Friend */}
             <button onClick={onInviteReferral} className='px-6 py-3 bg-purple-600 text-white rounded-lg'>
               {texts?.TEXT_45 || 'Invite Friend'}
             </button>
-            {/* CTA Action (TEXT_44) opens per-game URL if provided */}
-            {texts?.TEXT_44_URL && texts.TEXT_44_URL.trim().length > 0 && (
-              <button
-                type="button"
-                onClick={() => { window.location.href = texts.TEXT_44_URL }}
-                className={styles?.main?.buttonPrimaryClass || 'px-6 py-3 bg-blue-600 text-white rounded-lg'}
-                aria-label={texts?.TEXT_44 || 'Open CTA'}
-              >
-                {texts?.TEXT_44 || 'Open CTA'}
-              </button>
-            )}
+            {/* Play Again */}
             <button onClick={() => window.location.href = `/play/${gameId}`} className={styles?.main?.buttonPrimaryClass || 'px-6 py-3 bg-green-600 text-white rounded-lg'}>
               {texts?.TEXT_46 || 'Play Again'}
             </button>

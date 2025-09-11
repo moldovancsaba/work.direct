@@ -109,7 +109,7 @@ const [platformStyles, setPlatformStyles] = useState<Record<string, any>>({})
           const plat = game.configuration?.platform || {}
           const stars = game.configuration?.starsHexa || {}
           const penalty = game.configuration?.penaltyShootout || {}
-          const derivedTexts: Record<string,string> = {
+          const derivedTexts: Record<string, any> = {
             TEXT_10: plat.texts?.TEXT_10 || stars.texts?.welcomeTitle || game.title || 'Welcome',
             TEXT_20: plat.texts?.TEXT_20 || (stars.texts?.rulesTitle || penalty.texts?.gameRulesTitle) || 'Game Rules',
             TEXT_30: plat.texts?.TEXT_30 || game.title || 'Game',
@@ -139,7 +139,15 @@ const [platformStyles, setPlatformStyles] = useState<Record<string, any>>({})
             TEXT_44: plat.texts?.TEXT_44 || 'Open CTA',
             TEXT_44_URL: plat.texts?.TEXT_44_URL || '',
             TEXT_45: plat.texts?.TEXT_45 || 'Invite Friend',
-            TEXT_46: plat.texts?.TEXT_46 || 'Play Again'
+            TEXT_46: plat.texts?.TEXT_46 || 'Play Again',
+            // New CTA fields & back-compat mapping
+            CTA_TITLE: plat.texts?.CTA_TITLE || plat.texts?.TEXT_42 || 'Share Your Result',
+            CTA_DESCRIPTION: plat.texts?.CTA_DESCRIPTION || plat.texts?.TEXT_43 || 'Copy or share your result with friends.',
+            CTA1_BUTTON_TEXT: plat.texts?.CTA1_BUTTON_TEXT || plat.texts?.TEXT_44 || '',
+            CTA1_URL: plat.texts?.CTA1_URL || plat.texts?.TEXT_44_URL || '',
+            CTA_BUTTONS: Array.isArray(plat.texts?.CTA_BUTTONS) && plat.texts.CTA_BUTTONS.length > 0
+              ? plat.texts.CTA_BUTTONS
+              : (plat.texts?.TEXT_44 || plat.texts?.TEXT_44_URL ? [{ text: plat.texts.TEXT_44 || '', url: plat.texts.TEXT_44_URL || '' }] : [])
           }
           setPlatformTexts(plat.texts || derivedTexts)
           setPlatformStyles(plat.styles || {})
