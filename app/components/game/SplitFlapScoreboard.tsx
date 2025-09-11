@@ -482,7 +482,7 @@ font-family: 'Noto Sans', sans-serif;
       
 {mode === 'title' ? (
         // What: Render split-flap characters that flip from random previous letters to target title
-        <div className={`split-flap-scoreboard ${className}`} style={{ ['--card-bg' as any]: '#C00000FF', ['--digit-color' as any]: '#FFFFFFFF' }}>
+        <div className={`split-flap-scoreboard ${className}`} style={{ ['--card-bg' as any]: homeCardBg, ['--digit-color' as any]: digitColor }}>
           <div className="split-flap-board">
             <div className="board-wrap" ref={boardRef}>
               {/* score container built dynamically in animateTitle */}

@@ -197,6 +197,16 @@ const gameSchema = new Schema<Game>({
         TEXT_44: { type: String, default: '' },
         TEXT_45: { type: String, default: '' },
         TEXT_46: { type: String, default: '' },
+        
+        // Per-button background CSS (multiline CSS supported)
+        // What: Allow admins to set exact CSS backgrounds (including gradients) for primary CTAs across the flow
+        // Why: Product requirement to control button visuals with full CSS, not only utility classes
+        TEXT_18_BG: { type: String, default: '' }, // Next With Login (Welcome) button background
+        TEXT_19_BG: { type: String, default: '' }, // Next Without Login (Welcome) button background
+        TEXT_25_BG: { type: String, default: '' }, // Next Play (Rules) button background
+        TEXT_45_BG: { type: String, default: '' }, // Invite Friend (Result) button background
+        TEXT_46_BG: { type: String, default: '' }, // Play Again (Result) button background
+        
         // Extended per-game platform texts
         TEXT_26: { type: String, default: '' },
         TEXT_27: { type: String, default: '' },
@@ -205,7 +215,39 @@ const gameSchema = new Schema<Game>({
         CTA_DESCRIPTION: { type: String, default: '' },
         WON_TEXT: { type: String, default: '' },
         LOST_TEXT: { type: String, default: '' },
+        // Standardized CTA keys for Admin Editor (Option B migration)
+        // What: Introduce consistent 3-line setups across buttons and dedicated ACTION fields where applicable.
+        // Why: Future-proof CTA configuration and keep backward compatibility by preserving legacy keys.
+        // Note: CTA1_BG already existed historically; we add CTA1_TEXT and CTA1_URL to complete the trio.
+        CTA1_TEXT: { type: String, default: '' },
+        CTA1_URL: { type: String, default: '' },
         CTA1_BG: { type: String, default: '' },
+
+        // Welcome — Next With Login (maps from/to TEXT_18, TEXT_18_BG)
+        NEXT_LOGIN_TEXT: { type: String, default: '' },
+        NEXT_LOGIN_ACTION: { type: String, default: '' },
+        NEXT_LOGIN_BG: { type: String, default: '' },
+
+        // Welcome — Next Without Login (maps from/to TEXT_19, TEXT_19_BG)
+        NEXT_GUEST_TEXT: { type: String, default: '' },
+        NEXT_GUEST_ACTION: { type: String, default: '' },
+        NEXT_GUEST_BG: { type: String, default: '' },
+
+        // Rules — Next Play (maps from/to TEXT_25, TEXT_25_BG)
+        NEXT_PLAY_TEXT: { type: String, default: '' },
+        NEXT_PLAY_ACTION: { type: String, default: '' },
+        NEXT_PLAY_BG: { type: String, default: '' },
+
+        // Result — Invite Friend (maps from/to TEXT_45, TEXT_45_BG)
+        INVITE_TEXT: { type: String, default: '' },
+        INVITE_ACTION: { type: String, default: '' },
+        INVITE_BG: { type: String, default: '' },
+
+        // Result — Play Again (maps from/to TEXT_46, TEXT_46_BG)
+        PLAYAGAIN_TEXT: { type: String, default: '' },
+        PLAYAGAIN_ACTION: { type: String, default: '' },
+        PLAYAGAIN_BG: { type: String, default: '' },
+
         CTA_BUTTONS: {
           type: [
             new Schema({

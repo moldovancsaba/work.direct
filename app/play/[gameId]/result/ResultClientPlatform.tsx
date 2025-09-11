@@ -64,7 +64,16 @@ return (
       className="min-h-screen w-full"
       style={{ backgroundColor: '#000000FF', color: '#FFFFFFFF', fontFamily: '"Noto Sans", sans-serif' }}
     >
-      <HeroBlock backgroundClass={heroBg} title={title} />
+      <HeroBlock
+        backgroundClass={heroBg}
+        title={title}
+        scoreboard={{
+          home: 0,
+          visitor: 0,
+          homeBg: styles?.scoreboard?.homeBg || '#C00000FF',
+          digitColor: styles?.scoreboard?.digitColor || '#FFFFFFFF'
+        }}
+      />
       <MainBlock backgroundClass={mainBg}>
         <div className="space-y-6 text-center flex flex-col items-center justify-center">
           {/* Participated note (Markdown-like, multiline) */}
@@ -143,11 +152,19 @@ return (
             )}
 
             {/* Invite Friend */}
-            <button onClick={onInviteReferral} className='px-6 py-3 bg-purple-600 text-white rounded-lg'>
+            <button
+              onClick={onInviteReferral}
+              className='px-6 py-3 text-white rounded-lg'
+              style={{ background: extractBackgroundValue(texts?.TEXT_45_BG) }}
+            >
               {texts?.TEXT_45 || 'Invite Friend'}
             </button>
             {/* Play Again */}
-            <button onClick={() => window.location.href = `/play/${gameId}`} className={styles?.main?.buttonPrimaryClass || 'px-6 py-3 bg-green-600 text-white rounded-lg'}>
+            <button
+              onClick={() => window.location.href = `/play/${gameId}`}
+              className={styles?.main?.buttonPrimaryClass || 'px-6 py-3 text-white rounded-lg'}
+              style={{ background: extractBackgroundValue(texts?.TEXT_46_BG) }}
+            >
               {texts?.TEXT_46 || 'Play Again'}
             </button>
           </div>

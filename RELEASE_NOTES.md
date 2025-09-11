@@ -1,9 +1,15 @@
 # 📝 RELEASE_NOTES.md - PlayMass
 
-**Current Version**: 1.6.0
-**Last Updated**: {NOW}
+**Current Version**: 1.13.0
+**Last Updated**: 2025-09-11T14:53:30.000Z
 
 ## 🔹 Version History
+
+### [v1.13.0] — 2025-09-11T14:53:30.000Z
+- Admin Editor: Standardized 3-line CTA blocks for all key buttons (Text, URL/Action, BG) with editor-only borders.
+- Database Schema: Added CTA1_TEXT/CTA1_URL and NEXT_*/INVITE/PLAYAGAIN fields under configuration.platform.texts (legacy keys preserved).
+- Types: Extended PlatformTexts with standardized CTA fields and ACTIONs.
+- Compatibility: Editor adapters mirror standardized keys to legacy keys on save to keep runtime stable.
 
 ### [v1.10.0] — 2025-09-11
 - Public site: Added top-level Terms (/terms) and Privacy (/privacy) pages using hero+main blocks.

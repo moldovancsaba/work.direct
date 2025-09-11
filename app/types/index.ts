@@ -315,8 +315,49 @@ export interface PlatformTexts {
   CTA_DESCRIPTION?: string
   WON_TEXT?: string
   LOST_TEXT?: string
+  // Standardized CTA keys (editor-facing). Why: unify 3-line button blocks and introduce ACTION fields.
+  // Result primary CTA (external link)
+  CTA1_TEXT?: string
+  CTA1_URL?: string
   CTA1_BG?: string
+
+  // Welcome — Next With Login (maps to legacy TEXT_18, TEXT_18_BG)
+  NEXT_LOGIN_TEXT?: string
+  NEXT_LOGIN_ACTION?: string // e.g., REGISTER_AND_CONTINUE
+  NEXT_LOGIN_BG?: string
+
+  // Welcome — Next Without Login (maps to legacy TEXT_19, TEXT_19_BG)
+  NEXT_GUEST_TEXT?: string
+  NEXT_GUEST_ACTION?: string // e.g., CONTINUE_AS_GUEST
+  NEXT_GUEST_BG?: string
+
+  // Rules — Next Play (maps to legacy TEXT_25, TEXT_25_BG)
+  NEXT_PLAY_TEXT?: string
+  NEXT_PLAY_ACTION?: string // e.g., START_GAME
+  NEXT_PLAY_BG?: string
+
+  // Result — Invite Friend (maps to legacy TEXT_45, TEXT_45_BG)
+  INVITE_TEXT?: string
+  INVITE_ACTION?: string // e.g., INVITE_REFERRAL
+  INVITE_BG?: string
+
+  // Result — Play Again (maps to legacy TEXT_46, TEXT_46_BG)
+  PLAYAGAIN_TEXT?: string
+  PLAYAGAIN_ACTION?: string // e.g., RESTART_GAME
+  PLAYAGAIN_BG?: string
+
+  // Additional CTAs array (unchanged storage)
   CTA_BUTTONS?: Array<{ text: string; url: string; bg?: string }>
+
+  // Per-button background CSS (legacy fields, multiline supported)
+  // What: precise CSS control per CTA across the flow
+  // Why: product requirement for gradients and custom backgrounds via admin
+  TEXT_18_BG?: string
+  TEXT_19_BG?: string
+  TEXT_25_BG?: string
+  TEXT_45_BG?: string
+  TEXT_46_BG?: string
+
   // Legal docs
   TERMS_TITLE?: string
   TERMS_BODY?: string

@@ -69,6 +69,53 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
   // Removed inline TextInput component to prevent remounts on each render.
   // Use module-scoped SimpleTextInput instead.
 
+  // Editor-only adapters for new standardized CTA fields with legacy mirroring
+  // What: Prefer new keys (CTA1_TEXT, NEXT_* etc.), fallback to legacy (TEXT_44, TEXT_18...), and write both.
+  // Why: Provide consistent 3-line button setup while maintaining backward compatibility at runtime.
+  const mirrorMap: Record<string, string | undefined> = {
+    CTA1_TEXT: 'TEXT_44',
+    CTA1_URL: 'TEXT_44_URL',
+
+    NEXT_LOGIN_TEXT: 'TEXT_18',
+    NEXT_LOGIN_BG: 'TEXT_18_BG',
+
+    NEXT_GUEST_TEXT: 'TEXT_19',
+    NEXT_GUEST_BG: 'TEXT_19_BG',
+
+    NEXT_PLAY_TEXT: 'TEXT_25',
+    NEXT_PLAY_BG: 'TEXT_25_BG',
+
+    INVITE_TEXT: 'TEXT_45',
+    INVITE_BG: 'TEXT_45_BG',
+
+    PLAYAGAIN_TEXT: 'TEXT_46',
+    PLAYAGAIN_BG: 'TEXT_46_BG'
+  }
+
+  const defaultAction: Record<string, string> = {
+    NEXT_LOGIN_ACTION: 'REGISTER_AND_CONTINUE',
+    NEXT_GUEST_ACTION: 'CONTINUE_AS_GUEST',
+    NEXT_PLAY_ACTION: 'START_GAME',
+    INVITE_ACTION: 'INVITE_REFERRAL',
+    PLAYAGAIN_ACTION: 'RESTART_GAME'
+  }
+
+  const getTNew = (k: string) => {
+    const v = texts?.[k]
+    if (v != null && String(v).trim() !== '') return String(v)
+    const legacy = mirrorMap[k]
+    const lv = legacy ? texts?.[legacy] : undefined
+    if (lv != null && String(lv).trim() !== '') return String(lv)
+    if (k in defaultAction) return defaultAction[k]
+    return ''
+  }
+  const setTNew = (k: string, v: string) => {
+    const legacy = mirrorMap[k]
+    const next = { ...texts, [k]: v }
+    if (legacy) (next as any)[legacy] = v
+    onTextsChange(next)
+  }
+
   return (
     <div className="space-y-8">
       {/* Hero Settings */}
@@ -120,14 +167,36 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
           {/* Contact required (Markdown-capable) - single full-width, multiline */}
           <SimpleTextInput code="TEXT_26" label="Contact Required (Markdown)" placeholder="Please provide either email or phone number" multiline value={getT('TEXT_26')} onChange={(v)=> setT('TEXT_26', v)} />
 
-          {/* Next with login - single line */}
-          <SimpleTextInput code="TEXT_18" label="Next With Login (Button)" value={getT('TEXT_18')} onChange={(v)=> setT('TEXT_18', v)} />
+          {/* Next With Login — standardized 3-line block (bordered, editor-only) */}
+          <div className="border border-gray-300 rounded-lg p-4 space-y-2">
+            <label className="block text-sm font-semibold text-gray-800">Next With Login Button</label>
+            <SimpleTextInput code="NEXT_LOGIN_TEXT" label="CTA Action Text (Button)" value={getTNew('NEXT_LOGIN_TEXT')} onChange={(v)=> setTNew('NEXT_LOGIN_TEXT', v)} />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">CTA Action (Action)</label>
+              <select className="w-full px-3 py-2 border rounded-md" value={getTNew('NEXT_LOGIN_ACTION')} onChange={(e)=> setTNew('NEXT_LOGIN_ACTION', e.target.value)}>
+                <option value="REGISTER_AND_CONTINUE">REGISTER_AND_CONTINUE</option>
+                <option value="OPEN_LOGIN_MODAL">OPEN_LOGIN_MODAL</option>
+              </select>
+            </div>
+            <SimpleTextInput code="NEXT_LOGIN_BG" label="CTA Action BG (CSS)" multiline placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} value={getTNew('NEXT_LOGIN_BG')} onChange={(v)=> setTNew('NEXT_LOGIN_BG', v)} />
+          </div>
 
           {/* Try without registration (Markdown-capable) - single full-width, multiline */}
           <SimpleTextInput code="TEXT_27" label="Try Without Registration Text (Markdown)" placeholder="Want to try without registration?" multiline value={getT('TEXT_27')} onChange={(v)=> setT('TEXT_27', v)} />
 
-          {/* Next without login - single line */}
-          <SimpleTextInput code="TEXT_19" label="Next Without Login (Button)" value={getT('TEXT_19')} onChange={(v)=> setT('TEXT_19', v)} />
+          {/* Next Without Login — standardized 3-line block (bordered, editor-only) */}
+          <div className="border border-gray-300 rounded-lg p-4 space-y-2">
+            <label className="block text-sm font-semibold text-gray-800">Next Without Registration Button</label>
+            <SimpleTextInput code="NEXT_GUEST_TEXT" label="CTA Action Text (Button)" value={getTNew('NEXT_GUEST_TEXT')} onChange={(v)=> setTNew('NEXT_GUEST_TEXT', v)} />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">CTA Action (Action)</label>
+              <select className="w-full px-3 py-2 border rounded-md" value={getTNew('NEXT_GUEST_ACTION')} onChange={(e)=> setTNew('NEXT_GUEST_ACTION', e.target.value)}>
+                <option value="CONTINUE_AS_GUEST">CONTINUE_AS_GUEST</option>
+                <option value="SKIP_AND_PLAY">SKIP_AND_PLAY</option>
+              </select>
+            </div>
+            <SimpleTextInput code="NEXT_GUEST_BG" label="CTA Action BG (CSS)" multiline placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} value={getTNew('NEXT_GUEST_BG')} onChange={(v)=> setTNew('NEXT_GUEST_BG', v)} />
+          </div>
         </div>
       </div>
 
@@ -139,7 +208,19 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
           <SimpleTextInput code="TEXT_22" label="Game Rules (multi-line)" multiline value={getT('TEXT_22')} onChange={(v)=> setT('TEXT_22', v)} />
           <SimpleTextInput code="TEXT_23" label="Win Title (H2)" value={getT('TEXT_23')} onChange={(v)=> setT('TEXT_23', v)} />
           <SimpleTextInput code="TEXT_24" label="Win Rules (multi-line)" multiline value={getT('TEXT_24')} onChange={(v)=> setT('TEXT_24', v)} />
-          <SimpleTextInput code="TEXT_25" label="Next Play (Button)" value={getT('TEXT_25')} onChange={(v)=> setT('TEXT_25', v)} />
+        </div>
+        {/* Next Play — standardized 3-line block (bordered, editor-only) */}
+        <div className="mt-4 border border-gray-300 rounded-lg p-4 space-y-2">
+          <label className="block text-sm font-semibold text-gray-800">Next Play Button</label>
+          <SimpleTextInput code="NEXT_PLAY_TEXT" label="CTA Action Text (Button)" value={getTNew('NEXT_PLAY_TEXT')} onChange={(v)=> setTNew('NEXT_PLAY_TEXT', v)} />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">CTA Action (Action)</label>
+            <select className="w-full px-3 py-2 border rounded-md" value={getTNew('NEXT_PLAY_ACTION')} onChange={(e)=> setTNew('NEXT_PLAY_ACTION', e.target.value)}>
+              <option value="START_GAME">START_GAME</option>
+              <option value="OPEN_RULES">OPEN_RULES</option>
+            </select>
+          </div>
+          <SimpleTextInput code="NEXT_PLAY_BG" label="CTA Action BG (CSS)" multiline placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} value={getTNew('NEXT_PLAY_BG')} onChange={(v)=> setTNew('NEXT_PLAY_BG', v)} />
         </div>
       </div>
 
@@ -158,36 +239,44 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
           {/* Participated note (Markdown-capable) */}
           <SimpleTextInput code="TEXT_41" label="Participated (P, Markdown)" multiline value={getT('TEXT_41')} onChange={(v)=> setT('TEXT_41', v)} />
 
-          {/* Primary CTA pair on same line */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <SimpleTextInput code="TEXT_44" label="CTA Action (Button)" value={getT('TEXT_44')} onChange={(v)=> setT('TEXT_44', v)} />
-            <SimpleTextInput code="TEXT_44_URL" label="CTA Action URL" value={getT('TEXT_44_URL')} onChange={(v)=> setT('TEXT_44_URL', v)} />
+          {/* Primary Result CTA — standardized 3-line block (bordered, editor-only) */}
+          <div className="border border-gray-300 rounded-lg p-4 space-y-2">
+            <label className="block text-sm font-semibold text-gray-800">Primary CTA (Result)</label>
+            <SimpleTextInput code="CTA1_TEXT" label="CTA Action Text (Button)" value={getTNew('CTA1_TEXT')} onChange={(v)=> setTNew('CTA1_TEXT', v)} />
+            <SimpleTextInput code="CTA1_URL" label="CTA Action URL (URL)" value={getTNew('CTA1_URL')} onChange={(v)=> setTNew('CTA1_URL', v)} />
+            <SimpleTextInput code="CTA1_BG" label="CTA Action BG (CSS)" multiline placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} value={getTNew('CTA1_BG')} onChange={(v)=> setTNew('CTA1_BG', v)} />
           </div>
 
-          {/* CTA Background (Markdown-like CSS) */}
-          <SimpleTextInput code="CTA1_BG" label="CTA BG (CSS)" multiline placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} value={getT('CTA1_BG')} onChange={(v)=> setT('CTA1_BG', v)} />
-
-          {/* Additional CTAs manager */}
+          {/* Additional CTAs manager (bordered cards with editor-only CTA2_TEXT/CTA2_URL/CTA2_BG labels) */}
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-2">Additional CTAs</label>
             <div className="space-y-2">
               {(texts.CTA_BUTTONS as Array<{text:string;url:string;bg?:string}>)?.slice(1)?.map((cta, idx) => (
-                <div key={idx} className="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
-                  <input className="w-full px-3 py-2 border rounded-md" value={cta.text} onChange={e => {
-                    const list = Array.isArray(texts.CTA_BUTTONS) ? [...texts.CTA_BUTTONS] : []
-                    list[idx+1] = { ...list[idx+1], text: e.target.value }
-                    onTextsChange({ ...texts, CTA_BUTTONS: list })
-                  }} placeholder={`CTA Action${idx+2} Button`} />
-                  <input className="w-full px-3 py-2 border rounded-md" value={cta.url} onChange={e => {
-                    const list = Array.isArray(texts.CTA_BUTTONS) ? [...texts.CTA_BUTTONS] : []
-                    list[idx+1] = { ...list[idx+1], url: e.target.value }
-                    onTextsChange({ ...texts, CTA_BUTTONS: list })
-                  }} placeholder={`CTA Action${idx+2} URL`} />
-                  <textarea className="w-full px-3 py-2 border rounded-md min-h-12" value={cta.bg || ''} onChange={e => {
-                    const list = Array.isArray(texts.CTA_BUTTONS) ? [...texts.CTA_BUTTONS] : []
-                    list[idx+1] = { ...list[idx+1], bg: e.target.value }
-                    onTextsChange({ ...texts, CTA_BUTTONS: list })
-                  }} placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} />
+                <div key={idx} className="border border-gray-300 rounded-lg p-4 grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">CTA{idx+2}_TEXT</label>
+                    <input className="w-full px-3 py-2 border rounded-md" value={cta.text} onChange={e => {
+                      const list = Array.isArray(texts.CTA_BUTTONS) ? [...texts.CTA_BUTTONS] : []
+                      list[idx+1] = { ...list[idx+1], text: e.target.value }
+                      onTextsChange({ ...texts, CTA_BUTTONS: list })
+                    }} placeholder={`CTA Action${idx+2} Button`} />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">CTA{idx+2}_URL</label>
+                    <input className="w-full px-3 py-2 border rounded-md" value={cta.url} onChange={e => {
+                      const list = Array.isArray(texts.CTA_BUTTONS) ? [...texts.CTA_BUTTONS] : []
+                      list[idx+1] = { ...list[idx+1], url: e.target.value }
+                      onTextsChange({ ...texts, CTA_BUTTONS: list })
+                    }} placeholder={`CTA Action${idx+2} URL`} />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-xs text-gray-600 mb-1">CTA{idx+2}_BG</label>
+                    <textarea className="w-full px-3 py-2 border rounded-md min-h-12" value={cta.bg || ''} onChange={e => {
+                      const list = Array.isArray(texts.CTA_BUTTONS) ? [...texts.CTA_BUTTONS] : []
+                      list[idx+1] = { ...list[idx+1], bg: e.target.value }
+                      onTextsChange({ ...texts, CTA_BUTTONS: list })
+                    }} placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} />
+                  </div>
                   <button type="button" className="px-3 py-2 bg-red-600 text-white rounded-md" onClick={() => {
                     const list = Array.isArray(texts.CTA_BUTTONS) ? [...texts.CTA_BUTTONS] : []
                     list.splice(idx+1, 1)
@@ -199,7 +288,7 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
                 const list = Array.isArray(texts.CTA_BUTTONS) ? [...texts.CTA_BUTTONS] : []
                 if (list.length === 0) {
                   // Seed list with CTA1 from fields if present
-                  const first = { text: (texts.TEXT_44 || ''), url: (texts.TEXT_44_URL || ''), bg: (texts.CTA1_BG || '') }
+                  const first = { text: (getTNew('CTA1_TEXT') || ''), url: (getTNew('CTA1_URL') || ''), bg: (getTNew('CTA1_BG') || '') }
                   list.push(first)
                 }
                 list.push({ text: '', url: '', bg: '' })
@@ -208,8 +297,33 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
             </div>
           </div>
 
-          <SimpleTextInput code="TEXT_45" label="Invite Friend (Button)" value={getT('TEXT_45')} onChange={(v)=> setT('TEXT_45', v)} />
-          <SimpleTextInput code="TEXT_46" label="Play Again (Button)" value={getT('TEXT_46')} onChange={(v)=> setT('TEXT_46', v)} />
+          {/* Invite Friend — standardized 3-line block (bordered, editor-only) */}
+          <div className="border border-gray-300 rounded-lg p-4 space-y-2">
+            <label className="block text-sm font-semibold text-gray-800">Invite Friend Button</label>
+            <SimpleTextInput code="INVITE_TEXT" label="CTA Action Text (Button)" value={getTNew('INVITE_TEXT')} onChange={(v)=> setTNew('INVITE_TEXT', v)} />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">CTA Action (Action)</label>
+              <select className="w-full px-3 py-2 border rounded-md" value={getTNew('INVITE_ACTION')} onChange={(e)=> setTNew('INVITE_ACTION', e.target.value)}>
+                <option value="INVITE_REFERRAL">INVITE_REFERRAL</option>
+                <option value="SHARE_GENERIC">SHARE_GENERIC</option>
+              </select>
+            </div>
+            <SimpleTextInput code="INVITE_BG" label="CTA Action BG (CSS)" multiline value={getTNew('INVITE_BG')} onChange={(v)=> setTNew('INVITE_BG', v)} />
+          </div>
+
+          {/* Play Again — standardized 3-line block (bordered, editor-only) */}
+          <div className="border border-gray-300 rounded-lg p-4 space-y-2">
+            <label className="block text-sm font-semibold text-gray-800">Play Again Button</label>
+            <SimpleTextInput code="PLAYAGAIN_TEXT" label="CTA Action Text (Button)" value={getTNew('PLAYAGAIN_TEXT')} onChange={(v)=> setTNew('PLAYAGAIN_TEXT', v)} />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">CTA Action (Action)</label>
+              <select className="w-full px-3 py-2 border rounded-md" value={getTNew('PLAYAGAIN_ACTION')} onChange={(e)=> setTNew('PLAYAGAIN_ACTION', e.target.value)}>
+                <option value="RESTART_GAME">RESTART_GAME</option>
+                <option value="GO_TO_HOME">GO_TO_HOME</option>
+              </select>
+            </div>
+            <SimpleTextInput code="PLAYAGAIN_BG" label="CTA Action BG (CSS)" multiline value={getTNew('PLAYAGAIN_BG')} onChange={(v)=> setTNew('PLAYAGAIN_BG', v)} />
+          </div>
         </div>
       </div>
 

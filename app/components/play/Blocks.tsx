@@ -28,6 +28,8 @@ function HeroBlockInner({ backgroundClass, title, scoreboard }: { backgroundClas
             mode="title"
             titleText={title}
             className="scale-75 md:scale-90"
+            homeCardBg={scoreboard?.homeBg || '#C00000FF'}
+            digitColor={scoreboard?.digitColor || '#FFFFFFFF'}
           />
         ) : (
           <SplitFlapScoreboard

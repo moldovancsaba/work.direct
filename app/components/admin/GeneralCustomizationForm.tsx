@@ -187,11 +187,11 @@ export default function GeneralCustomizationForm({ texts, colors, onTextsChange,
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Page Background</label>
-              <input className="w-full px-3 py-2 border rounded-md" value={get(colors,'pageBackground')} onChange={(e)=>updateColor('pageBackground', e.target.value)} placeholder="bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900"/>
+              <textarea className="w-full px-3 py-2 border rounded-md min-h-20" value={get(colors,'pageBackground')} onChange={(e)=>updateColor('pageBackground', e.target.value)} placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Block Background</label>
-              <input className="w-full px-3 py-2 border rounded-md" value={get(colors,'blockBackground')} onChange={(e)=>updateColor('blockBackground', e.target.value)} placeholder="bg-white/10 backdrop-blur-sm"/>
+              <textarea className="w-full px-3 py-2 border rounded-md min-h-20" value={get(colors,'blockBackground')} onChange={(e)=>updateColor('blockBackground', e.target.value)} placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} />
             </div>
           </div>
         </div>
@@ -202,11 +202,11 @@ export default function GeneralCustomizationForm({ texts, colors, onTextsChange,
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Primary Button</label>
-              <input className="w-full px-3 py-2 border rounded-md" value={get(colors,'primaryButton')} onChange={(e)=>updateColor('primaryButton', e.target.value)} placeholder="bg-gradient-to-r from-green-600 to-emerald-600 ..."/>
+              <textarea className="w-full px-3 py-2 border rounded-md min-h-20" value={get(colors,'primaryButton')} onChange={(e)=>updateColor('primaryButton', e.target.value)} placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Secondary Button</label>
-              <input className="w-full px-3 py-2 border rounded-md" value={get(colors,'secondaryButton')} onChange={(e)=>updateColor('secondaryButton', e.target.value)} placeholder="bg-gradient-to-r from-blue-600 to-purple-600 ..."/>
+              <textarea className="w-full px-3 py-2 border rounded-md min-h-20" value={get(colors,'secondaryButton')} onChange={(e)=>updateColor('secondaryButton', e.target.value)} placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} />
             </div>
           </div>
         </div>

@@ -74,6 +74,14 @@ function derivePlatform(game: any) {
       : (platTexts.TEXT_44 || platTexts.TEXT_44_URL
           ? [{ text: platTexts.TEXT_44 || 'Open CTA', url: platTexts.TEXT_44_URL || '', bg: platTexts.CTA1_BG || '' }]
           : []),
+
+    // Per-button background CSS (multiline strings)
+    TEXT_18_BG: platTexts.TEXT_18_BG || '',
+    TEXT_19_BG: platTexts.TEXT_19_BG || '',
+    TEXT_25_BG: platTexts.TEXT_25_BG || '',
+    TEXT_45_BG: platTexts.TEXT_45_BG || '',
+    TEXT_46_BG: platTexts.TEXT_46_BG || '',
+
     // Legal documents with defaults
     TERMS_TITLE: platTexts.TERMS_TITLE || 'General Terms & Conditions',
     TERMS_BODY: platTexts.TERMS_BODY || `Welcome to PlayMass. By participating in our games, you agree to the following terms:\n\n1) Eligibility — You must comply with all applicable laws and age requirements.\n2) Fair Play — Cheating, automated participation, or abuse is prohibited.\n3) Rewards — Prizes, coupons, and points are subject to availability and expiration.\n4) Data — We process necessary data to operate games; see Privacy Policy for details.\n5) Liability — PlayMass is not liable for indirect, incidental, or consequential damages.\n6) Changes — We may update these Terms; continued use constitutes acceptance.\n7) Contact — For support, contact the game organizer or PlayMass support.`,

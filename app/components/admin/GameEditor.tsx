@@ -143,13 +143,31 @@ const [platformStyles, setPlatformStyles] = useState<Record<string, any>>({})
             // New CTA fields & back-compat mapping
             CTA_TITLE: plat.texts?.CTA_TITLE || plat.texts?.TEXT_42 || 'Share Your Result',
             CTA_DESCRIPTION: plat.texts?.CTA_DESCRIPTION || plat.texts?.TEXT_43 || 'Copy or share your result with friends.',
-            CTA1_BUTTON_TEXT: plat.texts?.CTA1_BUTTON_TEXT || plat.texts?.TEXT_44 || '',
+            CTA1_TEXT: plat.texts?.CTA1_TEXT || plat.texts?.TEXT_44 || '',
             CTA1_URL: plat.texts?.CTA1_URL || plat.texts?.TEXT_44_URL || '',
+            CTA1_BG: plat.texts?.CTA1_BG || '',
+            // Editor-standardized action CTAs with defaults
+            NEXT_LOGIN_TEXT: plat.texts?.NEXT_LOGIN_TEXT || plat.texts?.TEXT_18 || '',
+            NEXT_LOGIN_ACTION: plat.texts?.NEXT_LOGIN_ACTION || 'REGISTER_AND_CONTINUE',
+            NEXT_LOGIN_BG: plat.texts?.NEXT_LOGIN_BG || plat.texts?.TEXT_18_BG || '',
+            NEXT_GUEST_TEXT: plat.texts?.NEXT_GUEST_TEXT || plat.texts?.TEXT_19 || '',
+            NEXT_GUEST_ACTION: plat.texts?.NEXT_GUEST_ACTION || 'CONTINUE_AS_GUEST',
+            NEXT_GUEST_BG: plat.texts?.NEXT_GUEST_BG || plat.texts?.TEXT_19_BG || '',
+            NEXT_PLAY_TEXT: plat.texts?.NEXT_PLAY_TEXT || plat.texts?.TEXT_25 || '',
+            NEXT_PLAY_ACTION: plat.texts?.NEXT_PLAY_ACTION || 'START_GAME',
+            NEXT_PLAY_BG: plat.texts?.NEXT_PLAY_BG || plat.texts?.TEXT_25_BG || '',
+            INVITE_TEXT: plat.texts?.INVITE_TEXT || plat.texts?.TEXT_45 || '',
+            INVITE_ACTION: plat.texts?.INVITE_ACTION || 'INVITE_REFERRAL',
+            INVITE_BG: plat.texts?.INVITE_BG || plat.texts?.TEXT_45_BG || '',
+            PLAYAGAIN_TEXT: plat.texts?.PLAYAGAIN_TEXT || plat.texts?.TEXT_46 || '',
+            PLAYAGAIN_ACTION: plat.texts?.PLAYAGAIN_ACTION || 'RESTART_GAME',
+            PLAYAGAIN_BG: plat.texts?.PLAYAGAIN_BG || plat.texts?.TEXT_46_BG || '',
             CTA_BUTTONS: Array.isArray(plat.texts?.CTA_BUTTONS) && plat.texts.CTA_BUTTONS.length > 0
               ? plat.texts.CTA_BUTTONS
               : (plat.texts?.TEXT_44 || plat.texts?.TEXT_44_URL ? [{ text: plat.texts.TEXT_44 || '', url: plat.texts.TEXT_44_URL || '' }] : [])
           }
-          setPlatformTexts(plat.texts || derivedTexts)
+          // Normalize to standardized editor keys with fallbacks while preserving any other existing keys
+          setPlatformTexts({ ...(plat.texts || {}), ...derivedTexts })
           setPlatformStyles(plat.styles || {})
 // Stars Hexa
           if (game.type === 'STARS_HEXA' && game.configuration?.starsHexa) {
@@ -213,7 +231,31 @@ const [platformStyles, setPlatformStyles] = useState<Record<string, any>>({})
     try {
       if (!title.trim()) throw new Error('Game title is required')
 
-let payload: any = {
+      // Mirror standardized editor keys back to legacy before saving (back-compat)
+      const mirrorLegacyBeforeSubmit = (t: any) => {
+        const next = { ...(t || {}) }
+        // Primary CTA
+        if (!next.TEXT_44) next.TEXT_44 = next.CTA1_TEXT || ''
+        if (!next.TEXT_44_URL) next.TEXT_44_URL = next.CTA1_URL || ''
+        // Welcome — Next With Login
+        if (!next.TEXT_18) next.TEXT_18 = next.NEXT_LOGIN_TEXT || ''
+        if (!next.TEXT_18_BG) next.TEXT_18_BG = next.NEXT_LOGIN_BG || ''
+        // Welcome — Next Without Login
+        if (!next.TEXT_19) next.TEXT_19 = next.NEXT_GUEST_TEXT || ''
+        if (!next.TEXT_19_BG) next.TEXT_19_BG = next.NEXT_GUEST_BG || ''
+        // Rules — Next Play
+        if (!next.TEXT_25) next.TEXT_25 = next.NEXT_PLAY_TEXT || ''
+        if (!next.TEXT_25_BG) next.TEXT_25_BG = next.NEXT_PLAY_BG || ''
+        // Result — Invite Friend
+        if (!next.TEXT_45) next.TEXT_45 = next.INVITE_TEXT || ''
+        if (!next.TEXT_45_BG) next.TEXT_45_BG = next.INVITE_BG || ''
+        // Result — Play Again
+        if (!next.TEXT_46) next.TEXT_46 = next.PLAYAGAIN_TEXT || ''
+        if (!next.TEXT_46_BG) next.TEXT_46_BG = next.PLAYAGAIN_BG || ''
+        return next
+      }
+
+      let payload: any = {
         title: title.trim(),
         description: description.trim(),
         type: gameType,
@@ -222,9 +264,9 @@ let payload: any = {
         rewards: rewards.filter(r => r.title.trim())
       }
 
-// Attach platform configuration
+      // Attach platform configuration
       payload.configuration.platform = {
-        texts: platformTexts,
+        texts: mirrorLegacyBeforeSubmit(platformTexts),
         styles: platformStyles
       }
 

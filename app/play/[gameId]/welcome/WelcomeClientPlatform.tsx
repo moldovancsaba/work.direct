@@ -58,7 +58,16 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
       className="min-h-screen w-full"
       style={{ backgroundColor: '#000000FF', color: '#FFFFFFFF', fontFamily: '"Noto Sans", sans-serif' }}
     >
-      <HeroBlock backgroundClass={heroBg} title={title} />
+      <HeroBlock
+        backgroundClass={heroBg}
+        title={title}
+        scoreboard={{
+          home: 0,
+          visitor: 0,
+          homeBg: styles?.scoreboard?.homeBg || '#C00000FF',
+          digitColor: styles?.scoreboard?.digitColor || '#FFFFFFFF'
+        }}
+      />
       <MainBlock backgroundClass={mainBg}>
         {description && (
           <p
@@ -88,6 +97,8 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
             hideHeader={true}
             containerMode="embedded"
             headingClass={styles?.main?.h2Class || 'text-xl font-semibold'}
+            primaryButtonBgCss={texts?.TEXT_18_BG}
+            trialButtonBgCss={texts?.TEXT_19_BG}
             customTexts={{
               // Headings (H2)
               nameHeading: texts?.TEXT_12 || 'Your Name',

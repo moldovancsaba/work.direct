@@ -50,6 +50,12 @@ export interface UnifiedRegistrationProps {
   // H2 headings style (platform main.h2Class)
   headingClass?: string
   
+  // Custom button background CSS (multiline strings with full CSS supported)
+  // What: apply admin-provided CSS backgrounds for Start and Trial buttons
+  // Why: enable full control (e.g., gradients) beyond class utilities
+  primaryButtonBgCss?: string
+  trialButtonBgCss?: string
+  
   // Layout control
   hideHeader?: boolean
   containerMode?: 'fullscreen' | 'embedded'
@@ -90,7 +96,9 @@ export default function UnifiedRegistration({
   className,
   headingClass,
   hideHeader = false,
-  containerMode = 'fullscreen'
+  containerMode = 'fullscreen',
+  primaryButtonBgCss,
+  trialButtonBgCss
 }: UnifiedRegistrationProps) {
   
   // Form state management
@@ -202,6 +210,19 @@ export default function UnifiedRegistration({
     ? `w-full ${className || ''}`
     : `h-screen w-screen flex items-center justify-center p-4 overflow-hidden bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 ${className || ''}`
 
+  // Extract value from multiline CSS (supports 'background: ...; background: linear-gradient(...)')
+  const extractBackgroundValue = (css?: string): string | undefined => {
+    if (!css) return undefined
+    const grad = css.match(/linear-gradient\([^\)]+\)/i)
+    if (grad) return grad[0]
+    const bg = css.match(/background:\s*([^;]+);?/i)
+    if (bg && bg[1]) return bg[1].trim()
+    return undefined
+  }
+
+  const primaryBg = extractBackgroundValue(primaryButtonBgCss)
+  const trialBg = extractBackgroundValue(trialButtonBgCss)
+
   return (
     <div className={containerClass}>
       <div className="w-full max-w-md mx-auto">
@@ -297,6 +318,7 @@ export default function UnifiedRegistration({
               type="submit"
               disabled={isLoading || isSubmitting}
               className={`w-full text-white py-3 px-4 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${themeClasses.button}`}
+              style={primaryBg ? { background: primaryBg } : undefined}
             >
               {isSubmitting ? 'Registering...' : (customTexts?.startPlayingButton || 'Start Playing')}
             </button>
@@ -312,6 +334,7 @@ export default function UnifiedRegistration({
                 onClick={handleTrialMode}
                 disabled={isLoading}
                 className={`w-full text-white py-3 px-4 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${themeClasses.trialButton}`}
+                style={trialBg ? { background: trialBg } : undefined}
               >
                 {customTexts?.tryWithoutRegButton || 'Try Without Registration'}
               </button>
