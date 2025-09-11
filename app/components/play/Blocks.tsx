@@ -63,7 +63,8 @@ function MainBlockInner({ backgroundClass, children }: { backgroundClass?: strin
         fontFamily: '"Noto Sans", sans-serif',
         padding: '24px',
         overflow: 'auto',
-        borderRadius: 0
+        borderRadius: 0,
+        textAlign: 'center'
       }}
     >
       {children}

@@ -316,7 +316,7 @@ export interface PlatformTexts {
   WON_TEXT?: string
   LOST_TEXT?: string
   CTA1_BG?: string
-  CTA_BUTTONS?: Array<{ text: string; url: string }>
+  CTA_BUTTONS?: Array<{ text: string; url: string; bg?: string }>
 }
 
 export interface PlatformStyles {

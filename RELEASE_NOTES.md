@@ -5,6 +5,10 @@
 
 ## 🔹 Version History
 
+### [v1.8.0] — 2025-09-11
+- Result CTAs: Per-button unique background support (CTA_BUTTONS[].bg). Admin editor includes BG input per CTA; runtime prefers per-CTA bg and falls back to CTA1_BG.
+- UI Alignment: All MainBlock content center-aligned across play pages.
+
 ### [v1.7.0] — 2025-09-11
 - Admin Editor: Welcome section restructured — TEXT_11, TEXT_26, TEXT_27 are multiline (Markdown-capable). Paired Ask/Placeholder fields aligned side-by-side (TEXT_12+TEXT_13, TEXT_14+TEXT_15, TEXT_16+TEXT_17). Single-row controls for TEXT_18 and TEXT_19.
 - Admin Editor: Result section enhanced — WON_TEXT and LOST_TEXT (H1, Markdown), TEXT_41 multiline (Markdown), TEXT_44 + TEXT_44_URL side-by-side, CTA1_BG multiline CSS.

@@ -106,7 +106,7 @@ return (
                       }
                     }}
                     className={styles?.main?.buttonPrimaryClass || 'px-6 py-3 bg-blue-600 text-white rounded-lg'}
-                    style={{ background: extractBackgroundValue(texts?.CTA1_BG) }}
+                    style={{ background: extractBackgroundValue(btn?.bg) || extractBackgroundValue(texts?.CTA1_BG) }}
                   >
                     {btn.text}
                   </a>

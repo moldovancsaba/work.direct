@@ -210,7 +210,8 @@ const gameSchema = new Schema<Game>({
           type: [
             new Schema({
               text: { type: String, default: '' },
-              url: { type: String, default: '' }
+              url: { type: String, default: '' },
+              bg: { type: String, default: '' }
             }, { _id: false })
           ],
           default: []

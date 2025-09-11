@@ -171,8 +171,8 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-2">Additional CTAs</label>
             <div className="space-y-2">
-              {(texts.CTA_BUTTONS as Array<{text:string;url:string}>)?.slice(1)?.map((cta, idx) => (
-                <div key={idx} className="grid grid-cols-1 md:grid-cols-3 gap-2 items-end">
+              {(texts.CTA_BUTTONS as Array<{text:string;url:string;bg?:string}>)?.slice(1)?.map((cta, idx) => (
+                <div key={idx} className="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
                   <input className="w-full px-3 py-2 border rounded-md" value={cta.text} onChange={e => {
                     const list = Array.isArray(texts.CTA_BUTTONS) ? [...texts.CTA_BUTTONS] : []
                     list[idx+1] = { ...list[idx+1], text: e.target.value }
@@ -183,6 +183,11 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
                     list[idx+1] = { ...list[idx+1], url: e.target.value }
                     onTextsChange({ ...texts, CTA_BUTTONS: list })
                   }} placeholder={`CTA Action${idx+2} URL`} />
+                  <textarea className="w-full px-3 py-2 border rounded-md min-h-12" value={cta.bg || ''} onChange={e => {
+                    const list = Array.isArray(texts.CTA_BUTTONS) ? [...texts.CTA_BUTTONS] : []
+                    list[idx+1] = { ...list[idx+1], bg: e.target.value }
+                    onTextsChange({ ...texts, CTA_BUTTONS: list })
+                  }} placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} />
                   <button type="button" className="px-3 py-2 bg-red-600 text-white rounded-md" onClick={() => {
                     const list = Array.isArray(texts.CTA_BUTTONS) ? [...texts.CTA_BUTTONS] : []
                     list.splice(idx+1, 1)
@@ -194,10 +199,10 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
                 const list = Array.isArray(texts.CTA_BUTTONS) ? [...texts.CTA_BUTTONS] : []
                 if (list.length === 0) {
                   // Seed list with CTA1 from fields if present
-const first = { text: texts.TEXT_44 || '', url: texts.TEXT_44_URL || '' }
+                  const first = { text: (texts.TEXT_44 || ''), url: (texts.TEXT_44_URL || ''), bg: (texts.CTA1_BG || '') }
                   list.push(first)
                 }
-                list.push({ text: '', url: '' })
+                list.push({ text: '', url: '', bg: '' })
                 onTextsChange({ ...texts, CTA_BUTTONS: list })
               }}>ADD CTA</button>
             </div>
