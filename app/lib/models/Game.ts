@@ -220,7 +220,9 @@ const gameSchema = new Schema<Game>({
         TERMS_TITLE: { type: String, default: '' },
         TERMS_BODY: { type: String, default: '' },
         PRIVACY_TITLE: { type: String, default: '' },
-        PRIVACY_BODY: { type: String, default: '' }
+        PRIVACY_BODY: { type: String, default: '' },
+        DELETION_TITLE: { type: String, default: '' },
+        DELETION_BODY: { type: String, default: '' }
       },
       styles: {
         hero: {

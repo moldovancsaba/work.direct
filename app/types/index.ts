@@ -322,6 +322,8 @@ export interface PlatformTexts {
   TERMS_BODY?: string
   PRIVACY_TITLE?: string
   PRIVACY_BODY?: string
+  DELETION_TITLE?: string
+  DELETION_BODY?: string
 }
 
 export interface PlatformStyles {

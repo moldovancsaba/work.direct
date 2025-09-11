@@ -252,6 +252,8 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
           <SimpleTextInput code="TERMS_BODY" label="Terms & Conditions Body (multiline)" multiline value={getT('TERMS_BODY')} onChange={(v)=> setT('TERMS_BODY', v)} />
           <SimpleTextInput code="PRIVACY_TITLE" label="Privacy Policy Title" value={getT('PRIVACY_TITLE')} onChange={(v)=> setT('PRIVACY_TITLE', v)} />
           <SimpleTextInput code="PRIVACY_BODY" label="Privacy Policy Body (multiline)" multiline value={getT('PRIVACY_BODY')} onChange={(v)=> setT('PRIVACY_BODY', v)} />
+          <SimpleTextInput code="DELETION_TITLE" label="Data Deletion Title" value={getT('DELETION_TITLE')} onChange={(v)=> setT('DELETION_TITLE', v)} />
+          <SimpleTextInput code="DELETION_BODY" label="Data Deletion Instructions (multiline)" multiline value={getT('DELETION_BODY')} onChange={(v)=> setT('DELETION_BODY', v)} />
         </div>
       </div>
 
