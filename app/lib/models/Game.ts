@@ -196,7 +196,11 @@ const gameSchema = new Schema<Game>({
         TEXT_43: { type: String, default: '' },
         TEXT_44: { type: String, default: '' },
         TEXT_45: { type: String, default: '' },
-        TEXT_46: { type: String, default: '' }
+        TEXT_46: { type: String, default: '' },
+        // Extended per-game platform texts
+        TEXT_26: { type: String, default: '' },
+        TEXT_27: { type: String, default: '' },
+        TEXT_44_URL: { type: String, default: '' }
       },
       styles: {
         hero: {
