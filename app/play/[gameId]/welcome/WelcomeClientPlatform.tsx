@@ -69,6 +69,16 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
           </p>
         )}
         <div className="space-y-3">
+          {/* Alternative login with Facebook */}
+          <div className="text-center">
+            <a
+              href="/api/auth/facebook/start"
+              className={styles?.main?.buttonSecondaryClass || 'px-6 py-3 bg-[#1877F2] text-white rounded-lg inline-block'}
+            >
+              Continue with Facebook
+            </a>
+          </div>
+
           <UnifiedRegistration
             onRegister={async (p) => { saveSession(p, false); onNext(`/play/${gameId}/rules`) }}
             onTrialMode={() => { saveSession({ name: 'Guest' }, true); onNext(`/play/${gameId}/rules`) }}
