@@ -39,6 +39,13 @@ export default function HomePage() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <a
+              href="/api/auth/facebook/start"
+              className="bg-[#1877F2] text-white px-8 py-4 rounded-lg hover:opacity-90 transition-all transform hover:scale-105 shadow-lg font-medium text-lg"
+            >
+              Continue with Facebook
+            </a>
+
             <Link 
               href="/admin" 
               className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105 shadow-lg font-medium text-lg"
