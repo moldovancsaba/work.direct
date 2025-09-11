@@ -159,6 +159,10 @@ export default function HomePage() {
           </div>
           
           <div className="mt-8 pt-8 border-t border-gray-800 text-center text-gray-400">
+            <div className="mb-3 space-x-4">
+              <Link href="/terms" className="underline hover:no-underline">General Terms & Conditions</Link>
+              <Link href="/privacy" className="underline hover:no-underline">Privacy Policy</Link>
+            </div>
             <p>&copy; 2024 PlayMass. Built with ❤️ for interactive gaming experiences.</p>
           </div>
         </div>

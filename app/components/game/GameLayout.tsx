@@ -122,12 +122,14 @@ export default function GameLayout({
         )}
 
         {/* Game content */}
-        <div className={`${
-          gameType === 'PENALTY_SHOOTOUT' 
-            ? 'w-full h-full max-w-6xl max-h-6xl' 
-            : 'w-full h-full max-w-4xl max-h-4xl'
-        }`}>
-          {gameContent}
+        <div className="w-full h-full flex justify-center">
+          <div className={`${
+            gameType === 'PENALTY_SHOOTOUT' 
+              ? 'w-full h-full max-w-6xl max-h-6xl' 
+              : 'w-full h-full max-w-4xl max-h-4xl'
+          }`}>
+            {gameContent}
+          </div>
         </div>
 
         {/* Status/Description rendered inside main to respect height contract */}

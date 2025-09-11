@@ -246,7 +246,7 @@ const schema = new Schema({
 
 ---
 
-**Current Version**: 1.9.0  
+**Current Version**: 1.10.0  
 **Last Updated**: {NOW}
 **Maintainer**: AI Development Team
 
