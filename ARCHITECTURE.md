@@ -53,6 +53,7 @@ PlayMass is a Next.js (App Router) application with MongoDB/Mongoose persistence
 - Dependencies:
   - Facebook JS SDK (loaded globally in app/layout.tsx via next/script)
   - API endpoint: POST /api/auth/facebook/client (verifies access token via debug_token; fetches user profile; sets httpOnly user-session cookie)
+  - API endpoint: GET/POST /api/auth/session (POC cross-game 24h session persistence)
 - Flow:
   1) Welcome page triggers FB.login({ scope: 'public_profile,email' })
   2) On success, the short-lived accessToken is posted to the server endpoint

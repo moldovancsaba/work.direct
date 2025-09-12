@@ -7,6 +7,7 @@
 
 ### [v1.15.0] — 2025-09-12T08:38:38.000Z
 - Auth: Implemented Facebook Login via JS SDK popup
+  - POC: Cross-game end-user session persistence for 24h via GET/POST /api/auth/session and unified cookie expiry
   - Global SDK load in app/layout.tsx with readiness event
   - New endpoint POST /api/auth/facebook/client verifies accessToken (debug_token), fetches profile (id,name,email), and sets httpOnly user-session cookie
   - Welcome page uses FB.login and redirects to /play/[gameId]/rules preserving ?ref

@@ -122,6 +122,24 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
     }
   }
 
+  // Auto-continue if a server-side user session already exists (httpOnly cookie)
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch('/api/auth/session', { credentials: 'include', cache: 'no-store' })
+        if (!res.ok) return
+        const data = await res.json()
+        if (cancelled) return
+        const name = data?.user?.name || 'User'
+        const email = data?.user?.email
+        saveSession({ name, email }, false)
+        onNext(`/play/${gameId}/rules`)
+      } catch { /* ignore */ }
+    })()
+    return () => { cancelled = true }
+  }, [gameId])
+
   return (
     <div
       className="min-h-screen w-full"
@@ -166,7 +184,19 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
           </div>
 
           <UnifiedRegistration
-            onRegister={async (p) => { saveSession(p, false); onNext(`/play/${gameId}/rules`) }}
+            onRegister={async (p) => {
+              try {
+                // Create/refresh 24h end-user session for cross-game persistence (POC)
+                await fetch('/api/auth/session', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  credentials: 'include',
+                  body: JSON.stringify({ provider: 'email', name: p.name, email: p.email || undefined })
+                })
+              } catch {}
+              saveSession(p, false)
+              onNext(`/play/${gameId}/rules`)
+            }}
             onTrialMode={() => { saveSession({ name: 'Guest' }, true); onNext(`/play/${gameId}/rules`) }}
             gameTitle={title}
             gameName={title}

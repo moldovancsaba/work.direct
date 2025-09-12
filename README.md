@@ -123,6 +123,8 @@ app/
 - `POST /api/games/[id]/play` - Play a game
 - `POST /api/participants` - Register participant
 - `POST /api/auth/facebook/client` - Verify Facebook SDK access token and create session cookie
+- `GET /api/auth/session` - Get current end-user session (POC)
+- `POST /api/auth/session` - Create/refresh end-user session for 24h (POC)
 - `GET /api/health` - System health check
 
 ## 🎲 Game Types
