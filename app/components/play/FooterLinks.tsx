@@ -1,8 +1,24 @@
 "use client"
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 
 export default function FooterLinks({ gameId }: { gameId: string }) {
+  // Track if an end-user session exists (httpOnly cookie), so we only show Logout when relevant
+  const [hasSession, setHasSession] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch('/api/auth/session', { credentials: 'include', cache: 'no-store' })
+        if (!cancelled) setHasSession(res.ok)
+      } catch {
+        if (!cancelled) setHasSession(false)
+      }
+    })()
+    return () => { cancelled = true }
+  }, [])
+
   const onLogout = async (e: React.MouseEvent) => {
     e.preventDefault()
     try {
@@ -21,8 +37,12 @@ export default function FooterLinks({ gameId }: { gameId: string }) {
       <a href={`/play/${gameId}/privacy`} className="underline hover:no-underline">Privacy Policy</a>
       <span>•</span>
       <a href={`/play/${gameId}/deletion`} className="underline hover:no-underline">Data Deletion</a>
-      <span>•</span>
-      <a href="#" onClick={onLogout} className="underline hover:no-underline">Logout</a>
+      {hasSession && (
+        <>
+          <span>•</span>
+          <a href="#" onClick={onLogout} className="underline hover:no-underline">Logout</a>
+        </>
+      )}
     </div>
   )
 }
