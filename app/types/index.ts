@@ -365,6 +365,10 @@ export interface PlatformTexts {
   PRIVACY_BODY?: string
   DELETION_TITLE?: string
   DELETION_BODY?: string
+
+  // Landing page
+  LANDING_TITLE?: string
+  LANDING_IMAGE_URL?: string
 }
 
 export interface PlatformStyles {

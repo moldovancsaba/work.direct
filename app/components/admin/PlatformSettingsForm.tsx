@@ -139,6 +139,15 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
         </div>
       </div>
 
+      {/* Landing */}
+      <div className="bg-emerald-50 p-4 rounded-lg">
+        <h3 className="text-md font-medium text-gray-800 mb-2">Landing</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <SimpleTextInput code="LANDING_TITLE" label="Landing Title" placeholder="" value={getT('LANDING_TITLE')} onChange={(v)=> setT('LANDING_TITLE', v)} />
+          <SimpleTextInput code="LANDING_IMAGE_URL" label="Landing Image URL" placeholder="https://..." value={getT('LANDING_IMAGE_URL')} onChange={(v)=> setT('LANDING_IMAGE_URL', v)} />
+        </div>
+      </div>
+
       {/* Welcome Main */}
       <div className="bg-blue-50 p-4 rounded-lg">
         <h3 className="text-md font-medium text-gray-800 mb-2">Welcome Main</h3>

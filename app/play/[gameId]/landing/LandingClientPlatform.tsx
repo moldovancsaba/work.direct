@@ -15,8 +15,9 @@ export default function LandingClientPlatform({ gameId, texts, styles, refCode }
   const heroBg = styles?.hero?.background
   const mainBg = styles?.main?.background
 
-  const title = texts?.LANDING_TITLE || texts?.TEXT_30 || 'Welcome'
-  const imageUrl = texts?.LANDING_IMAGE_URL || ''
+  // Title and image fallback to empty when not provided (per product requirement)
+  const title = (typeof texts?.LANDING_TITLE === 'string') ? texts.LANDING_TITLE : ''
+  const imageUrl = (typeof texts?.LANDING_IMAGE_URL === 'string') ? texts.LANDING_IMAGE_URL : ''
   const ctaText = texts?.LANDING_CTA_TEXT || 'Enter'
 
   const onNext = (href: string) => {
