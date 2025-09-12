@@ -23,10 +23,16 @@ export default function FooterLinks({ gameId }: { gameId: string }) {
     e.preventDefault()
     try {
       await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
-      // Redirect to home after logout to clear any state and show public view
-      window.location.href = '/'
+      try { localStorage.removeItem(`playmass:session:${gameId}`) } catch {}
+      const url = new URL(window.location.href)
+      const ref = url.searchParams.get('ref')
+      const dest = ref ? `/play/${gameId}/welcome?ref=${encodeURIComponent(ref)}` : `/play/${gameId}/welcome`
+      window.location.href = dest
     } catch {
-      window.location.href = '/'
+      const url = new URL(window.location.href)
+      const ref = url.searchParams.get('ref')
+      const dest = ref ? `/play/${gameId}/welcome?ref=${encodeURIComponent(ref)}` : `/play/${gameId}/welcome`
+      window.location.href = dest
     }
   }
 
