@@ -170,6 +170,17 @@ export async function POST(
       playRequest.participant.phone
     )
 
+    // Derive login provider from httpOnly user-session cookie (POC persistence)
+    const sessionCookie = request.cookies.get('user-session')?.value
+    let loginProvider: 'facebook' | 'email' | undefined
+    try {
+      if (sessionCookie) {
+        const decoded = JSON.parse(Buffer.from(sessionCookie, 'base64').toString('utf8'))
+        if (decoded?.provider === 'facebook') loginProvider = 'facebook'
+        else if (decoded?.provider === 'email') loginProvider = 'email'
+      }
+    } catch {}
+
     // Set referral info from request if available
     const incomingUuid = (playRequest as any).participant?.uuid as string | undefined
     const incomingRef = (playRequest as any).ref as string | undefined
@@ -186,7 +197,7 @@ export async function POST(
         gameResults: [],
         totalGamesPlayed: 0,
         totalRewardsEarned: 0,
-        metadata: {}
+        metadata: loginProvider ? { loginProvider } : {}
       })
       
       await participant.save()
@@ -199,10 +210,13 @@ export async function POST(
         )
       }
     } else {
-      // Update uuid/referrer if missing
+      // Update uuid/referrer if missing; set login provider if not recorded yet
       const updates: any = {}
       if (incomingUuid && !participant.uuid) updates.uuid = incomingUuid
       if (incomingRef && incomingRef !== participant.uuid && !participant.referrerUuid) updates.referrerUuid = incomingRef
+      if (loginProvider && !(participant as any).metadata?.loginProvider) {
+        updates['metadata.loginProvider'] = loginProvider
+      }
       if (Object.keys(updates).length) {
         await ParticipantModel.updateOne({ _id: participant._id }, { $set: updates })
       }

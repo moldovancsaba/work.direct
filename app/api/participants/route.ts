@@ -63,6 +63,17 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     // Generate UUID for new participant if not provided
     const uuid = participantData.uuid || uuidv4()
     
+    // Try derive login provider from httpOnly user-session cookie (POC)
+    const sessionCookie = request.cookies.get('user-session')?.value
+    let loginProvider: 'facebook' | 'email' | undefined
+    try {
+      if (sessionCookie) {
+        const decoded = JSON.parse(Buffer.from(sessionCookie, 'base64').toString('utf8'))
+        if (decoded?.provider === 'facebook') loginProvider = 'facebook'
+        else if (decoded?.provider === 'email') loginProvider = 'email'
+      }
+    } catch {}
+
     // Create new participant
     const participant = new ParticipantModel({
       name: participantData.name,
@@ -74,7 +85,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       gameResults: [],
       totalGamesPlayed: 0,
       totalRewardsEarned: 0,
-      metadata: participantData.metadata || {},
+      metadata: { ...(participantData.metadata || {}), ...(loginProvider ? { loginProvider } : {}) },
       isActive: true
     })
     
@@ -164,7 +175,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
       .sort(searchText ? { score: { $meta: 'textScore' } } : { lastActivityAt: -1 })
       .skip(skip)
       .limit(limit)
-      .select('-metadata') // Exclude metadata for list view
+      // Select essential fields + loginProvider for admin list view
+      .select('name email phone uuid referrerUuid createdAt lastActivityAt totalGamesPlayed totalRewardsEarned isActive metadata.loginProvider')
       .lean()
       .exec()
     
@@ -190,7 +202,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
 
     const augmented = participants.map((p: any) => ({
       ...p,
-      invitesCount: p.uuid ? (invitesByReferrer[p.uuid] || 0) : 0
+      invitesCount: p.uuid ? (invitesByReferrer[p.uuid] || 0) : 0,
+      loginProvider: p?.metadata?.loginProvider || (p?.email ? 'email' : undefined)
     }))
     
     // Calculate pagination metadata

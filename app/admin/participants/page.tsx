@@ -15,6 +15,7 @@ interface Participant {
   totalRewardsEarned: number
   isActive: boolean
   invitesCount?: number
+  loginProvider?: 'facebook' | 'email' | 'guest' | 'unknown'
 }
 
 interface ParticipantsStats {
@@ -311,6 +312,9 @@ export default function ParticipantsPage() {
                     Referral Info
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Login
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Joined
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -363,6 +367,15 @@ export default function ParticipantsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Date(participant.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      {(() => {
+                        const p = participant.loginProvider || (participant.email ? 'email' : 'unknown')
+                        if (p === 'facebook') return <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">FB</span>
+                        if (p === 'email') return <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">Email</span>
+                        if (p === 'guest') return <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">Guest</span>
+                        return <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">Unknown</span>
+                      })()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {participant.totalGamesPlayed}
