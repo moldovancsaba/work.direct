@@ -44,19 +44,14 @@ export default function ResultClientPlatform({ gameId, texts, styles, won, refCo
   // WHY: Simplify the CTA surface area and avoid redundant share patterns;
   //      keep "Invite Friend" (referral share) and "Play Again" only.
 
-  const onInviteReferral = async () => {
-    const base = (process.env.NEXT_PUBLIC_APP_URL || window.location.origin).replace(/\/$/, '')
-    const shareRef = getReferralUuid()
-    // Build query-style referral URL: /play/{gameId}?ref={uuid}
-    const url = `${base}/play/${gameId}${shareRef ? `?ref=${encodeURIComponent(shareRef)}` : ''}`
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: 'Invite Friend', text: texts?.TEXT_42 || 'Challenge your friends!', url })
-      } else {
-        await navigator.clipboard.writeText(url)
-        alert('Referral link copied!')
-      }
-    } catch {}
+  const navigateWithRef = (path: string) => {
+    const ref = getReferralUuid()
+    const q = ref ? `?ref=${encodeURIComponent(ref)}` : ''
+    window.location.href = `${path}${q}`
+  }
+
+  const onInviteLanding = () => {
+    navigateWithRef(`/play/${gameId}/landing`)
   }
 
 return (
@@ -151,17 +146,17 @@ return (
               ))
             )}
 
-            {/* Invite Friend */}
+            {/* Invite Friend → Landing */}
             <button
-              onClick={onInviteReferral}
+              onClick={onInviteLanding}
               className='px-6 py-3 text-white rounded-lg'
               style={{ background: extractBackgroundValue(texts?.TEXT_45_BG) }}
             >
               {texts?.TEXT_45 || 'Invite Friend'}
             </button>
-            {/* Play Again */}
+            {/* Play Again → Welcome */}
             <button
-              onClick={() => window.location.href = `/play/${gameId}`}
+              onClick={() => navigateWithRef(`/play/${gameId}/welcome`)}
               className={styles?.main?.buttonPrimaryClass || 'px-6 py-3 text-white rounded-lg'}
               style={{ background: extractBackgroundValue(texts?.TEXT_46_BG) }}
             >
