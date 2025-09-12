@@ -13,6 +13,8 @@ export default async function PlayEntryRedirect({
   const { gameId } = await params
   const s = await searchParams
   const ref = typeof s?.ref === 'string' ? s.ref : undefined
-  const q = ref ? `?ref=${encodeURIComponent(ref)}` : ''
+  const reserved = new Set(['landing','welcome','rules','game','result','terms','privacy','deletion'])
+  const preserveRef = ref && !reserved.has(ref)
+  const q = preserveRef ? `?ref=${encodeURIComponent(ref as string)}` : ''
   redirect(`/play/${gameId}/landing${q}`)
 }
