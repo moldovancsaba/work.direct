@@ -118,3 +118,19 @@ Compliance
 - Timestamps strictly ISO 8601 with milliseconds (UTC)
 - Tests prohibited; manual verification only
 - No breadcrumbs; consistent hero scoreboard pattern
+
+---
+
+Timestamp: 2025-09-12T08:21:57.000Z
+Author: Agent Mode (AI)
+Topic: Facebook JS SDK Login Integration
+Plan:
+- Load FB SDK globally in app/layout.tsx (next/script), init with NEXT_PUBLIC_FACEBOOK_APP_ID, emit fb-sdk-ready
+- Replace anchor-based redirect login with FB.login popup on the welcome page
+- Add POST /api/auth/facebook/client to verify token (debug_token) and set httpOnly user-session cookie
+- Redirect to /play/[gameId]/rules preserving ?ref; no anchor fallback
+- Update env (.env.local), README (SDK flow), TASKLIST/ROADMAP
+Notes:
+- Tokens are never stored; only minimal cookie with provider,id,name,email,iat
+- Legacy OAuth routes retained for rollback only (annotated)
+- All timestamps ISO 8601 with ms (UTC)

@@ -1,6 +1,6 @@
 # ROADMAP.md — PlayMass
 
-Last Updated: 2025-09-11T15:55:02.000Z
+Last Updated: 2025-09-12T08:38:38.000Z
 
 Purpose
 - Forward-looking plan for modular game architecture and Stars Hexa refactor within PlayMass.
@@ -43,6 +43,16 @@ Milestone: Standardized 4-Page Flow
 - Backward-compat redirect from /play/[gameId] → /welcome
 - Referral param (?ref=) propagation across pages
 - Hero/Main centralized blocks used across Welcome/Rules/Game/Result with unified defaults (page bg #000000FF; hero #000000FF; main #444444FF; text #FFFFFFFF; Noto Sans)
+
+Milestone: Facebook JS SDK Login Integration
+- Priority: HIGH
+- Target: 2025-09-12T10:00:00.000Z
+- Dependencies: Standardized 4-Page Flow
+- Deliverables:
+  - Global FB SDK load with readiness event
+  - Client popup login replacing legacy redirect
+  - Server token verification endpoint and session cookie
+  - Redirect to /play/[gameId]/rules preserving ?ref
 
 Milestone: PlayMass Defaults Management UI
 - Priority: MEDIUM

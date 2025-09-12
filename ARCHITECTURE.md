@@ -1,6 +1,6 @@
 # ARCHITECTURE.md — PlayMass
 
-Last Updated: 2025-09-11T15:55:02.000Z
+Last Updated: 2025-09-12T08:29:26.000Z
 
 ## Overview
 PlayMass is a Next.js (App Router) application with MongoDB/Mongoose persistence and a modular game system. This document describes current system components and their roles, dependencies, and status.
@@ -43,7 +43,25 @@ PlayMass is a Next.js (App Router) application with MongoDB/Mongoose persistence
   - NEXT_PUBLIC_APP_URL
   - NEXT_PUBLIC_APP_NAME
   - ADMIN_PASSWORD (MVP admin auth)
+  - NEXT_PUBLIC_FACEBOOK_APP_ID (client SDK init)
+  - FACEBOOK_APP_ID (server-side verification)
+  - FACEBOOK_APP_SECRET (server-side verification)
 - Timestamps: ISO 8601 with milliseconds (UTC)
+
+## End-User Authentication (Facebook SDK)
+- Role: Provide end-user login via Facebook popup for welcome/registration flow
+- Dependencies:
+  - Facebook JS SDK (loaded globally in app/layout.tsx via next/script)
+  - API endpoint: POST /api/auth/facebook/client (verifies access token via debug_token; fetches user profile; sets httpOnly user-session cookie)
+- Flow:
+  1) Welcome page triggers FB.login({ scope: 'public_profile,email' })
+  2) On success, the short-lived accessToken is posted to the server endpoint
+  3) Server validates token and fetches minimal profile (id,name,email)
+  4) Server sets httpOnly cookie 'user-session' with minimal user info; client saves local session (non-sensitive) and continues to /play/[gameId]/rules
+- Security:
+  - Access tokens are never stored server-side or client-side
+  - Cookie flags: httpOnly, sameSite=lax, secure in production
+  - Legacy redirect routes /api/auth/facebook/start and /callback are retained for rollback only; UI uses SDK popup exclusively
 
 ## Future Improvements
 - Admin auth hardening (signed cookies/JWT, rate limiting/lockout, audit logs)

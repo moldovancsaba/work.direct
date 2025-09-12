@@ -1,10 +1,15 @@
-1.14.0
+1.15.0
 
-**Last Updated**: 2025-09-11T15:55:02.000Z
+**Last Updated**: 2025-09-12T08:38:38.000Z
 
 ## 🔹 Priority Task Queue
 
 ### ✅ Recently Completed
+- Facebook JS SDK Login Integration — Completed: 2025-09-12T08:38:38.000Z | Owner: AI Developer | Priority: HIGH
+  - ✅ Global SDK loader in app/layout.tsx with readiness event
+  - ✅ POST /api/auth/facebook/client verifies token, sets httpOnly user-session cookie
+  - ✅ Welcome page uses FB.login popup; removed legacy anchor from UI
+  - ✅ Redirects to /play/[gameId]/rules with ?ref preserved
 - **Centralized Hero/Main Defaults Across All Play Pages** - Completed: 2025-09-08T08:56:53.000Z | Owner: AI Developer | Priority: CRITICAL
   - ✅ Enforced 2% / 18% / 2% / 76% / 2% page structure in shared blocks
   - ✅ Default page bg #000000FF; hero bg #000000FF; main bg #444444FF

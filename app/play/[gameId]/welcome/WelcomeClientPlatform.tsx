@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { HeroBlock, MainBlock } from '../../../components/play/Blocks'
 import UnifiedRegistration from '../../../components/game/UnifiedRegistration'
 import FooterLinks from '../../../components/play/FooterLinks'
@@ -10,6 +10,11 @@ interface WelcomeClientPlatformProps {
   texts: any
   styles: any
   refCode?: string
+}
+
+// Minimal window typing to access FB safely; full types are declared in app/types if present.
+declare global {
+  interface Window { FB?: any; __fbReady?: boolean }
 }
 
 export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }: WelcomeClientPlatformProps) {
@@ -25,6 +30,21 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
   const btnLogin = texts?.TEXT_18 || 'Start'
   const btnTrial = texts?.TEXT_19 || 'Try Without Registration'
   const description = texts?.TEXT_11 || ''
+
+  const [fbReady, setFbReady] = useState<boolean>(typeof window !== 'undefined' ? !!window.__fbReady && !!window.FB : false)
+  const [fbError, setFbError] = useState<string | null>(null)
+  const [fbLoading, setFbLoading] = useState<boolean>(false)
+
+  useEffect(() => {
+    const onReady = () => setFbReady(!!window.FB)
+    if (typeof window !== 'undefined') {
+      if (window.__fbReady && window.FB) setFbReady(true)
+      else window.addEventListener('fb-sdk-ready', onReady, { once: true })
+    }
+    return () => {
+      if (typeof window !== 'undefined') window.removeEventListener('fb-sdk-ready', onReady as any)
+    }
+  }, [])
 
   const generateUuid = (): string => {
     try {
@@ -53,6 +73,55 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
     window.location.href = `${href}${q}`
   }
 
+  // Facebook login handler using JS SDK popup
+  const handleFacebookLogin = async () => {
+    setFbError(null)
+    if (!window.FB) {
+      setFbError('Facebook login is temporarily unavailable. Please try again later.')
+      return
+    }
+    setFbLoading(true)
+    try {
+      // FB.login presents the popup; request minimal scope for name+email
+      window.FB.login(async (response: any) => {
+        try {
+          if (response && response.status === 'connected' && response.authResponse?.accessToken) {
+            const accessToken = response.authResponse.accessToken as string
+            // Verify on server and set httpOnly session cookie; never store token client-side
+            const res = await fetch('/api/auth/facebook/client', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({ accessToken })
+            })
+            const data = await res.json().catch(() => ({}))
+            if (res.ok && data?.success) {
+              // Save local session details for gameplay continuity
+              const name = data?.user?.name || 'Facebook User'
+              const email = data?.user?.email
+              saveSession({ name, email }, false)
+              onNext(`/play/${gameId}/rules`)
+              return
+            }
+            setFbError(data?.error || 'Facebook login failed. Please try again.')
+          } else if (response && response.status === 'not_authorized') {
+            setFbError('Facebook login was not authorized.')
+          } else {
+            // User cancelled or closed popup
+            setFbError('Facebook login was cancelled.')
+          }
+        } catch (e) {
+          setFbError('Unexpected error during Facebook login. Please try again.')
+        } finally {
+          setFbLoading(false)
+        }
+      }, { scope: 'public_profile,email', return_scopes: true })
+    } catch (_e) {
+      setFbLoading(false)
+      setFbError('Unable to initiate Facebook login. Please try again later.')
+    }
+  }
+
   return (
     <div
       className="min-h-screen w-full"
@@ -78,14 +147,22 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
           </p>
         )}
         <div className="space-y-3">
-          {/* Alternative login with Facebook */}
+          {/* Facebook Login via JS SDK popup (replaces legacy anchor redirect) */}
           <div className="text-center">
-            <a
-              href="/api/auth/facebook/start"
+            <button
+              type="button"
+              onClick={handleFacebookLogin}
+              disabled={!fbReady || fbLoading}
               className={styles?.main?.buttonSecondaryClass || 'px-6 py-3 bg-[#1877F2] text-white rounded-lg inline-block'}
             >
-              Continue with Facebook
-            </a>
+              {fbLoading ? 'Connecting to Facebook…' : 'Continue with Facebook'}
+            </button>
+            {!fbReady && (
+              <p className="text-sm text-gray-300 mt-2">Facebook login is initializing…</p>
+            )}
+            {fbError && (
+              <p className="text-sm text-red-300 mt-2">{fbError}</p>
+            )}
           </div>
 
           <UnifiedRegistration

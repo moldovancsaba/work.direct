@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 
+// LEGACY: OAuth redirect flow retained for rollback compatibility only.
+// UI now uses Facebook JS SDK popup and POST /api/auth/facebook/client for verification.
 export async function GET() {
   const appId = process.env.FACEBOOK_APP_ID
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'

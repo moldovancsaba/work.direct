@@ -1,9 +1,17 @@
 # 📝 RELEASE_NOTES.md - PlayMass
 
-**Current Version**: 1.14.0
-**Last Updated**: 2025-09-11T15:55:02.000Z
+**Current Version**: 1.15.0
+**Last Updated**: 2025-09-12T08:38:38.000Z
 
 ## 🔹 Version History
+
+### [v1.15.0] — 2025-09-12T08:38:38.000Z
+- Auth: Implemented Facebook Login via JS SDK popup
+  - Global SDK load in app/layout.tsx with readiness event
+  - New endpoint POST /api/auth/facebook/client verifies accessToken (debug_token), fetches profile (id,name,email), and sets httpOnly user-session cookie
+  - Welcome page uses FB.login and redirects to /play/[gameId]/rules preserving ?ref
+  - Legacy OAuth redirect routes retained for rollback; no UI entry points
+- Docs: Updated README (SDK flow), TASKLIST, ROADMAP, WARP.md; .env.local now includes FB variables
 
 ### [v1.14.0] — 2025-09-11T15:55:02.000Z
 - Admin Editor: Additional CTAs are now displayed as 3 distinct lines (TEXT, URL, BG) per CTA card.

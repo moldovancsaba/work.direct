@@ -183,6 +183,9 @@ MONGODB_URI=mongodb://localhost:27017/playmass
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_APP_NAME=PlayMass
 ADMIN_PASSWORD=playmass
+NEXT_PUBLIC_FACEBOOK_APP_ID=804700345578279
+FACEBOOK_APP_ID=804700345578279
+FACEBOOK_APP_SECRET=<set-in-vercel-or-.env.local>
 ```
 
 ## Game Engine Architecture
@@ -246,8 +249,8 @@ const schema = new Schema({
 
 ---
 
-**Current Version**: 1.14.0  
-**Last Updated**: 2025-09-11T15:55:02.000Z
+**Current Version**: 1.15.0  
+**Last Updated**: 2025-09-12T08:38:38.000Z
 **Maintainer**: AI Development Team
 
 ## Important Notes for WARP Instances

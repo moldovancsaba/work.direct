@@ -2,10 +2,19 @@
 
 This document captures implementation insights, technical decisions, and solutions to issues encountered during PlayMass development.
 
-**Current Version**: 1.14.0
-**Last Updated**: 2025-09-11T15:55:02.000Z
+**Current Version**: 1.15.0
+**Last Updated**: 2025-09-12T08:38:38.000Z
 
 ## Development Learnings
+
+### Facebook SDK Login Integration (v1.15.0)
+- What: Switched end-user login to Facebook JS SDK popup; added server verification endpoint and consistent httpOnly session cookie
+- Why: Better UX (popup), simpler flow than server redirect; avoids storing access tokens
+- How:
+  - Global SDK load via next/script; readiness event fb-sdk-ready; window.__fbReady guard
+  - POST /api/auth/facebook/client uses debug_token to validate input token and fetches minimal profile (id,name,email)
+  - Cookie flags: httpOnly, sameSite=lax, secure in production
+- Notes: Legacy redirect endpoints kept for rollback only; UI no longer links to them
 
 ### Standardized 4-Page Flow & Config Resolver (v1.2.12)
 

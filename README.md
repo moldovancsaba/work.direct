@@ -1,7 +1,7 @@
 # PlayMass - Interactive Game Platform
 
-Current Version: 1.14.0
-Last Updated: 2025-09-11T15:55:02.000Z
+Current Version: 1.15.0
+Last Updated: 2025-09-12T08:38:38.000Z
 
 A Next.js-based platform for creating and distributing interactive games like Stars Hexa with comprehensive rewards management.
 
@@ -43,6 +43,30 @@ Environment:
 
 Security note:
 - This is intentionally simple and unsigned for MVP. See ROADMAP for future upgrade to signed tokens/JWT and additional hardening (rate limiting, lockouts, audit logs).
+
+## 🔵 Facebook Login (SDK)
+
+PlayMass uses the Facebook JavaScript SDK popup for user login. The flow is:
+- The SDK is loaded globally in `app/layout.tsx` via `next/script` and initialized with your App ID
+- The welcome page calls `FB.login({ scope: 'public_profile,email' })`
+- On success, the browser POSTs the short-lived `accessToken` to `/api/auth/facebook/client`
+- The server verifies the token with `debug_token`, fetches `me?fields=id,name,email`, and sets an httpOnly `user-session` cookie
+- No access tokens are stored — only minimal session info is kept in a cookie
+
+Required environment variables:
+- `NEXT_PUBLIC_FACEBOOK_APP_ID=804700345578279` (client)
+- `FACEBOOK_APP_ID=804700345578279` (server)
+- `FACEBOOK_APP_SECRET=<REPLACE_WITH_REAL_SECRET>` (server)
+- `NEXT_PUBLIC_APP_URL=http://localhost:3000` (or your production domain)
+
+Facebook App configuration:
+- App Domains: your domain(s) (and `localhost` in development)
+- Valid OAuth Redirect URIs: `{NEXT_PUBLIC_APP_URL}/api/auth/facebook/callback` (kept for rollback compatibility)
+
+Code reference:
+- SDK load/init: `app/layout.tsx`
+- Client login button and handler: `app/play/[gameId]/welcome/WelcomeClientPlatform.tsx`
+- Server verification endpoint: `app/api/auth/facebook/client/route.ts`
 
 ## 🚀 Getting Started
 
@@ -98,6 +122,7 @@ app/
 - `GET /api/games/[id]` - Get specific game
 - `POST /api/games/[id]/play` - Play a game
 - `POST /api/participants` - Register participant
+- `POST /api/auth/facebook/client` - Verify Facebook SDK access token and create session cookie
 - `GET /api/health` - System health check
 
 ## 🎲 Game Types

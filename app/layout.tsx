@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Noto_Sans } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import Script from "next/script";
 
 // Fonts: prefer Noto Sans (broad unicode coverage incl. latin-ext), Inter secondary
 const inter = Inter({
@@ -52,6 +53,28 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${notoSans.variable} ${inter.variable}`}>
       <body className="font-sans antialiased bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+        {/* Load Facebook SDK globally once. Why: single init across app; enables FB.login popup without page-specific loaders. */}
+        <Script
+          id="fb-sdk"
+          src="https://connect.facebook.net/en_US/sdk.js"
+          strategy="afterInteractive"
+        />
+        <Script id="fb-sdk-init" strategy="afterInteractive">
+          {`
+            window.fbAsyncInit = function() {
+              // Initialize FB SDK with app ID exposed via NEXT_PUBLIC_ (client-safe)
+              FB.init({
+                appId: '${process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || ''}',
+                cookie: true,
+                xfbml: false,
+                version: 'v19.0'
+              });
+              // Mark readiness for client components to listen to
+              window.__fbReady = true;
+              window.dispatchEvent(new Event('fb-sdk-ready'));
+            };
+          `}
+        </Script>
         <ThemeProvider>
           {children}
         </ThemeProvider>
