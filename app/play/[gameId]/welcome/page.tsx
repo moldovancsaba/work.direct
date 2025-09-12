@@ -1,4 +1,5 @@
 import { Metadata } from 'next'
+import { redirect } from 'next/navigation'
 import { resolvePlayConfig } from '../../../lib/resolvers/playConfigResolver'
 
 // Welcome page (server component)
@@ -13,6 +14,12 @@ export default async function WelcomePage({
 }) {
   const { gameId } = await params
   const s = await searchParams
+
+  // If someone arrives at /welcome?ref=landing (legacy/misconfigured links),
+  // redirect to the proper landing step and do NOT treat 'landing' as a referral code.
+  if (typeof s?.ref === 'string' && s.ref === 'landing') {
+    redirect(`/play/${gameId}/landing`)
+  }
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
   const res = await fetch(`${baseUrl}/api/games/${gameId}`, { cache: 'no-store' })
