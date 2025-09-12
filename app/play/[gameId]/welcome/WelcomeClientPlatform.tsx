@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { HeroBlock, MainBlock } from '../../../components/play/Blocks'
 import UnifiedRegistration from '../../../components/game/UnifiedRegistration'
 import FooterLinks from '../../../components/play/FooterLinks'
@@ -35,16 +35,63 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
   const [fbError, setFbError] = useState<string | null>(null)
   const [fbLoading, setFbLoading] = useState<boolean>(false)
 
+  // Build-time app ID presence (NEXT_PUBLIC_ variables are inlined at build)
+  const buildAppId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || ''
+  const hasAppId = useMemo(() => !!String(buildAppId).trim(), [buildAppId])
+
+  // Ref to container where fb-login-button markup will be placed for XFBML parsing
+  const fbPluginContainerRef = useRef<HTMLDivElement | null>(null)
+
   useEffect(() => {
-    const onReady = () => setFbReady(!!window.FB)
+    const onReady = () => {
+      setFbReady(!!window.FB)
+      try {
+        if (window.FB && fbPluginContainerRef.current) {
+          // Parse XFBML inside our container to render the plugin
+          window.FB.XFBML.parse(fbPluginContainerRef.current)
+        }
+      } catch {}
+      try {
+        // Subscribe to login status changes to capture token from plugin login
+        window.FB?.Event?.subscribe('auth.statusChange', async (response: any) => {
+          if (response?.status === 'connected' && response.authResponse?.accessToken) {
+            try {
+              const res = await fetch('/api/auth/facebook/client', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ accessToken: response.authResponse.accessToken })
+              })
+              const data = await res.json().catch(() => ({}))
+              if (res.ok && data?.success) {
+                const name = data?.user?.name || 'Facebook User'
+                const email = data?.user?.email
+                saveSession({ name, email }, false)
+                onNext(`/play/${gameId}/rules`)
+              } else {
+                setFbError(data?.error || 'Facebook login failed. Please try again.')
+              }
+            } catch {
+              setFbError('Unexpected error during Facebook login. Please try again.')
+            }
+          }
+        })
+      } catch {}
+    }
+    const onError = () => setFbError(prev => prev || (typeof (window as any).__fbError === 'string' ? (window as any).__fbError : 'SDK_ERROR'))
     if (typeof window !== 'undefined') {
-      if (window.__fbReady && window.FB) setFbReady(true)
+      if (window.__fbReady && window.FB) onReady()
       else window.addEventListener('fb-sdk-ready', onReady, { once: true })
+      window.addEventListener('fb-sdk-error', onError as any, { once: true })
     }
     return () => {
-      if (typeof window !== 'undefined') window.removeEventListener('fb-sdk-ready', onReady as any)
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('fb-sdk-ready', onReady as any)
+        window.removeEventListener('fb-sdk-error', onError as any)
+        try { window.FB?.Event?.unsubscribe?.('auth.statusChange'); } catch {}
+      }
     }
-  }, [])
+  }, [gameId])
 
   const generateUuid = (): string => {
     try {
@@ -76,8 +123,12 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
   // Facebook login handler using JS SDK popup
   const handleFacebookLogin = async () => {
     setFbError(null)
+    if (!hasAppId) {
+      setFbError('Facebook App ID is not configured for this build.')
+      return
+    }
     if (!window.FB) {
-      setFbError('Facebook login is temporarily unavailable. Please try again later.')
+      setFbError('Facebook SDK is not ready. Please try again shortly.')
       return
     }
     setFbLoading(true)
@@ -116,9 +167,10 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
           setFbLoading(false)
         }
       }, { scope: 'public_profile,email', return_scopes: true })
-    } catch (_e) {
+    } catch (e) {
       setFbLoading(false)
-      setFbError('Unable to initiate Facebook login. Please try again later.')
+      console.error('FB.login initiation error:', e)
+      setFbError('Unable to initiate Facebook login. Please check SDK readiness and App ID.')
     }
   }
 
@@ -165,17 +217,22 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
           </p>
         )}
         <div className="space-y-3">
-          {/* Facebook Login via JS SDK popup (replaces legacy anchor redirect) */}
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={handleFacebookLogin}
-              disabled={!fbReady || fbLoading}
-              className={styles?.main?.buttonSecondaryClass || 'px-6 py-3 bg-[#1877F2] text-white rounded-lg inline-block'}
-            >
-              {fbLoading ? 'Connecting to Facebook…' : 'Continue with Facebook'}
-            </button>
-            {!fbReady && (
+          {/* Facebook Login Plugin (XFBML) */}
+          <div className="text-center" ref={fbPluginContainerRef}>
+            <div
+              className="fb-login-button"
+              data-width=""
+              data-size="large"
+              data-button-type="continue_with"
+              data-layout="default"
+              data-auto-logout-link="false"
+              data-use-continue-as="true"
+              data-scope="public_profile,email"
+            />
+            {!hasAppId && (
+              <p className="text-sm text-red-300 mt-2">Facebook App ID is not configured. Please set NEXT_PUBLIC_FACEBOOK_APP_ID and restart.</p>
+            )}
+            {hasAppId && !fbReady && (
               <p className="text-sm text-gray-300 mt-2">Facebook login is initializing…</p>
             )}
             {fbError && (

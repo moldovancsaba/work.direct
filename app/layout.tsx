@@ -53,25 +53,48 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${notoSans.variable} ${inter.variable}`}>
       <body className="font-sans antialiased bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-        {/* Load Facebook SDK globally once. Why: single init across app; enables FB.login popup without page-specific loaders. */}
+        {/* Required root container for Facebook SDK */}
+        <div id="fb-root" />
+        {/* Load Facebook SDK globally once. Why: single init across app; enables FB.login popup and XFBML plugin parsing. */}
         <Script
           id="fb-sdk"
-          src="https://connect.facebook.net/en_US/sdk.js"
+          src="https://connect.facebook.net/en_GB/sdk.js"
           strategy="afterInteractive"
+          onError={() => {
+            // WHAT: Surface SDK load errors to client state
+            // WHY: Provide actionable feedback when network blockers prevent SDK usage
+            try {
+              (window as any).__fbError = 'LOAD_FAILED'
+              window.dispatchEvent(new Event('fb-sdk-error'))
+            } catch {}
+          }}
         />
         <Script id="fb-sdk-init" strategy="afterInteractive">
           {`
             window.fbAsyncInit = function() {
-              // Initialize FB SDK with app ID exposed via NEXT_PUBLIC_ (client-safe)
-              FB.init({
-                appId: '${process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || ''}',
-                cookie: true,
-                xfbml: false,
-                version: 'v19.0'
-              });
-              // Mark readiness for client components to listen to
-              window.__fbReady = true;
-              window.dispatchEvent(new Event('fb-sdk-ready'));
+              try {
+                var appId = '${process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || ''}';
+                if (!appId || !String(appId).trim()) {
+                  console.error('[FB SDK] Missing NEXT_PUBLIC_FACEBOOK_APP_ID');
+                  window.__fbReady = false;
+                  window.__fbError = 'MISSING_APP_ID';
+                  window.dispatchEvent(new Event('fb-sdk-error'));
+                  return;
+                }
+                FB.init({
+                  appId: appId,
+                  cookie: true,
+                  xfbml: true, // enable XFBML parsing for fb-login-button plugin
+                  version: 'v23.0'
+                });
+                window.__fbReady = true;
+                window.dispatchEvent(new Event('fb-sdk-ready'));
+              } catch (e) {
+                console.error('[FB SDK] Init failed:', e);
+                window.__fbReady = false;
+                window.__fbError = 'INIT_FAILED';
+                window.dispatchEvent(new Event('fb-sdk-error'));
+              }
             };
           `}
         </Script>
