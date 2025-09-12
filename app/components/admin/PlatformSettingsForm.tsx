@@ -252,36 +252,51 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
             <label className="block text-sm font-medium text-gray-700 mb-2">Additional CTAs</label>
             <div className="space-y-2">
               {(texts.CTA_BUTTONS as Array<{text:string;url:string;bg?:string}>)?.slice(1)?.map((cta, idx) => (
-                <div key={idx} className="border border-gray-300 rounded-lg p-4 grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
-                  <div>
-                    <label className="block text-xs text-gray-600 mb-1">CTA{idx+2}_TEXT</label>
-                    <input className="w-full px-3 py-2 border rounded-md" value={cta.text} onChange={e => {
+                <div key={idx} className="border border-gray-300 rounded-lg p-4 space-y-2">
+                  <SimpleTextInput
+                    code={`CTA${idx+2}_TEXT`}
+                    label="CTA Action Text (Button)"
+                    value={cta.text}
+                    onChange={val => {
                       const list = Array.isArray(texts.CTA_BUTTONS) ? [...texts.CTA_BUTTONS] : []
-                      list[idx+1] = { ...list[idx+1], text: e.target.value }
+                      list[idx+1] = { ...list[idx+1], text: val }
                       onTextsChange({ ...texts, CTA_BUTTONS: list })
-                    }} placeholder={`CTA Action${idx+2} Button`} />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-600 mb-1">CTA{idx+2}_URL</label>
-                    <input className="w-full px-3 py-2 border rounded-md" value={cta.url} onChange={e => {
+                    }}
+                  />
+                  <SimpleTextInput
+                    code={`CTA${idx+2}_URL`}
+                    label="CTA Action URL (URL)"
+                    value={cta.url}
+                    onChange={val => {
                       const list = Array.isArray(texts.CTA_BUTTONS) ? [...texts.CTA_BUTTONS] : []
-                      list[idx+1] = { ...list[idx+1], url: e.target.value }
+                      list[idx+1] = { ...list[idx+1], url: val }
                       onTextsChange({ ...texts, CTA_BUTTONS: list })
-                    }} placeholder={`CTA Action${idx+2} URL`} />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-xs text-gray-600 mb-1">CTA{idx+2}_BG</label>
-                    <textarea className="w-full px-3 py-2 border rounded-md min-h-12" value={cta.bg || ''} onChange={e => {
+                    }}
+                  />
+                  <SimpleTextInput
+                    code={`CTA${idx+2}_BG`}
+                    label="CTA Action BG (CSS)"
+                    multiline
+                    value={cta.bg || ''}
+                    onChange={val => {
                       const list = Array.isArray(texts.CTA_BUTTONS) ? [...texts.CTA_BUTTONS] : []
-                      list[idx+1] = { ...list[idx+1], bg: e.target.value }
+                      list[idx+1] = { ...list[idx+1], bg: val }
                       onTextsChange({ ...texts, CTA_BUTTONS: list })
-                    }} placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} />
+                    }}
+                  />
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      className="px-3 py-2 bg-red-600 text-white rounded-md"
+                      onClick={() => {
+                        const list = Array.isArray(texts.CTA_BUTTONS) ? [...texts.CTA_BUTTONS] : []
+                        list.splice(idx+1, 1)
+                        onTextsChange({ ...texts, CTA_BUTTONS: list })
+                      }}
+                    >
+                      Delete CTA
+                    </button>
                   </div>
-                  <button type="button" className="px-3 py-2 bg-red-600 text-white rounded-md" onClick={() => {
-                    const list = Array.isArray(texts.CTA_BUTTONS) ? [...texts.CTA_BUTTONS] : []
-                    list.splice(idx+1, 1)
-                    onTextsChange({ ...texts, CTA_BUTTONS: list })
-                  }}>Delete CTA</button>
                 </div>
               ))}
               <button type="button" className="px-4 py-2 bg-blue-600 text-white rounded-md" onClick={() => {

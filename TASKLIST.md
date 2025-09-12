@@ -1,6 +1,6 @@
-1.13.0
+1.14.0
 
-**Last Updated**: 2025-09-11T14:53:30.000Z
+**Last Updated**: 2025-09-11T15:55:02.000Z
 
 ## 🔹 Priority Task Queue
 
@@ -224,7 +224,7 @@
 
 ## 🔹 Version Control
 
-**Current Version**: 1.13.0
+**Current Version**: 1.14.0
 **Last Commit**: Centralized game environment architecture - unified layout, registration, status, and description components
 **Branch**: main
 **Status**: Active Development

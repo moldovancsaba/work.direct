@@ -1,9 +1,13 @@
 # 📝 RELEASE_NOTES.md - PlayMass
 
-**Current Version**: 1.13.0
-**Last Updated**: 2025-09-11T14:53:30.000Z
+**Current Version**: 1.14.0
+**Last Updated**: 2025-09-11T15:55:02.000Z
 
 ## 🔹 Version History
+
+### [v1.14.0] — 2025-09-11T15:55:02.000Z
+- Admin Editor: Additional CTAs are now displayed as 3 distinct lines (TEXT, URL, BG) per CTA card.
+- Docs/Version: Bumped to 1.14.0 and synchronized timestamps (ISO 8601 with ms).
 
 ### [v1.13.0] — 2025-09-11T14:53:30.000Z
 - Admin Editor: Standardized 3-line CTA blocks for all key buttons (Text, URL/Action, BG) with editor-only borders.
