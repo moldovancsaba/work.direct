@@ -248,6 +248,15 @@ const gameSchema = new Schema<Game>({
         PLAYAGAIN_ACTION: { type: String, default: '' },
         PLAYAGAIN_BG: { type: String, default: '' },
 
+        // Landing Page — Fields and Next Welcome CTA
+        // What: Persist configuration for the Landing screen (title, image) and its CTA button.
+        // Why: Admin reported LANDING_* fields not saving; strict schema requires explicit keys.
+        LANDING_TITLE: { type: String, default: '' },
+        LANDING_IMAGE_URL: { type: String, default: '' },
+        NEXT_WELCOME_TEXT: { type: String, default: '' },
+        NEXT_WELCOME_ACTION: { type: String, default: 'GO_TO_WELCOME' },
+        NEXT_WELCOME_BG: { type: String, default: '' },
+
         CTA_BUTTONS: {
           type: [
             new Schema({

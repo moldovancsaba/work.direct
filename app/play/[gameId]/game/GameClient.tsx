@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import GameLayout from '../../../components/game/GameLayout'
 import StarsHexa from '../../../components/games/StarsHexa'
-import PenaltyHexa from '../../../components/games/PenaltyHexa'
+import PenaltyHexa from '../../../components/games/PenaltyHexa 2'
 
 interface GameClientProps {
   game: any

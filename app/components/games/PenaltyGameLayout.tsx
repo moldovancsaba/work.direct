@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import PenaltyScoreboard from './PenaltyScoreboard'
+import PenaltyScoreboard from './PenaltyScoreboard 2'
 
 interface PenaltyGameLayoutProps {
   homeScore: number

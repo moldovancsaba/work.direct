@@ -18,7 +18,25 @@ export default function LandingClientPlatform({ gameId, texts, styles, refCode }
   // Title and image fallback to empty when not provided (per product requirement)
   const title = (typeof texts?.LANDING_TITLE === 'string') ? texts.LANDING_TITLE : ''
   const imageUrl = (typeof texts?.LANDING_IMAGE_URL === 'string') ? texts.LANDING_IMAGE_URL : ''
-  const ctaText = texts?.LANDING_CTA_TEXT || 'Enter'
+  const ctaText = texts?.NEXT_WELCOME_TEXT || 'Enter'
+  const action = (typeof texts?.NEXT_WELCOME_ACTION === 'string' && texts.NEXT_WELCOME_ACTION.trim()) ? texts.NEXT_WELCOME_ACTION.trim() : 'GO_TO_WELCOME'
+
+  const extractBackgroundValue = (css?: string): string | undefined => {
+    if (!css) return undefined
+    const grad = css.match(/linear-gradient\([^\)]+\)/i)
+    if (grad) return grad[0]
+    const bg = css.match(/background:\s*([^;]+);?/i)
+    if (bg && bg[1]) return bg[1].trim()
+    return undefined
+  }
+
+  const buildHrefForAction = (act: string): string => {
+    switch (act) {
+      case 'GO_TO_WELCOME':
+      default:
+        return `/play/${gameId}/welcome`
+    }
+  }
 
   const onNext = (href: string) => {
     const q = refCode ? `?ref=${encodeURIComponent(refCode)}` : ''
@@ -29,20 +47,35 @@ export default function LandingClientPlatform({ gameId, texts, styles, refCode }
     <div className="min-h-screen w-full" style={{ backgroundColor: '#000000FF', color: '#FFFFFFFF', fontFamily: '"Noto Sans", sans-serif' }}>
       <HeroBlock backgroundClass={heroBg} title={title} scoreboard={{ home: 0, visitor: 0, homeBg: styles?.scoreboard?.homeBg || '#C00000FF', digitColor: styles?.scoreboard?.digitColor || '#FFFFFFFF' }} />
       <MainBlock backgroundClass={mainBg}>
-        <div className="flex flex-col items-center justify-center gap-4">
-          {imageUrl ? (
-            <img src={imageUrl} alt={title} className="max-w-xs rounded-md shadow" />
-          ) : (
-            <div className="w-64 h-40 bg-gray-700 rounded-md flex items-center justify-center text-gray-300">Image</div>
+        <div className="relative w-full h-full">
+          {/* Background cover image */}
+          {imageUrl && (
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage: `url(${imageUrl})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+                filter: 'none'
+              }}
+            />
           )}
-          <button
-            onClick={() => onNext(`/play/${gameId}/welcome`)}
-            className={styles?.main?.buttonPrimaryClass || 'px-6 py-3 bg-blue-600 text-white rounded-lg'}
-          >
-            {ctaText}
-          </button>
+          {/* Centered CTA Button */}
+          <div className="absolute inset-0 flex items-center justify-center p-4">
+            <button
+              onClick={() => onNext(buildHrefForAction(action))}
+              className={styles?.main?.buttonPrimaryClass || 'px-6 py-3 text-white rounded-lg'}
+              style={{ background: extractBackgroundValue(texts?.NEXT_WELCOME_BG) }}
+            >
+              {ctaText}
+            </button>
+          </div>
+          {/* Footer links pinned to bottom */}
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-full">
+            <FooterLinks gameId={gameId} />
+          </div>
         </div>
-        <FooterLinks gameId={gameId} />
       </MainBlock>
     </div>
   )

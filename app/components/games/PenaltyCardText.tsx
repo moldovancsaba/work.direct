@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect } from 'react'
-import { usePenaltyCards } from '../../hooks/usePenaltyCards'
+import { usePenaltyCards } from '../../hooks/usePenaltyCards 2'
 
 interface PenaltyCardTextProps {
   text: string

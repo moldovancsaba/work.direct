@@ -3,8 +3,8 @@
 // Why: Decouple UI from raw DB schema; ensure consistent texts/colors across modules.
 
 import { Game } from '../../types'
-import { deepMerge } from '../utils/deepMerge'
-import { PlaymassDefaults } from '../config/playmassDefaults'
+import { deepMerge } from '../utils/deepMerge 2'
+import { PlaymassDefaults } from '../config/playmassDefaults 2'
 
 export interface ColorsPalette {
   primary?: string

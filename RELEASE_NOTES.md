@@ -1,9 +1,17 @@
 # 📝 RELEASE_NOTES.md - PlayMass
 
-**Current Version**: 1.15.0
-**Last Updated**: 2025-09-12T08:38:38.000Z
+**Current Version**: 1.16.0
+**Last Updated**: 2025-09-13T10:37:21.000Z
 
 ## 🔹 Version History
+
+### [v1.16.0] — 2025-09-13T10:37:21.000Z
+- Landing Page: Persist Landing configuration and finalize UI
+  - Database schema: Added LANDING_TITLE, LANDING_IMAGE_URL, NEXT_WELCOME_TEXT, NEXT_WELCOME_ACTION, NEXT_WELCOME_BG under configuration.platform.texts
+  - Admin editor: Moved Landing Title into Hero Settings; added Landing Image URL and Next Welcome Button block (text/action/bg)
+  - UI: Background image now covers the main block; CTA centered; legal links pinned at the bottom; NEXT_WELCOME_ACTION respected (GO_TO_WELCOME)
+  - Build: Resolved missing module imports by aligning admin/game imports with existing files
+- Docs: Version bump and synchronized timestamps per ISO 8601 with milliseconds
 
 ### [v1.15.0] — 2025-09-12T08:38:38.000Z
 - Auth: Implemented Facebook Login via JS SDK popup

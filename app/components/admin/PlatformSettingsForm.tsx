@@ -122,6 +122,7 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
       <div className="bg-slate-50 p-4 rounded-lg">
         <h3 className="text-md font-medium text-gray-800 mb-2">Hero Settings</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <SimpleTextInput code="LANDING_TITLE" label="Landing Title" placeholder="" value={getT('LANDING_TITLE')} onChange={(v)=> setT('LANDING_TITLE', v)} />
           <SimpleTextInput code="TEXT_10" label="Welcome Title" placeholder="Welcome" value={getT('TEXT_10')} onChange={(v)=> setT('TEXT_10', v)} />
           <SimpleTextInput code="TEXT_20" label="Rules Title" placeholder="Game Rules" value={getT('TEXT_20')} onChange={(v)=> setT('TEXT_20', v)} />
           <SimpleTextInput code="TEXT_30" label="Game Title" placeholder="Game" value={getT('TEXT_30')} onChange={(v)=> setT('TEXT_30', v)} />
@@ -143,8 +144,18 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
       <div className="bg-emerald-50 p-4 rounded-lg">
         <h3 className="text-md font-medium text-gray-800 mb-2">Landing</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <SimpleTextInput code="LANDING_TITLE" label="Landing Title" placeholder="" value={getT('LANDING_TITLE')} onChange={(v)=> setT('LANDING_TITLE', v)} />
           <SimpleTextInput code="LANDING_IMAGE_URL" label="Landing Image URL" placeholder="https://..." value={getT('LANDING_IMAGE_URL')} onChange={(v)=> setT('LANDING_IMAGE_URL', v)} />
+        </div>
+        <div className="mt-4 border border-gray-300 rounded-lg p-4 space-y-2">
+          <label className="block text-sm font-semibold text-gray-800">Next Welcome Button</label>
+          <SimpleTextInput code="NEXT_WELCOME_TEXT" label="Button Text" value={getT('NEXT_WELCOME_TEXT')} onChange={(v)=> setT('NEXT_WELCOME_TEXT', v)} />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Button Action</label>
+            <select className="w-full px-3 py-2 border rounded-md" value={getT('NEXT_WELCOME_ACTION') || 'GO_TO_WELCOME'} onChange={(e)=> setT('NEXT_WELCOME_ACTION', e.target.value)}>
+              <option value="GO_TO_WELCOME">GO_TO_WELCOME</option>
+            </select>
+          </div>
+          <SimpleTextInput code="NEXT_WELCOME_BG" label="Button BG (CSS)" multiline placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} value={getT('NEXT_WELCOME_BG')} onChange={(v)=> setT('NEXT_WELCOME_BG', v)} />
         </div>
       </div>
 

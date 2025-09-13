@@ -4,7 +4,7 @@
 
 import { connectDB } from '../../lib/mongodb'
 import GameModel from '../../lib/models/Game'
-import PlaymassDefaultsModel from '../../lib/models/PlaymassDefaults'
+import PlaymassDefaultsModel from '../../lib/models/PlaymassDefaults 2'
 import { GameType } from '../../types'
 import { getGameModule } from './registry'
 import type { GameConfig } from './types'

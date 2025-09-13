@@ -1,6 +1,6 @@
 # ARCHITECTURE.md — PlayMass
 
-Last Updated: 2025-09-12T08:29:26.000Z
+Last Updated: 2025-09-13T10:37:21.000Z
 
 ## Overview
 PlayMass is a Next.js (App Router) application with MongoDB/Mongoose persistence and a modular game system. This document describes current system components and their roles, dependencies, and status.

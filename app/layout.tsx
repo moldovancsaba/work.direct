@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Noto_Sans } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "./contexts/ThemeContext";
+import { ThemeProvider } from "./contexts/ThemeContext 2";
 import FacebookSDK from "./components/FacebookSDK";
 
 // Fonts: prefer Noto Sans (broad unicode coverage incl. latin-ext), Inter secondary

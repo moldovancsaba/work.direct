@@ -2,10 +2,19 @@
 
 This document captures implementation insights, technical decisions, and solutions to issues encountered during PlayMass development.
 
-**Current Version**: 1.15.0
-**Last Updated**: 2025-09-12T08:38:38.000Z
+**Current Version**: 1.16.0
+**Last Updated**: 2025-09-13T10:37:21.000Z
 
 ## Development Learnings
+
+### Landing Page Admin Fields & UI (v1.16.0)
+- What: Persisted Landing configuration (LANDING_TITLE, LANDING_IMAGE_URL, NEXT_WELCOME_TEXT/_ACTION/_BG) and updated landing UI (cover image, centered CTA, pinned legal links)
+- Why: Admin Landing fields weren’t saving due to strict Mongoose schema; UI needed to match the standardized flow and design
+- How:
+  - Schema: Added fields under configuration.platform.texts in Game model
+  - Admin: Moved Landing Title into Hero Settings; added Next Welcome Button block; preserved existing editor patterns and mirroring
+  - UI: Absolute cover background, centered CTA with gradient support, FooterLinks pinned bottom; action respects NEXT_WELCOME_ACTION
+- Notes: Validated via successful production build; further manual runtime checks recommended on /play/[gameId]/landing
 
 ### Facebook SDK Login Integration (v1.15.0)
 - What: Switched end-user login to Facebook JS SDK popup; added server verification endpoint and consistent httpOnly session cookie
