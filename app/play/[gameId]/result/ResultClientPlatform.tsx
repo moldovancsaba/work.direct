@@ -84,7 +84,8 @@ export default function ResultClientPlatform({ gameId, texts, styles, won, refCo
         }}
       />
       <MainBlock backgroundClass={mainBg}>
-        <div className="space-y-6 text-center flex flex-col items-center justify-center">
+        <div className="w-full h-full flex justify-center">
+          <div className="w-full h-full max-w-6xl space-y-6 text-center flex flex-col items-center justify-center">
           {/* Participated note (Markdown-like, multiline) */}
           {texts?.TEXT_41 && (
             <p className={styles?.main?.pClass || 'text-base'} style={{ whiteSpace: 'pre-wrap' }}>{texts.TEXT_41}</p>
@@ -176,6 +177,7 @@ export default function ResultClientPlatform({ gameId, texts, styles, won, refCo
             >
               {texts?.TEXT_46 || 'Play Again'}
             </button>
+          </div>
           </div>
         </div>
         <FooterLinks gameId={gameId} />
