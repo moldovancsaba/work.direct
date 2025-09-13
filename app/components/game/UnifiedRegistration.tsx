@@ -242,61 +242,61 @@ export default function UnifiedRegistration({
           
           {/* Registration form */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            
-            {/* Name heading (H2) */}
-            {customTexts?.nameHeading && (
-              <h2 className={`${headingClass ? headingClass + ' ' : ''}text-xl font-semibold mb-1 text-black`}>{customTexts.nameHeading}</h2>
-            )}
-            {/* Name field - always required */}
-            <div>
-              <input
-                type="text"
-                value={participant.name}
-                onChange={(e) => setParticipant({ ...participant, name: e.target.value })}
-                className={`w-full px-4 py-3 rounded-lg transition-colors ${themeClasses.input}`}
-                style={{ color: '#000000', backgroundColor: '#ffffff', caretColor: '#000000' }}
-                placeholder={customTexts?.namePlaceholder || "Enter your name"}
-                required
-                disabled={isLoading || isSubmitting}
-              />
+            {/* Two-column rows: Question (H2) at left, Answer (Input) at right */}
+            <div className="grid grid-cols-2 gap-4 items-center">
+              <h2 className={`${headingClass ? headingClass + ' ' : ''}text-xl font-semibold text-black text-right`}>
+                {customTexts?.nameHeading || 'Your Name'}
+              </h2>
+              <div>
+                <input
+                  type="text"
+                  value={participant.name}
+                  onChange={(e) => setParticipant({ ...participant, name: e.target.value })}
+                  className={`w-full px-4 py-3 rounded-lg transition-colors ${themeClasses.input}`}
+                  style={{ color: '#000000', backgroundColor: '#ffffff', caretColor: '#000000' }}
+                  placeholder={customTexts?.namePlaceholder || "Enter your name"}
+                  required
+                  disabled={isLoading || isSubmitting}
+                />
+              </div>
             </div>
-            
-            {/* Email heading (H2) */}
-            {customTexts?.emailHeading && (
-              <h2 className={`${headingClass ? headingClass + ' ' : ''}text-xl font-semibold mb-1 text-black`}>{customTexts.emailHeading}</h2>
-            )}
-            {/* Email field */}
-            <div>
-              <input
-                type="email"
-                value={participant.email || ''}
-                onChange={(e) => setParticipant({ ...participant, email: e.target.value })}
-                className={`w-full px-4 py-3 rounded-lg transition-colors ${themeClasses.input}`}
-                style={{ color: '#000000', backgroundColor: '#ffffff', caretColor: '#000000' }}
-                placeholder={customTexts?.emailPlaceholder || (requireEmail ? "your@email.com (required)" : "your@email.com")}
-                required={requireEmail}
-                disabled={isLoading || isSubmitting}
-              />
+
+            <div className="grid grid-cols-2 gap-4 items-center">
+              <h2 className={`${headingClass ? headingClass + ' ' : ''}text-xl font-semibold text-black text-right`}>
+                {customTexts?.emailHeading || 'Your Email'}
+              </h2>
+              <div>
+                <input
+                  type="email"
+                  value={participant.email || ''}
+                  onChange={(e) => setParticipant({ ...participant, email: e.target.value })}
+                  className={`w-full px-4 py-3 rounded-lg transition-colors ${themeClasses.input}`}
+                  style={{ color: '#000000', backgroundColor: '#ffffff', caretColor: '#000000' }}
+                  placeholder={customTexts?.emailPlaceholder || (requireEmail ? "your@email.com (required)" : "your@email.com")}
+                  required={requireEmail}
+                  disabled={isLoading || isSubmitting}
+                />
+              </div>
             </div>
-            
-            {/* Phone heading (H2) */}
-            {customTexts?.phoneHeading && (
-              <h2 className={`${headingClass ? headingClass + ' ' : ''}text-xl font-semibold mb-1 text-black`}>{customTexts.phoneHeading}</h2>
-            )}
-            {/* Phone field */}
-            <div>
-              <input
-                type="tel"
-                value={participant.phone || ''}
-                onChange={(e) => setParticipant({ ...participant, phone: e.target.value })}
-                className={`w-full px-4 py-3 rounded-lg transition-colors ${themeClasses.input}`}
-                style={{ color: '#000000', backgroundColor: '#ffffff', caretColor: '#000000' }}
-                placeholder={customTexts?.phonePlaceholder || (requirePhone ? "+1 (555) 123-4567 (required)" : "+1 (555) 123-4567")}
-                required={requirePhone}
-                disabled={isLoading || isSubmitting}
-              />
+
+            <div className="grid grid-cols-2 gap-4 items-center">
+              <h2 className={`${headingClass ? headingClass + ' ' : ''}text-xl font-semibold text-black text-right`}>
+                {customTexts?.phoneHeading || 'Your Phone'}
+              </h2>
+              <div>
+                <input
+                  type="tel"
+                  value={participant.phone || ''}
+                  onChange={(e) => setParticipant({ ...participant, phone: e.target.value })}
+                  className={`w-full px-4 py-3 rounded-lg transition-colors ${themeClasses.input}`}
+                  style={{ color: '#000000', backgroundColor: '#ffffff', caretColor: '#000000' }}
+                  placeholder={customTexts?.phonePlaceholder || (requirePhone ? "+1 (555) 123-4567 (required)" : "+1 (555) 123-4567")}
+                  required={requirePhone}
+                  disabled={isLoading || isSubmitting}
+                />
+              </div>
             </div>
-            
+
             {/* Field requirements info */}
             {!requireEmail && !requirePhone && (
               <div className="text-center">
@@ -305,14 +305,14 @@ export default function UnifiedRegistration({
                 </p>
               </div>
             )}
-            
+
             {/* Error display */}
             {displayError && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                 <p className="text-sm text-red-600">{displayError}</p>
               </div>
             )}
-            
+
             {/* Submit button */}
             <button
               type="submit"
