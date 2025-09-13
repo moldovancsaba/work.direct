@@ -1,9 +1,13 @@
 # 📝 RELEASE_NOTES.md - PlayMass
 
-**Current Version**: 1.16.0
-**Last Updated**: 2025-09-13T10:37:21.000Z
+**Current Version**: 1.17.0
+**Last Updated**: 2025-09-13T12:01:17.000Z
 
 ## 🔹 Version History
+
+### [v1.17.0] — 2025-09-13T12:01:17.000Z
+- Build: Fix Next.js compile failure by adding `app/globals.css` so `import './globals.css'` resolves in `app/layout.tsx`.
+- Docs: Synchronized version and timestamps across README, TASKLIST, ROADMAP, RELEASE_NOTES, ARCHITECTURE, LEARNINGS, and WARP.
 
 ### [v1.16.0] — 2025-09-13T10:37:21.000Z
 - Landing Page: Persist Landing configuration and finalize UI
