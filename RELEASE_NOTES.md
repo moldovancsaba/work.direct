@@ -1,5 +1,6 @@
 # 📝 RELEASE_NOTES.md - PlayMass
 
+<<<<<<< HEAD
 **Current Version**: 1.18.1
 **Last Updated**: 2025-09-13T16:27:18.176Z
 
@@ -17,6 +18,16 @@
 ### [v1.17.0] — 2025-09-13T12:01:17.000Z
 - Build: Fix Next.js compile failure by adding `app/globals.css` so `import './globals.css'` resolves in `app/layout.tsx`.
 - Docs: Synchronized version and timestamps across README, TASKLIST, ROADMAP, RELEASE_NOTES, ARCHITECTURE, LEARNINGS, and WARP.
+=======
+**Current Version**: 1.17.0
+**Last Updated**: 2025-09-13T11:38:30.000Z
+
+## 🔹 Version History
+
+### [v1.17.0] — 2025-09-13T11:38:30.000Z
+- Build: Fix Next.js compile failure by adding `app/globals.css` to the repository so `import './globals.css'` resolves in `app/layout.tsx`.
+- Docs: Synchronized version and timestamps across README, TASKLIST, ROADMAP, RELEASE_NOTES, ARCHITECTURE, LEARNINGS, and WARP per protocol.
+>>>>>>> c1f583a (feat(admin): rename Platform Settings→Hero Settings; move Scoreboard under Hero; add inline Cancel/Update bars between sections\n\nchore: version bump to v1.19.0 and sync docs (ISO 8601 UTC with ms))
 
 ### [v1.16.0] — 2025-09-13T10:37:21.000Z
 - Landing Page: Persist Landing configuration and finalize UI

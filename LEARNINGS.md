@@ -2,10 +2,20 @@
 
 This document captures implementation insights, technical decisions, and solutions to issues encountered during PlayMass development.
 
+<<<<<<< HEAD
 **Current Version**: 1.18.1
 **Last Updated**: 2025-09-13T16:27:18.176Z
+=======
+**Current Version**: 1.17.0
+**Last Updated**: 2025-09-13T11:38:30.000Z
+>>>>>>> c1f583a (feat(admin): rename Platform Settings→Hero Settings; move Scoreboard under Hero; add inline Cancel/Update bars between sections\n\nchore: version bump to v1.19.0 and sync docs (ISO 8601 UTC with ms))
 
 ## Development Learnings
+
+### Next.js Build Failure due to missing app/globals.css (v1.17.0)
+- What: Vercel production build failed with “Module not found: Can't resolve './globals.css'” from app/layout.tsx.
+- Why: The file existed locally but was not tracked in Git, so the deployed commit did not include it.
+- Fix: Added app/globals.css to the repository, bumped version to v1.17.0, and synchronized documentation timestamps per ISO 8601 with milliseconds.
 
 ### Landing Page Admin Fields & UI (v1.16.0)
 - What: Persisted Landing configuration (LANDING_TITLE, LANDING_IMAGE_URL, NEXT_WELCOME_TEXT/_ACTION/_BG) and updated landing UI (cover image, centered CTA, pinned legal links)
