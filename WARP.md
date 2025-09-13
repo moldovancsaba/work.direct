@@ -249,8 +249,13 @@ const schema = new Schema({
 
 ---
 
+<<<<<<< HEAD
 **Current Version**: 1.18.1  
 **Last Updated**: 2025-09-13T16:27:18.176Z
+=======
+**Current Version**: 1.17.0  
+**Last Updated**: 2025-09-13T11:38:30.000Z
+>>>>>>> c1f583a (feat(admin): rename Platform Settings→Hero Settings; move Scoreboard under Hero; add inline Cancel/Update bars between sections\n\nchore: version bump to v1.19.0 and sync docs (ISO 8601 UTC with ms))
 **Maintainer**: AI Development Team
 
 ## Important Notes for WARP Instances
