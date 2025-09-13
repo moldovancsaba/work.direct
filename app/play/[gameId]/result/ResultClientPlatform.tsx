@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect } from 'react'
 import { HeroBlock, MainBlock } from '../../../components/play/Blocks'
 import FooterLinks from '../../../components/play/FooterLinks'
 
@@ -54,9 +54,23 @@ export default function ResultClientPlatform({ gameId, texts, styles, won, refCo
     navigateWithRef(`/play/${gameId}/landing`)
   }
 
-return (
+  // Enforce no-scroll at the document level while on result
+  useEffect(() => {
+    const html = document.documentElement
+    const body = document.body
+    const prevHtmlOverflow = html.style.overflow
+    const prevBodyOverflow = body.style.overflow
+    html.style.overflow = 'hidden'
+    body.style.overflow = 'hidden'
+    return () => {
+      html.style.overflow = prevHtmlOverflow
+      body.style.overflow = prevBodyOverflow
+    }
+  }, [])
+
+  return (
     <div
-      className="min-h-screen w-full"
+      className="fixed inset-0 w-screen h-screen overflow-hidden"
       style={{ backgroundColor: '#000000FF', color: '#FFFFFFFF', fontFamily: '"Noto Sans", sans-serif' }}
     >
       <HeroBlock
