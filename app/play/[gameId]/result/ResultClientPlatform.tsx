@@ -86,10 +86,6 @@ export default function ResultClientPlatform({ gameId, texts, styles, won, refCo
       <MainBlock backgroundClass={mainBg}>
         <div className="w-full h-full flex justify-center">
           <div className="h-full w-[80vw] min-w-[80vw] max-w-none space-y-6 text-center flex flex-col items-center justify-center">
-          {/* Participated note (Markdown-like, multiline) */}
-          {texts?.TEXT_41 && (
-            <p className={styles?.main?.pClass || 'text-base'} style={{ whiteSpace: 'pre-wrap' }}>{texts.TEXT_41}</p>
-          )}
           {/* Result headline based on win/lose */}
           {typeof won !== 'undefined' && (
             <h1 className={styles?.main?.h1Class || 'text-3xl font-bold'} style={{ whiteSpace: 'pre-wrap' }}>
@@ -97,7 +93,6 @@ export default function ResultClientPlatform({ gameId, texts, styles, won, refCo
             </h1>
           )}
           <h1 className={styles?.main?.h1Class || 'text-3xl font-bold'}>{texts?.CTA_TITLE || texts?.TEXT_42 || 'Share Your Result'}</h1>
-          <p className={styles?.main?.pClass || 'text-base'}>{texts?.CTA_DESCRIPTION || texts?.TEXT_43 || 'Copy or share your result with friends.'}</p>
 
           {/* CTA Buttons Grid */}
           <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 pt-2">
