@@ -85,7 +85,7 @@ export default function ResultClientPlatform({ gameId, texts, styles, won, refCo
       />
       <MainBlock backgroundClass={mainBg}>
         <div className="w-full h-full flex justify-center">
-          <div className="w-full h-full max-w-6xl space-y-6 text-center flex flex-col items-center justify-center">
+          <div className="h-full w-[80vw] min-w-[80vw] max-w-none space-y-6 text-center flex flex-col items-center justify-center">
           {/* Participated note (Markdown-like, multiline) */}
           {texts?.TEXT_41 && (
             <p className={styles?.main?.pClass || 'text-base'} style={{ whiteSpace: 'pre-wrap' }}>{texts.TEXT_41}</p>
