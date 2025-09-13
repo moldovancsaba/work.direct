@@ -230,7 +230,8 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
             {description}
           </p>
         )}
-        <div className="space-y-3">
+        <div className="w-full h-full flex justify-center">
+          <div className="w-full h-full max-w-6xl space-y-3">
           {/* Facebook Login Plugin (XFBML) */}
           <div className="text-center" ref={fbPluginContainerRef}>
             <div
@@ -293,6 +294,7 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
               tryWithoutRegText: texts?.TEXT_27 || 'Want to try without registration?'
             }}
           />
+          </div>
         </div>
         <FooterLinks gameId={gameId} />
       </MainBlock>
