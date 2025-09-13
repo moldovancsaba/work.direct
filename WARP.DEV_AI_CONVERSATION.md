@@ -1,5 +1,7 @@
 # WARP.DEV_AI_CONVERSATION.md — Planning Log
 
+2025-09-13T12:44:07.090Z — Plan: Housekeeping — bump to v1.18.0; add whitespace to README; synchronize documentation timestamps; add release note; commit and push to main. No code changes. ISO 8601 timestamps with ms enforced.
+
 Timestamp: 2025-09-06T16:58:38.000Z
 Author: Agent Mode (AI)
 Topic: Stars Hexa Game — Modular Refactor & Integration in PlayMass

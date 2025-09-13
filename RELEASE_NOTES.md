@@ -1,9 +1,14 @@
 # 📝 RELEASE_NOTES.md - PlayMass
 
-**Current Version**: 1.17.0
-**Last Updated**: 2025-09-13T12:01:17.000Z
+**Current Version**: 1.18.0
+**Last Updated**: 2025-09-13T12:44:07.090Z
 
 ## 🔹 Version History
+
+### [v1.18.0] — 2025-09-13T12:44:07.090Z
+- Docs: Add whitespace to README to trigger commit
+- Chore: Version bump to 1.18.0 and synchronize documentation timestamps
+- Note: No code changes; build-only verification
 
 ### [v1.17.0] — 2025-09-13T12:01:17.000Z
 - Build: Fix Next.js compile failure by adding `app/globals.css` so `import './globals.css'` resolves in `app/layout.tsx`.
