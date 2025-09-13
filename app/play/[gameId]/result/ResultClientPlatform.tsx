@@ -99,8 +99,8 @@ export default function ResultClientPlatform({ gameId, texts, styles, won, refCo
           <h1 className={styles?.main?.h1Class || 'text-3xl font-bold'}>{texts?.CTA_TITLE || texts?.TEXT_42 || 'Share Your Result'}</h1>
           <p className={styles?.main?.pClass || 'text-base'}>{texts?.CTA_DESCRIPTION || texts?.TEXT_43 || 'Copy or share your result with friends.'}</p>
 
-          <div className="w-full max-w-sm flex flex-col gap-3 pt-2">
-            {/* CTA Buttons (vertical stack) */}
+          {/* CTA Buttons Grid */}
+          <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 pt-2">
             {Array.isArray(texts?.CTA_BUTTONS) && texts.CTA_BUTTONS.length > 0 ? (
               texts.CTA_BUTTONS
                 .filter((btn: any) => (btn?.text || '').trim() && (btn?.url || '').trim())
@@ -125,7 +125,7 @@ export default function ResultClientPlatform({ gameId, texts, styles, won, refCo
                         (e.currentTarget as HTMLAnchorElement).className = styles.main.buttonPrimaryClass
                       }
                     }}
-                    className={`${styles?.main?.buttonPrimaryClass || 'px-6 py-3 bg-blue-600 text-white rounded-lg'} text-2xl px-9 py-5`}
+                    className={`${styles?.main?.buttonPrimaryClass || 'px-6 py-3 bg-blue-600 text-white rounded-lg'} text-2xl px-9 py-5 text-center`}
                     style={{ background: extractBackgroundValue(btn?.bg) || extractBackgroundValue(texts?.CTA1_BG) }}
                   >
                     {btn.text}
@@ -153,15 +153,17 @@ export default function ResultClientPlatform({ gameId, texts, styles, won, refCo
                       (e.currentTarget as HTMLAnchorElement).className = styles.main.buttonPrimaryClass
                     }
                   }}
-                  className={styles?.main?.buttonPrimaryClass || 'px-6 py-3 bg-blue-600 text-white rounded-lg'}
+                  className={`${styles?.main?.buttonPrimaryClass || 'px-6 py-3 bg-blue-600 text-white rounded-lg'} text-2xl px-9 py-5 text-center`}
                   style={{ background: extractBackgroundValue(texts?.CTA1_BG) }}
                 >
                   {texts?.TEXT_44 || 'Open CTA'}
                 </a>
               ))
             )}
+          </div>
 
-            {/* Invite Friend → Landing */}
+          {/* Secondary Actions Grid: Invite + Play Again */}
+          <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4">
             <button
               onClick={onInviteLanding}
               className='px-6 py-3 text-white rounded-lg text-2xl px-9 py-5'
@@ -169,7 +171,6 @@ export default function ResultClientPlatform({ gameId, texts, styles, won, refCo
             >
               {texts?.TEXT_45 || 'Invite Friend'}
             </button>
-            {/* Play Again → Welcome */}
             <button
               onClick={() => navigateWithRef(`/play/${gameId}/welcome`)}
               className={`${styles?.main?.buttonPrimaryClass || 'px-6 py-3 text-white rounded-lg'} text-2xl px-9 py-5`}
