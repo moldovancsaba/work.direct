@@ -52,7 +52,7 @@ className={`w-full ${backgroundClass || ''} ${isLanding ? '' : 'px-4'} text-cent
 export const HeroBlock = React.memo(HeroBlockInner)
 HeroBlock.displayName = 'HeroBlock'
 
-function MainBlockInner({ backgroundClass, children, isLanding = false }: { backgroundClass?: string; children: React.ReactNode; isLanding?: boolean }) {
+function MainBlockInner({ backgroundClass, children, isLanding = false, isGame = false }: { backgroundClass?: string; children: React.ReactNode; isLanding?: boolean; isGame?: boolean }) {
   return (
     <div
       className={`w-full ${backgroundClass || ''}`}
@@ -63,8 +63,8 @@ function MainBlockInner({ backgroundClass, children, isLanding = false }: { back
         backgroundColor: '#444444FF',
         color: '#FFFFFFFF',
         fontFamily: '"Noto Sans", sans-serif',
-padding: isLanding ? '0' : '24px',
-        overflow: isLanding ? 'hidden' : 'auto',
+        padding: (isLanding || isGame) ? '0' : '24px',
+        overflow: (isLanding || isGame) ? 'hidden' : 'auto',
         borderRadius: 0,
         textAlign: 'center'
       }}

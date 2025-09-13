@@ -113,65 +113,13 @@ export default function GameLayout({
       />
 
       {/* MAIN (76%) */}
-      <MainBlock>
-        {/* Optional subtitle inside main content to keep hero strictly scoreboard cards */}
-        {subtitle && (
-          <p className="text-base md:text-lg mb-4" style={{ color: '#FFFFFFFF' }}>
-            {subtitle}
-          </p>
-        )}
-
-        {/* Game content */}
-        <div className="w-full h-full flex justify-center">
-          <div className="h-full w-[80vw] min-w-[80vw] max-w-none">
+      <MainBlock isGame={true}>
+        {/* Game content only - fills the entire main block */}
+        <div className="w-full h-full">
+          <div className="w-full h-full">
             {gameContent}
           </div>
         </div>
-
-        {/* Status/Description rendered inside main to respect height contract */}
-        {(statusContent || descriptionContent) && (
-          <div className="mt-4 space-y-2">
-            {statusContent && (
-              <div className="p-3 text-sm" style={{ backgroundColor: '#FFFFFF1A', color: '#FFFFFFFF' }}>
-                {statusContent}
-              </div>
-            )}
-            {descriptionContent && (
-              <div className="p-3 text-sm" style={{ backgroundColor: '#FFFFFF1A', color: '#FFFFFFFF' }}>
-                {descriptionContent}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Results page actions (when applicable) */}
-        {isGameComplete && onPlayAgain && (
-          <div className="mt-4">
-            <div className="p-4" style={{ backgroundColor: '#FFFFFF33' }}>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-                <button
-                  onClick={onPlayAgain}
-                  className="px-6 py-2 text-white font-bold transition-all duration-200 transform hover:scale-105 shadow-lg text-sm"
-                  style={{ backgroundColor: '#22C55E' }}
-                >
-                  🔄 Play Again
-                </button>
-                
-                <button
-                  onClick={() => {
-                    const currentUrl = window.location.href
-                    navigator.clipboard.writeText(currentUrl)
-                  }}
-                  className="px-6 py-2 text-white font-bold transition-all duration-200 transform hover:scale-105 shadow-lg text-sm"
-                  style={{ backgroundColor: '#4F46E5' }}
-                >
-                  📤 Share Game
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        <FooterLinks gameId={gameId} />
       </MainBlock>
     </div>
   )
