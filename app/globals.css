@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Global input field styling utilities to ensure consistent white background and black text */
+@layer base {
+  /* Ensure ALL input, textarea, and select elements have proper styling */
+  input:not([type="radio"]):not([type="checkbox"]):not([type="range"]):not([type="file"]),
+  textarea,
+  select {
+    @apply bg-white text-black;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    caret-color: #000000 !important;
+  }
+  
+  /* Ensure placeholder text is visible */
+  input::placeholder,
+  textarea::placeholder {
+    color: #6b7280 !important; /* gray-500 */
+    opacity: 1 !important;
+  }
+  
+  /* Ensure option elements in select dropdowns have proper colors */
+  option {
+    @apply bg-white text-black;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+  
+  /* Additional utility classes for explicit styling */
+  .input-styled {
+    @apply bg-white text-black border border-gray-300 rounded-lg;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    caret-color: #000000 !important;
+  }
+  
+  .input-styled:focus {
+    @apply ring-2 ring-blue-500 border-blue-500;
+  }
+  
+  .input-styled::placeholder {
+    color: #6b7280 !important;
+    opacity: 1 !important;
+  }
+}
