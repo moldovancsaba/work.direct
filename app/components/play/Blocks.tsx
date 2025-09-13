@@ -9,7 +9,7 @@ import SplitFlapScoreboard from '../game/SplitFlapScoreboard'
 function HeroBlockInner({ backgroundClass, title, scoreboard, isLanding = false }: { backgroundClass?: string; title?: string; scoreboard?: { home: number; visitor: number; showLabels?: boolean; homeLabel?: string; visitorLabel?: string; homeBg?: string; visitorBg?: string; digitColor?: string }; isLanding?: boolean }) {
   return (
     <div
-      className={`w-full ${backgroundClass || ''} px-4 text-center`}
+className={`w-full ${backgroundClass || ''} ${isLanding ? '' : 'px-4'} text-center`}
       style={{
         marginTop: isLanding ? '0' : '2vh',
         marginBottom: isLanding ? '0' : '2vh',
@@ -63,7 +63,7 @@ function MainBlockInner({ backgroundClass, children, isLanding = false }: { back
         backgroundColor: '#444444FF',
         color: '#FFFFFFFF',
         fontFamily: '"Noto Sans", sans-serif',
-        padding: '24px',
+padding: isLanding ? '0' : '24px',
         overflow: isLanding ? 'hidden' : 'auto',
         borderRadius: 0,
         textAlign: 'center'

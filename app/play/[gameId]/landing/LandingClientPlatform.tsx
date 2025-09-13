@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect } from 'react'
 import { HeroBlock, MainBlock } from '../../../components/play/Blocks'
 import FooterLinks from '../../../components/play/FooterLinks'
 
@@ -43,8 +43,22 @@ export default function LandingClientPlatform({ gameId, texts, styles, refCode }
     window.location.href = `${href}${q}`
   }
 
+  // Enforce no-scroll at the document level while on landing
+  useEffect(() => {
+    const html = document.documentElement
+    const body = document.body
+    const prevHtmlOverflow = html.style.overflow
+    const prevBodyOverflow = body.style.overflow
+    html.style.overflow = 'hidden'
+    body.style.overflow = 'hidden'
+    return () => {
+      html.style.overflow = prevHtmlOverflow
+      body.style.overflow = prevBodyOverflow
+    }
+  }, [])
+
   return (
-    <div className="h-screen w-full overflow-hidden" style={{ backgroundColor: '#000000FF', color: '#FFFFFFFF', fontFamily: '"Noto Sans", sans-serif' }}>
+    <div className="fixed inset-0 w-screen h-screen overflow-hidden" style={{ backgroundColor: '#000000FF', color: '#FFFFFFFF', fontFamily: '"Noto Sans", sans-serif' }}>
       <HeroBlock backgroundClass={heroBg} title={title} scoreboard={{ home: 0, visitor: 0, homeBg: styles?.scoreboard?.homeBg || '#C00000FF', digitColor: styles?.scoreboard?.digitColor || '#FFFFFFFF' }} isLanding={true} />
       <MainBlock backgroundClass={mainBg} isLanding={true}>
         <div className="relative w-full h-full">
