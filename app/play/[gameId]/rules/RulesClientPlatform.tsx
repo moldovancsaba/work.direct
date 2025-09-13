@@ -70,7 +70,7 @@ export default function RulesClientPlatform({ gameId, texts, styles, refCode }: 
           <div className="pt-4">
             <button
               onClick={() => onNext(`/play/${gameId}/game`)}
-              className={styles?.main?.buttonPrimaryClass || 'px-6 py-3 bg-blue-600 text-white rounded-lg'}
+              className={`${styles?.main?.buttonPrimaryClass || 'px-6 py-3 bg-blue-600 text-white rounded-lg'} text-2xl px-9 py-5`}
               style={(function () {
                 const css = texts?.TEXT_25_BG as string | undefined
                 if (!css) return undefined
