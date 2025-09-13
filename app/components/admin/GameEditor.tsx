@@ -443,8 +443,17 @@ const [platformStyles, setPlatformStyles] = useState<Record<string, any>>({})
                 }}
                 hideTextAndColors={true}
               />
-            </div>
+          </div>
           )}
+
+          {/* Inline Actions between sections */}
+          <div className="flex items-center justify-between pt-6">
+            <Link href="/admin/games" className="text-gray-600 hover:text-gray-800 transition-colors">Cancel</Link>
+            <button type="submit" disabled={saving || !title.trim() || (gameType === 'STARS_HEXA' && starsCount === 0)}
+              className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium">
+              {mode === 'create' ? 'Create Game' : 'Update Game'}
+            </button>
+          </div>
 
           {/* Penalty Shootout Configuration */}
           {gameType === 'PENALTY_SHOOTOUT' && (
@@ -469,7 +478,7 @@ const [platformStyles, setPlatformStyles] = useState<Record<string, any>>({})
             </div>
           )}
 
-          {/* Submit */}
+          {/* Inline Actions between sections */}
           <div className="flex items-center justify-between pt-6">
             <Link href="/admin/games" className="text-gray-600 hover:text-gray-800 transition-colors">Cancel</Link>
             <button type="submit" disabled={saving || !title.trim() || (gameType === 'STARS_HEXA' && starsCount === 0)}

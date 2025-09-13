@@ -252,12 +252,8 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
           <SimpleTextInput code="WON_TEXT" label="WON_TEXT (H1, Markdown)" multiline value={getT('WON_TEXT')} onChange={(v)=> setT('WON_TEXT', v)} />
           <SimpleTextInput code="LOST_TEXT" label="LOST_TEXT (H1, Markdown)" multiline value={getT('LOST_TEXT')} onChange={(v)=> setT('LOST_TEXT', v)} />
 
-          {/* CTA Title / Description */}
+          {/* CTA Title */}
           <SimpleTextInput code="CTA_TITLE" label="CTA Title (H1)" value={getT('CTA_TITLE')} onChange={(v)=> setT('CTA_TITLE', v)} />
-          <SimpleTextInput code="CTA_DESCRIPTION" label="CTA Description (P)" value={getT('CTA_DESCRIPTION')} onChange={(v)=> setT('CTA_DESCRIPTION', v)} />
-
-          {/* Participated note (Markdown-capable) */}
-          <SimpleTextInput code="TEXT_41" label="Participated (P, Markdown)" multiline value={getT('TEXT_41')} onChange={(v)=> setT('TEXT_41', v)} />
 
           {/* Primary Result CTA — standardized 3-line block (bordered, editor-only) */}
           <div className="border border-gray-300 rounded-lg p-4 space-y-2">
