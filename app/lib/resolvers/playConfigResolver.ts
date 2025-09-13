@@ -32,6 +32,13 @@ function derivePlatform(game: any) {
   const penalty = game.configuration?.penaltyShootout || {}
   // Merge platform texts and provide back-compat fallbacks
   const mergedTexts = {
+    // Landing fields (pass-through from platform texts)
+    LANDING_TITLE: platTexts.LANDING_TITLE || '',
+    LANDING_IMAGE_URL: platTexts.LANDING_IMAGE_URL || '',
+    NEXT_WELCOME_TEXT: platTexts.NEXT_WELCOME_TEXT || '',
+    NEXT_WELCOME_ACTION: platTexts.NEXT_WELCOME_ACTION || 'GO_TO_WELCOME',
+    NEXT_WELCOME_BG: platTexts.NEXT_WELCOME_BG || '',
+
     TEXT_10: platTexts.TEXT_10 || stars.texts?.welcomeTitle || game.title || 'Welcome',
     TEXT_20: platTexts.TEXT_20 || (stars.texts?.rulesTitle || penalty.texts?.gameRulesTitle) || 'Game Rules',
     TEXT_30: platTexts.TEXT_30 || game.title || 'Game',
