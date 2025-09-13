@@ -94,7 +94,7 @@ export default function GameLayout({
 
   return (
     <div
-      className="min-h-screen w-full"
+      className="fixed inset-0 w-screen h-screen overflow-hidden"
       style={{ backgroundColor: '#000000FF', color: '#FFFFFFFF', fontFamily: '"Noto Sans", sans-serif' }}
     >
 {/* HERO (18%) */}
