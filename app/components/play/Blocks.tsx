@@ -6,14 +6,14 @@ import SplitFlapScoreboard from '../game/SplitFlapScoreboard'
 // HeroBlock — unified hero section used across play flow pages
 // What: Renders the exact same SplitFlapScoreboard module used on the Game page.
 // Why: Product requirement — identical layout/module across Welcome, Rules, Game, Result.
-function HeroBlockInner({ backgroundClass, title, scoreboard }: { backgroundClass?: string; title?: string; scoreboard?: { home: number; visitor: number; showLabels?: boolean; homeLabel?: string; visitorLabel?: string; homeBg?: string; visitorBg?: string; digitColor?: string } }) {
+function HeroBlockInner({ backgroundClass, title, scoreboard, isLanding = false }: { backgroundClass?: string; title?: string; scoreboard?: { home: number; visitor: number; showLabels?: boolean; homeLabel?: string; visitorLabel?: string; homeBg?: string; visitorBg?: string; digitColor?: string }; isLanding?: boolean }) {
   return (
     <div
       className={`w-full ${backgroundClass || ''} px-4 text-center`}
       style={{
-        marginTop: '2vh',
-        marginBottom: '2vh',
-        height: '18vh',
+        marginTop: isLanding ? '0' : '2vh',
+        marginBottom: isLanding ? '0' : '2vh',
+        height: isLanding ? '20vh' : '18vh',
         backgroundColor: '#000000FF',
         color: '#FFFFFFFF',
         fontFamily: '"Noto Sans", sans-serif',
@@ -52,19 +52,19 @@ function HeroBlockInner({ backgroundClass, title, scoreboard }: { backgroundClas
 export const HeroBlock = React.memo(HeroBlockInner)
 HeroBlock.displayName = 'HeroBlock'
 
-function MainBlockInner({ backgroundClass, children }: { backgroundClass?: string; children: React.ReactNode }) {
+function MainBlockInner({ backgroundClass, children, isLanding = false }: { backgroundClass?: string; children: React.ReactNode; isLanding?: boolean }) {
   return (
     <div
       className={`w-full ${backgroundClass || ''}`}
       style={{
         width: '100vw',
-        height: '76vh',
-        marginBottom: '2vh',
+        height: isLanding ? '80vh' : '76vh',
+        marginBottom: isLanding ? '0' : '2vh',
         backgroundColor: '#444444FF',
         color: '#FFFFFFFF',
         fontFamily: '"Noto Sans", sans-serif',
         padding: '24px',
-        overflow: 'auto',
+        overflow: isLanding ? 'hidden' : 'auto',
         borderRadius: 0,
         textAlign: 'center'
       }}
