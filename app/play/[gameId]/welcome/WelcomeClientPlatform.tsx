@@ -231,7 +231,7 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
           </p>
         )}
         <div className="w-full h-full flex justify-center">
-          <div className="w-full h-full max-w-6xl space-y-3">
+          <div className="h-full w-[80vw] min-w-[80vw] max-w-none space-y-3">
           {/* Facebook Login Plugin (XFBML) */}
           <div className="text-center" ref={fbPluginContainerRef}>
             <div

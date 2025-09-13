@@ -225,7 +225,7 @@ export default function UnifiedRegistration({
 
   return (
     <div className={containerClass}>
-      <div className="w-full max-w-md mx-auto">
+      <div className="w-full mx-auto">
         <div className={`rounded-xl shadow-2xl p-6 md:p-8 border ${themeClasses.container}`}>
           
           {/* Registration header */}

@@ -57,7 +57,7 @@ export default function RulesClientPlatform({ gameId, texts, styles, refCode }: 
       />
       <MainBlock backgroundClass={mainBg}>
         <div className="w-full h-full flex justify-center">
-          <div className="w-full h-full max-w-6xl space-y-4">
+          <div className="h-full w-[80vw] min-w-[80vw] max-w-none space-y-4">
           <h2 className={styles?.main?.h2Class || 'text-xl font-semibold'}>{texts?.TEXT_21 || 'Rules'}</h2>
           <div className={styles?.main?.pClass || 'text-base'}>
             {rulesLines.length ? rulesLines.map((l: string, idx: number) => (<p key={idx} className="mb-1">{l}</p>)) : <p>No rules provided.</p>}
@@ -85,7 +85,7 @@ export default function RulesClientPlatform({ gameId, texts, styles, refCode }: 
               {texts?.TEXT_25 || 'Play'}
             </button>
           </div>
-          </div>
+          </div
         </div>
         <FooterLinks gameId={gameId} />
       </MainBlock>
