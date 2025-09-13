@@ -85,7 +85,7 @@ export default function RulesClientPlatform({ gameId, texts, styles, refCode }: 
               {texts?.TEXT_25 || 'Play'}
             </button>
           </div>
-          </div
+          </div>
         </div>
         <FooterLinks gameId={gameId} />
       </MainBlock>
