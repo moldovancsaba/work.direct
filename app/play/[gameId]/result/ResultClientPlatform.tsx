@@ -124,7 +124,7 @@ export default function ResultClientPlatform({ gameId, texts, styles, won, refCo
                         (e.currentTarget as HTMLAnchorElement).className = styles.main.buttonPrimaryClass
                       }
                     }}
-                    className={styles?.main?.buttonPrimaryClass || 'px-6 py-3 bg-blue-600 text-white rounded-lg'}
+                    className={`${styles?.main?.buttonPrimaryClass || 'px-6 py-3 bg-blue-600 text-white rounded-lg'} text-2xl px-9 py-5`}
                     style={{ background: extractBackgroundValue(btn?.bg) || extractBackgroundValue(texts?.CTA1_BG) }}
                   >
                     {btn.text}
@@ -163,7 +163,7 @@ export default function ResultClientPlatform({ gameId, texts, styles, won, refCo
             {/* Invite Friend → Landing */}
             <button
               onClick={onInviteLanding}
-              className='px-6 py-3 text-white rounded-lg'
+              className='px-6 py-3 text-white rounded-lg text-2xl px-9 py-5'
               style={{ background: extractBackgroundValue(texts?.TEXT_45_BG) }}
             >
               {texts?.TEXT_45 || 'Invite Friend'}
@@ -171,7 +171,7 @@ export default function ResultClientPlatform({ gameId, texts, styles, won, refCo
             {/* Play Again → Welcome */}
             <button
               onClick={() => navigateWithRef(`/play/${gameId}/welcome`)}
-              className={styles?.main?.buttonPrimaryClass || 'px-6 py-3 text-white rounded-lg'}
+              className={`${styles?.main?.buttonPrimaryClass || 'px-6 py-3 text-white rounded-lg'} text-2xl px-9 py-5`}
               style={{ background: extractBackgroundValue(texts?.TEXT_46_BG) }}
             >
               {texts?.TEXT_46 || 'Play Again'}

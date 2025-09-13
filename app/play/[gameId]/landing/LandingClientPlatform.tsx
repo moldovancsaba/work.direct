@@ -79,7 +79,7 @@ export default function LandingClientPlatform({ gameId, texts, styles, refCode }
           <div className="absolute inset-0 flex items-center justify-center p-4">
             <button
               onClick={() => onNext(buildHrefForAction(action))}
-              className={styles?.main?.buttonPrimaryClass || 'px-6 py-3 text-white rounded-lg'}
+              className={`${styles?.main?.buttonPrimaryClass || 'px-6 py-3 text-white rounded-lg'} text-2xl px-9 py-5`}
               style={{ background: extractBackgroundValue(texts?.NEXT_WELCOME_BG) }}
             >
               {ctaText}

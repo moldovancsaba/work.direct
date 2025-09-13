@@ -317,7 +317,7 @@ export default function UnifiedRegistration({
             <button
               type="submit"
               disabled={isLoading || isSubmitting}
-              className={`w-full text-white py-3 px-4 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${themeClasses.button}`}
+              className={`w-full text-white py-5 px-6 text-xl rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${themeClasses.button}`}
               style={primaryBg ? { background: primaryBg } : undefined}
             >
               {isSubmitting ? 'Registering...' : (customTexts?.startPlayingButton || 'Start Playing')}
@@ -333,7 +333,7 @@ export default function UnifiedRegistration({
               <button
                 onClick={handleTrialMode}
                 disabled={isLoading}
-                className={`w-full text-white py-3 px-4 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${themeClasses.trialButton}`}
+                className={`w-full text-white py-5 px-6 text-xl rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${themeClasses.trialButton}`}
                 style={trialBg ? { background: trialBg } : undefined}
               >
                 {customTexts?.tryWithoutRegButton || 'Try Without Registration'}
