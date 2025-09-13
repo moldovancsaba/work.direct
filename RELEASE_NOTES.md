@@ -1,9 +1,13 @@
 # 📝 RELEASE_NOTES.md - PlayMass
 
-**Current Version**: 1.18.0
-**Last Updated**: 2025-09-13T12:44:07.090Z
+**Current Version**: 1.18.1
+**Last Updated**: 2025-09-13T16:27:18.176Z
 
 ## 🔹 Version History
+
+### [v1.18.1] — 2025-09-13T16:27:18.176Z
+- UI (Landing): Disable scroll and remove all margins around Hero/Main blocks for a full-screen landing layout.
+- Chore: Patch bump per protocol.
 
 ### [v1.18.0] — 2025-09-13T12:44:07.090Z
 - Docs: Add whitespace to README to trigger commit
