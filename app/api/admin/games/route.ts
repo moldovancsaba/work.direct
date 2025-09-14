@@ -277,9 +277,9 @@ export async function POST(request: NextRequest) {
     if (error instanceof Error) {
       const message = error.message || 'Unknown validation error'
       const isValidation = /must|invalid|required|least|exceed|exactly|between/i.test(message)
-      return NextResponse.json(
+return NextResponse.json(
         { 
-          error: 'Failed to create game',
+          error: message || 'Failed to create game',
           message,
           details: (error as any).errors || null
         },
