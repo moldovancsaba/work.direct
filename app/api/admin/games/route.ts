@@ -115,7 +115,24 @@ export async function POST(request: NextRequest) {
     }
 
     if (type === 'FIND_RED') {
-      const def = REGISTRY.FIND_RED.defaultConfig.configuration.findRed
+      // WHAT: Pull default config from registry with safe fallback.
+      // WHY: TypeScript marks configuration as optional; provide runtime-safe defaults to satisfy types and prevent runtime errors.
+      const def = ((REGISTRY.FIND_RED.defaultConfig.configuration as any)?.findRed) ?? {
+        packSize: 6,
+        redsPerPack: 2,
+        selectionsPerRound: 1,
+        targetReds: 3,
+        totalRounds: 5,
+        theme: 'default',
+        texts: { shortyLabel: 'Shorty' },
+        colors: {
+          background: '#0B1220',
+          winForeground: '#FF1A1A',
+          neutralForeground: '#A0AEC0',
+          cardBack: '#1F2937',
+          cardBorder: '#374151'
+        }
+      }
       const cfg = processedConfiguration.findRed || {}
       // Coerce to numbers and backfill defaults
       processedConfiguration.findRed = {
@@ -138,7 +155,17 @@ export async function POST(request: NextRequest) {
     }
 
     if (type === 'WHEEL_OF_FORTUNE') {
-      const def = REGISTRY.WHEEL_OF_FORTUNE.defaultConfig.configuration.wheelOfFortune
+      // WHAT/WHY: Safe access to defaults similar to FIND_RED case above.
+      const def = ((REGISTRY.WHEEL_OF_FORTUNE.defaultConfig.configuration as any)?.wheelOfFortune) ?? {
+        segments: [],
+        spins: 8,
+        spinsPerGame: 1,
+        durationMs: 4500,
+        pointerAt: 'top' as const,
+        size: 280,
+        theme: 'default',
+        allowImmediateReplay: false
+      }
       const cfg = processedConfiguration.wheelOfFortune || {}
       // Ensure minimum viable configuration: at least 2 segments
       let segments = Array.isArray(cfg.segments) ? cfg.segments : []
