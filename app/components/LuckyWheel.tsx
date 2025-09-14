@@ -126,7 +126,7 @@ export default function LuckyWheel({
           />
           
           {/* Wheel Segments */}
-          <g ref={wheelRef} style={{ transformOrigin: `${centerX}px ${centerY}px` }}>
+          <g ref={wheelRef} style={{ transformOrigin: `${centerX}px ${centerY}px` }} data-role="wheel-rotor">
             {segments.map((segment, index) => {
               const startAngle = segmentAngles[index].start
               const endAngle = segmentAngles[index].end
@@ -373,14 +373,18 @@ function generateSegmentColors(segments: WheelSegment[], theme: string) {
 function calculateTargetAngle(segmentIndex: number, segmentAngles: { start: number; end: number }[]) {
   const segment = segmentAngles[segmentIndex]
   const segmentCenter = (segment.start + segment.end) / 2
-  
-  // Point the segment center to the top (pointer position)
-  // Since the wheel starts rotated -90 degrees, we need to account for that
-  const targetAngle = 90 - segmentCenter
-  
-  // Add some randomness within the segment for more natural results
+
+  // Point the segment center to the top (pointer position).
+  // IMPORTANT: The entire <svg> is rotated by -90deg to visually start at the top.
+  // Therefore, to bring the chosen segment to the pointer at top, we rotate the <g>
+  // so that its center aligns with 0deg in the original coordinate system (not 90deg).
+  // This means we must rotate by -segmentCenter (not 90 - segmentCenter).
+  const baseAngle = -segmentCenter
+
+  // Add some randomness within the segment to avoid landing exactly on center.
+  // Keep offset within the segment bounds (60% of segment width) to avoid crossing into neighbors.
   const segmentWidth = segment.end - segment.start
   const randomOffset = (Math.random() - 0.5) * segmentWidth * 0.6
-  
-  return targetAngle + randomOffset
+
+  return baseAngle + randomOffset
 }
