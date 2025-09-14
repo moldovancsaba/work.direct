@@ -8,6 +8,24 @@ if (!process.env.MONGODB_URI) {
 }
 
 const uri = process.env.MONGODB_URI
+
+// WHAT: Resolve an explicit database name for connections.
+// WHY: Atlas URIs without a path default to 'test'. We prefer an explicit DB to avoid
+//      accidental writes to 'test' in production. If DB_NAME is provided, use it. Otherwise,
+//      try to parse the database from the URI path. Fallback to 'playmass' as a safe default.
+function resolveDbName(mongoUri: string | undefined): string {
+  if (!mongoUri) return process.env.DB_NAME || 'playmass'
+  try {
+    const u = new URL(mongoUri)
+    const pathDb = u.pathname && u.pathname !== '/' ? u.pathname.slice(1) : ''
+    return process.env.DB_NAME || pathDb || 'playmass'
+  } catch {
+    return process.env.DB_NAME || 'playmass'
+  }
+}
+
+const resolvedDbName = resolveDbName(uri)
+
 const options: MongoClientOptions = {
   // Connection pool settings for optimal performance
   maxPoolSize: 10, // Maintain up to 10 socket connections
@@ -68,6 +86,7 @@ export const connectDB = async (): Promise<void> => {
     const db = await mongoose.connect(uri, {
       // Mongoose-specific connection options
       // These options are optimized for the ODM layer
+      dbName: resolvedDbName, // WHAT: Ensure we connect to the intended database; WHY: avoid defaulting to 'test'
       bufferCommands: false, // Disable mongoose buffering for serverless
       maxPoolSize: 10, // Maintain up to 10 socket connections  
       serverSelectionTimeoutMS: 10000, // Increased to 10 seconds for better reliability
