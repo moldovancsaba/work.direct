@@ -6,6 +6,7 @@ import StarsHexa from '../../../components/games/StarsHexa'
 import PenaltyHexa from '../../../components/games/PenaltyHexa 2'
 import FindRed from '../../../components/games/FindRed'
 import LuckyWheel from '../../../components/LuckyWheel'
+import { GameOutcome, WheelSegment } from '../../../types'
 
 interface GameClientProps {
   game: any
@@ -56,6 +57,61 @@ export default function GameClient({ game, cfg }: GameClientProps) {
     return data.data.result
   }
 
+  // WHAT: Spin handler for Wheel of Fortune.
+  // WHY: Previously the wheel button was disabled because no onSpin was provided. This wires backend spin
+  //      when a participant/session exists and gracefully falls back to a local weighted random spin in trial mode.
+  const onWheelSpin = async (): Promise<GameOutcome> => {
+    const segments: WheelSegment[] = game.configuration?.wheelOfFortune?.segments || []
+    const active = segments.filter((s: any) => s.isActive !== false)
+
+    // Local weighted result (used in trial mode when participant/session is missing)
+    const localWeightedPick = (): GameOutcome => {
+      if (active.length === 0) {
+        return { type: 'NO_REWARD', segmentId: undefined as any, starsFound: 0, totalStarsInGame: 0, foundAllStars: false, value: 'No segments', rewardIds: [], message: 'Wheel not configured' }
+      }
+      const probs = active.map((s: any) => Number(s.probability || 0))
+      const total = probs.reduce((a: number, b: number) => a + b, 0)
+      let chosen = active[0]
+      if (total > 0) {
+        const r = Math.random() * total
+        let acc = 0
+        for (let i = 0; i < active.length; i++) {
+          acc += probs[i]
+          if (r <= acc) { chosen = active[i]; break }
+        }
+      } else {
+        chosen = active[Math.floor(Math.random() * active.length)]
+      }
+      return {
+        type: chosen?.isWinning ? 'WIN' : 'NO_REWARD',
+        segmentId: chosen?.id as any,
+        starsFound: 0,
+        totalStarsInGame: 0,
+        foundAllStars: false,
+        value: chosen?.label,
+        rewardIds: [],
+        message: chosen?.label ? `Landed on: ${chosen.label}` : 'Wheel result'
+      }
+    }
+
+    // If trial mode, do not call backend — return local weighted result
+    if (isTrial || !participant || !sessionId) {
+      return localWeightedPick()
+    }
+
+    // Server-authoritative spin
+    const res = await fetch(`/api/games/${cfg.meta.gameId}/play`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ participant, sessionId, ref })
+    })
+    const data = await res.json()
+    if (!res.ok || !data?.success) {
+      // On failure, fallback to local pick rather than breaking UX
+      try { return localWeightedPick() } catch { throw new Error(data?.message || 'Spin failed') }
+    }
+    return data.data.result as GameOutcome
+  }
+
   const content = game.type === 'STARS_HEXA' ? (
 <StarsHexa
       hexagons={game.configuration?.starsHexa?.hexagons || []}
@@ -86,7 +142,7 @@ export default function GameClient({ game, cfg }: GameClientProps) {
   ) : game.type === 'WHEEL_OF_FORTUNE' ? (
     <LuckyWheel
       segments={game.configuration?.wheelOfFortune?.segments || []}
-      onSpin={undefined}
+      onSpin={onWheelSpin}
       onResult={undefined}
       size={game.configuration?.wheelOfFortune?.size || 280}
       theme={game.configuration?.wheelOfFortune?.theme || 'default'}
