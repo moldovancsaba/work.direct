@@ -1,10 +1,37 @@
 # 📝 RELEASE_NOTES.md - PlayMass
 
-<<<<<<< HEAD
-**Current Version**: 1.18.1
-**Last Updated**: 2025-09-13T16:27:18.176Z
+**Current Version**: 1.21.0
+**Last Updated**: 2025-09-14T08:35:53.000Z
 
 ## 🔹 Version History
+
+### [v1.21.0] — 2025-09-14T08:35:53.000Z
+- New Game: Get Shorty (Find Red) implemented with configurable pack size (X), reds per pack (Y), selections per round, target reds (Z), and total rounds (W); theme colors and Shorty label.
+- Model: Extended Mongoose Game schema with configuration.findRed sub-schema and validation defaults.
+- API: /api/games/[id]/play supports FIND_RED — records picks; unified gtype comparisons.
+- UI: New FindRed component with 3D flips (~200ms), early win, per-round shuffles; integrated into standardized 5-page flow.
+- Resolver/Registry: Added module registry and playConfig resolver for Find Red and Wheel; standardized Welcome/Rules/Game/Result mapping.
+- Wheel: Reintroduced WHEEL_OF_FORTUNE type, schema and resolver; client rendering via LuckyWheel; server-weighted selection in play endpoint.
+- Docs: Version and timestamp sync across all required files per protocol (ISO 8601 UTC with ms).
+
+### [v1.20.0] — 2025-09-13T19:48:48.015Z
+- Play Pages: Enforced no-scroll on the Game page via document-level overflow lock and fixed full-viewport container.
+- Build: Verified successful Next.js build.
+
+### [v1.19.0] — 2025-09-13T18:47:30.559Z
+- Admin Editor: Renamed "Platform Settings" to "Hero Settings" in GameEditor.
+- Admin Editor: Moved "Scoreboard Styles" under Hero Settings (before Landing).
+- Admin Editor: Added inline Cancel/Update action bars between sections: Basic→Hero, Hero→Landing, Landing→Welcome, Welcome→Rules, Rules→Result, Result→Main Styles, Main Styles→Legal.
+- Build: Verified successful Next.js build.
+
+### [v1.20.1] — 2025-09-14T07:33:11.000Z
+- Types: Add FIND_RED and WHEEL_OF_FORTUNE to GameType
+- Config: Add configuration.findRed with X/Y/Z/W, selectionsPerRound, colors, and label (Shorty)
+- Model: Extend Game mongoose schema with findRed sub-schema and validations
+- UI: New FindRed game component with 3D flips and client-authoritative rounds
+- Flow: Wire FindRed into standardized GameClient and scoreboard
+- Admin: Add basic type select entries (Get Shorty, Wheel of Fortune) and MVP settings block for Find Red
+- Protocol: Patch version bump per versioning rules
 
 ### [v1.18.1] — 2025-09-13T16:27:18.176Z
 - UI (Landing): Disable scroll and remove all margins around Hero/Main blocks for a full-screen landing layout.
@@ -18,18 +45,6 @@
 ### [v1.17.0] — 2025-09-13T12:01:17.000Z
 - Build: Fix Next.js compile failure by adding `app/globals.css` so `import './globals.css'` resolves in `app/layout.tsx`.
 - Docs: Synchronized version and timestamps across README, TASKLIST, ROADMAP, RELEASE_NOTES, ARCHITECTURE, LEARNINGS, and WARP.
-=======
-**Current Version**: 1.17.0
-**Last Updated**: 2025-09-13T11:38:30.000Z
-
-## 🔹 Version History
-
-### [v1.17.0] — 2025-09-13T11:38:30.000Z
-- Build: Fix Next.js compile failure by adding `app/globals.css` to the repository so `import './globals.css'` resolves in `app/layout.tsx`.
-- Docs: Synchronized version and timestamps across README, TASKLIST, ROADMAP, RELEASE_NOTES, ARCHITECTURE, LEARNINGS, and WARP per protocol.
->>>>>>> c1f583a (feat(admin): rename Platform Settings→Hero Settings; move Scoreboard under Hero; add inline Cancel/Update bars between sections\n\nchore: version bump to v1.19.0 and sync docs (ISO 8601 UTC with ms))
-
-### [v1.16.0] — 2025-09-13T10:37:21.000Z
 - Landing Page: Persist Landing configuration and finalize UI
   - Database schema: Added LANDING_TITLE, LANDING_IMAGE_URL, NEXT_WELCOME_TEXT, NEXT_WELCOME_ACTION, NEXT_WELCOME_BG under configuration.platform.texts
   - Admin editor: Moved Landing Title into Hero Settings; added Landing Image URL and Next Welcome Button block (text/action/bg)

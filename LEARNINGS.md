@@ -2,15 +2,8 @@
 
 This document captures implementation insights, technical decisions, and solutions to issues encountered during PlayMass development.
 
-<<<<<<< HEAD
-**Current Version**: 1.18.1
-**Last Updated**: 2025-09-13T16:27:18.176Z
-=======
-**Current Version**: 1.17.0
-**Last Updated**: 2025-09-13T11:38:30.000Z
->>>>>>> c1f583a (feat(admin): rename Platform Settings→Hero Settings; move Scoreboard under Hero; add inline Cancel/Update bars between sections\n\nchore: version bump to v1.19.0 and sync docs (ISO 8601 UTC with ms))
-
-## Development Learnings
+**Current Version**: 1.21.0
+**Last Updated**: 2025-09-14T08:35:53.000Z
 
 ### Next.js Build Failure due to missing app/globals.css (v1.17.0)
 - What: Vercel production build failed with “Module not found: Can't resolve './globals.css'” from app/layout.tsx.
@@ -451,6 +444,16 @@ interface WheelSegment {
 6. **Component Design**: Balancing flexibility with integration requirements
 
 This implementation demonstrates advanced SVG manipulation, mathematical precision, and React optimization techniques for creating engaging game components.
+
+---
+
+### Find Red (Get Shorty) — Client-authoritative MVP decisions (v1.20.1)
+
+- What: We generate round packs on the client to achieve instant UX. Server records each pick for analytics with minimal validation.
+- Why: Speed-to-market and simplicity; server-authoritative RNG can be layered later using deterministic PRNG keyed by (gameId+sessionId+round).
+- Reuse: We reused StarsHexa flip animation patterns (200ms, preserve-3d) to keep interactions consistent and fast.
+- Admin: Minimal settings now; color pickers and full edit planned via dedicated subform. Shorty label defaults to “Shorty”.
+- Scoreboard: Mapped to redsFound/targetReds; rounds used also tracked via HUD.
 
 ---
 
