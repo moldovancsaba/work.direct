@@ -5,6 +5,8 @@ import RewardModel from '../../../lib/models/Reward'
 import ParticipantModel from '../../../lib/models/Participant'
 import GameResultModel from '../../../lib/models/GameResult'
 import { getAdminUser } from '../../../lib/auth'
+import { REGISTRY } from '../../../modules/registry'
+import { v4 as uuidv4 } from 'uuid'
 
 // GET all games (admin only)
 export async function GET() {
@@ -81,26 +83,118 @@ export async function POST(request: NextRequest) {
     } = body
 
     // Validate required fields
-    if (!title || !type || !configuration) {
+    if (!title || !type) {
       return NextResponse.json(
-        { error: 'Missing required fields: title, type, configuration' },
+        { error: 'Missing required fields: title and type are required' },
         { status: 400 }
       )
     }
 
-    // Process configuration based on game type
-    let processedConfiguration = { ...configuration }
-    
-    // For STARS_HEXA games, ensure totalStars is set correctly
-    if (type === 'STARS_HEXA' && configuration.starsHexa) {
-      const starsCount = configuration.starsHexa.hexagons?.filter((h: any) => h.hasHiddenStar).length || 0
-      processedConfiguration.starsHexa = {
-        ...configuration.starsHexa,
-        totalStars: starsCount
+    // Normalize config and seed sensible defaults per game type (reuse registry)
+    // WHAT: Auto-hydrate missing per-type configuration to prevent 500s on creation (e.g., Wheel needs segments)
+    // WHY: Admin may create a game with minimal inputs first and configure details later.
+    const processedConfiguration: any = { ...(configuration || {}) }
+
+    if (type === 'STARS_HEXA') {
+      if (processedConfiguration.starsHexa?.hexagons) {
+        const starsCount = processedConfiguration.starsHexa.hexagons.filter((h: any) => h.hasHiddenStar).length
+        processedConfiguration.starsHexa.totalStars = starsCount
+      } else {
+        // Provide a minimal valid default if none supplied (7 hexagons with 1 star)
+        processedConfiguration.starsHexa = processedConfiguration.starsHexa || {}
+        processedConfiguration.starsHexa.hexagons = Array.from({ length: 7 }, (_, idx) => ({
+          id: `hex-${idx+1}`,
+          text: `Card ${idx+1}`,
+          hasHiddenStar: idx === 2,
+          position: idx
+        }))
+        processedConfiguration.starsHexa.maxFlipsPerAttempt = processedConfiguration.starsHexa.maxFlipsPerAttempt || 3
+        processedConfiguration.starsHexa.theme = processedConfiguration.starsHexa.theme || 'default'
+        processedConfiguration.starsHexa.totalStars = 1
       }
     }
-    
-    
+
+    if (type === 'FIND_RED') {
+      const def = REGISTRY.FIND_RED.defaultConfig.configuration.findRed
+      const cfg = processedConfiguration.findRed || {}
+      // Coerce to numbers and backfill defaults
+      processedConfiguration.findRed = {
+        packSize: Number(cfg.packSize ?? def.packSize),
+        redsPerPack: Number(cfg.redsPerPack ?? def.redsPerPack),
+        selectionsPerRound: Number(cfg.selectionsPerRound ?? def.selectionsPerRound),
+        targetReds: Number(cfg.targetReds ?? def.targetReds),
+        totalRounds: Number(cfg.totalRounds ?? def.totalRounds),
+        theme: cfg.theme || def.theme,
+        texts: { shortyLabel: cfg?.texts?.shortyLabel || def.texts.shortyLabel },
+        colors: {
+          background: cfg?.colors?.background || def.colors.background,
+          winForeground: cfg?.colors?.winForeground || def.colors.winForeground,
+          neutralForeground: cfg?.colors?.neutralForeground || def.colors.neutralForeground,
+          cardBack: cfg?.colors?.cardBack || def.colors.cardBack,
+          cardBorder: cfg?.colors?.cardBorder || def.colors.cardBorder
+        },
+        defaultRewardId: cfg.defaultRewardId || ''
+      }
+    }
+
+    if (type === 'WHEEL_OF_FORTUNE') {
+      const def = REGISTRY.WHEEL_OF_FORTUNE.defaultConfig.configuration.wheelOfFortune
+      const cfg = processedConfiguration.wheelOfFortune || {}
+      // Ensure minimum viable configuration: at least 2 segments
+      let segments = Array.isArray(cfg.segments) ? cfg.segments : []
+      if (segments.length < 2) {
+        // Seed 6 evenly weighted segments
+        const even = Math.round((100 / 6) * 1000) / 1000
+        segments = Array.from({ length: 6 }, (_, i) => ({
+          id: `seg-${i+1}`,
+          label: `Segment ${i+1}`,
+          probability: even,
+          color: '#3B82F6',
+          backgroundColor: '#3B82F6',
+          isActive: true
+        }))
+      }
+      processedConfiguration.wheelOfFortune = {
+        segments,
+        spins: Number(cfg.spins ?? def.spins),
+        spinsPerGame: Number(cfg.spinsPerGame ?? def.spinsPerGame),
+        durationMs: Number(cfg.durationMs ?? def.durationMs),
+        pointerAt: cfg.pointerAt || def.pointerAt,
+        size: Number(cfg.size ?? def.size),
+        theme: cfg.theme || def.theme,
+        allowImmediateReplay: cfg.allowImmediateReplay ?? def.allowImmediateReplay
+      }
+    }
+
+    if (type === 'PENALTY_SHOOTOUT') {
+      // If admin didn't supply players, generate a valid default
+      if (!processedConfiguration.penaltyShootout?.players) {
+        const playerNumbers = Array.from({ length: 21 }, (_, i) => i + 2) // 2..22
+        const shuffled = playerNumbers.sort(() => Math.random() - 0.5).slice(0, 11)
+        const goalPositions = Array.from({ length: 11 }, (_, i) => i).sort(() => Math.random() - 0.5).slice(0, 7)
+        processedConfiguration.penaltyShootout = {
+          players: Array.from({ length: 11 }, (_, index) => ({
+            id: `player-${index + 1}`,
+            playerNumber: shuffled[index],
+            hasGoal: goalPositions.includes(index),
+            isRevealed: false,
+            position: index,
+            color: '#c00000',
+            backgroundColor: '#ffffff'
+          })),
+          totalGoals: 7,
+          playersToSelect: 5,
+          theme: 'football',
+          texts: {},
+          colors: {},
+          gameSettings: { totalPlayers: 11, penaltyShots: 5, successfulShots: 7, missedShots: 4 }
+        }
+      }
+    }
+
+    // Ensure platform container exists for 4-page flow (texts/styles)
+    processedConfiguration.platform = processedConfiguration.platform || { texts: {}, styles: {} }
+
     // Create game data following the existing schema
     const gameData = {
       title,
@@ -109,20 +203,22 @@ export async function POST(request: NextRequest) {
       status: isActive ? 'ACTIVE' : 'DRAFT',
       configuration: {
         ...processedConfiguration,
-        maxAttemptsPerUser: maxAttemptsPerUser || 3
+        maxAttemptsPerUser: Number(maxAttemptsPerUser ?? 3)
       },
       createdBy: 'admin', // Default creator
       totalParticipants: 0,
       totalPlays: 0,
-      isPublic: false
-    }
+      isPublic: false,
+      // Traceability for support: creation correlation ID
+      _creationRequestId: uuidv4()
+    } as any
 
     // Create the game
     const game = new GameModel(gameData)
     const savedGame = await game.save()
 
     // Create associated rewards if provided
-    let gameRewards = []
+    let gameRewards = [] as any[]
     if (rewards && rewards.length > 0) {
       const rewardPromises = rewards.map((reward: any) => {
         // Map simplified admin reward to full Reward schema
@@ -177,15 +273,17 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error creating game:', error)
     
-    // Return detailed error message if it's a validation error
+    // Map validation errors to 400 where applicable
     if (error instanceof Error) {
+      const message = error.message || 'Unknown validation error'
+      const isValidation = /must|invalid|required|least|exceed|exactly|between/i.test(message)
       return NextResponse.json(
         { 
           error: 'Failed to create game',
-          message: error.message,
+          message,
           details: (error as any).errors || null
         },
-        { status: 500 }
+        { status: isValidation ? 400 : 500 }
       )
     }
     
