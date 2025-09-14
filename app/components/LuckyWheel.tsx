@@ -68,7 +68,7 @@ export default function LuckyWheel({
       
       // Calculate the target angle for the winning segment
       const segmentIndex = segments.findIndex(segment => segment.id === gameResult.segmentId)
-      const targetAngle = calculateTargetAngle(segmentIndex, segmentAngles)
+      const targetAngle = calculateTargetAngle(segmentIndex, segmentAngles, currentRotation)
       
       // Calculate total rotation (base rotations + target position)
       const baseRotation = 360 * rotations
@@ -370,21 +370,26 @@ function generateSegmentColors(segments: WheelSegment[], theme: string) {
 /**
  * Calculate target angle for winning segment
  */
-function calculateTargetAngle(segmentIndex: number, segmentAngles: { start: number; end: number }[]) {
+function calculateTargetAngle(
+  segmentIndex: number,
+  segmentAngles: { start: number; end: number }[],
+  currentRotation: number
+) {
   const segment = segmentAngles[segmentIndex]
   const segmentCenter = (segment.start + segment.end) / 2
 
-  // Point the segment center to the top (pointer position).
-  // IMPORTANT: The entire <svg> is rotated by -90deg to visually start at the top.
-  // Therefore, to bring the chosen segment to the pointer at top, we rotate the <g>
-  // so that its center aligns with 0deg in the original coordinate system (not 90deg).
-  // This means we must rotate by -segmentCenter (not 90 - segmentCenter).
-  const baseAngle = -segmentCenter
+  // WHAT: Compute rotation delta so that after applying it to the current wheel rotation,
+  // the chosen segment's center aligns with the pointer at the top.
+  // WHY: The <svg> is pre-rotated by -90deg to visually start at the top; the pointer
+  // stays static above the SVG. We must cancel the wheel's currentRotation modulo 360
+  // to prevent drift across spins, then rotate the negative of the segment center to land under the pointer.
+  const net = ((currentRotation % 360) + 360) % 360
 
-  // Add some randomness within the segment to avoid landing exactly on center.
-  // Keep offset within the segment bounds (60% of segment width) to avoid crossing into neighbors.
+  // Randomize landing position within the segment to avoid perfect centering (keep within 60% of the slice width)
   const segmentWidth = segment.end - segment.start
   const randomOffset = (Math.random() - 0.5) * segmentWidth * 0.6
 
-  return baseAngle + randomOffset
+  // Delta to apply (added to currentRotation by caller): cancel net rotation and bring center to 0deg
+  const delta = - (net + segmentCenter) + randomOffset
+  return delta
 }
