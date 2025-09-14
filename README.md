@@ -1,7 +1,7 @@
 # PlayMass - Interactive Game Platform
 
-Current Version: 1.21.0
-Last Updated: 2025-09-14T08:35:53.000Z
+Current Version: 1.22.0
+Last Updated: 2025-09-14T16:12:23.000Z
 
 ## 🎮 Features
 
@@ -226,16 +226,4 @@ This is a private project. Contact the maintainer for collaboration opportunitie
 
 ---
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-**Current Version**: 1.18.1
-**Last Updated**: 2025-09-13T16:27:18.176Z
-=======
-**Current Version**: 1.17.0
-**Last Updated**: 2025-09-13T11:38:30.000Z
->>>>>>> c1f583a (feat(admin): rename Platform Settings→Hero Settings; move Scoreboard under Hero; add inline Cancel/Update bars between sections\n\nchore: version bump to v1.19.0 and sync docs (ISO 8601 UTC with ms))
-=======
-**Current Version**: 1.20.0
-**Last Updated**: 2025-09-13T19:48:48.015Z
->>>>>>> 01cc5c3 (chore(release): v1.21.0 — Get Shorty (Find Red) + Wheel registry/resolver + standardized 5-page flow (2025-09-14T08:07:28.000Z))
 **Maintainer**: AI Development Team

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useAdminAuth } from '../hooks/useAdminAuth 2'
+import { useAdminAuth } from '@/hooks/useAdminAuth'
 
 export default function AdminLayout({
   children,

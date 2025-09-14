@@ -2,8 +2,14 @@
 
 This document captures implementation insights, technical decisions, and solutions to issues encountered during PlayMass development.
 
-**Current Version**: 1.21.0
-**Last Updated**: 2025-09-14T08:35:53.000Z
+**Current Version**: 1.22.0
+**Last Updated**: 2025-09-14T16:12:23.000Z
+
+### Duplicate key on shareLinks.id (E11000) — Fixed in v1.22.0
+- What: Creating any game failed with E11000 due to a unique index on subdocument array field shareLinks.id across the collection.
+- Why: Unique indexes on array subdocument paths are enforced globally; null/missing values collide.
+- Fix: Removed unique:true from shareLinks.id in Game schema; added a migration script to drop existing index shareLinks.id_1; ensured sparse unique index on shareLinks.shortCode.
+- Verification: Ran migration against DB (defaulted to test due to URI path); index dropped and game creation succeeds.
 
 ### Next.js Build Failure due to missing app/globals.css (v1.17.0)
 - What: Vercel production build failed with “Module not found: Can't resolve './globals.css'” from app/layout.tsx.

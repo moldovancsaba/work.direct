@@ -1,5 +1,6 @@
 # WARP.DEV_AI_CONVERSATION.md — Planning Log
 
+2025-09-14T16:12:23.000Z — Delivery: Fixed admin login 404 and E11000 duplicate index; dropped shareLinks.id_1; ensured sparse unique index on shareLinks.shortCode; bumped to v1.22.0; synchronized docs; commit and push to main.
 2025-09-13T12:44:07.090Z — Plan: Housekeeping — bump to v1.18.0; add whitespace to README; synchronize documentation timestamps; add release note; commit and push to main. No code changes. ISO 8601 timestamps with ms enforced.
 2025-09-13T16:27:18.176Z — Plan: Landing page UI tweak — disable scroll and remove margins on Hero/Main for full-screen experience; patch bump and docs sync per protocol; commit and push.
 2025-09-13T18:47:30.559Z — Plan: Admin editor polish — rename Platform Settings → Hero Settings; move Scoreboard Styles under Hero; add inline Cancel/Update action bars between all specified sections; minor version bump and docs sync; commit and push.

@@ -1,10 +1,16 @@
 # 📝 RELEASE_NOTES.md - PlayMass
 
-**Current Version**: 1.21.0
-**Last Updated**: 2025-09-14T08:35:53.000Z
+**Current Version**: 1.22.0
+**Last Updated**: 2025-09-14T16:12:23.000Z
 
 ## 🔹 Version History
 
+### [v1.22.0] — 2025-09-14T16:12:23.000Z
+- Admin: Fixed login route and auth hook import; /admin/login now resolves correctly
+- Backend: Removed unique index from shareLinks.id in Game schema; added migration script to drop existing index and ensured sparse unique index on shareLinks.shortCode
+- API: Hardened defaults in admin game creation for FIND_RED and WHEEL_OF_FORTUNE to avoid undefined access during build
+- Build: Verified successful Next.js production build
+- Docs: Synchronized version and timestamps (ISO 8601 with ms)
 ### [v1.21.0] — 2025-09-14T08:35:53.000Z
 - New Game: Get Shorty (Find Red) implemented with configurable pack size (X), reds per pack (Y), selections per round, target reds (Z), and total rounds (W); theme colors and Shorty label.
 - Model: Extended Mongoose Game schema with configuration.findRed sub-schema and validation defaults.

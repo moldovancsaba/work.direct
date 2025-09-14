@@ -93,8 +93,13 @@ const penaltyCardSchema = new Schema<PenaltyCard>({
 const shareLinkSchema = new Schema<ShareLink>({
   id: {
     type: String,
-    required: [true, 'Share link ID is required'],
-    unique: true
+    required: [true, 'Share link ID is required']
+    // IMPORTANT: Do NOT set unique:true here on subdocument arrays.
+    // WHAT: A unique index on 'shareLinks.id' across the collection causes E11000
+    //       when documents either have no shareLinks or null/duplicate values.
+    // WHY: MongoDB enforces uniqueness globally for the index, not per-parent doc.
+    //      We rely on app-level randomness for this id and enforce uniqueness on
+    //      shortCode instead via a sparse unique index defined on the parent schema.
   },
   url: {
     type: String,
