@@ -1,6 +1,6 @@
 'use client'
 
-import React, { ReactNode } from 'react'
+import React, { ReactNode, useEffect } from 'react'
 import SplitFlapScoreboard from './SplitFlapScoreboard'
 import { HeroBlock, MainBlock } from '../play/Blocks'
 import FooterLinks from '../play/FooterLinks'
@@ -74,6 +74,19 @@ export default function GameLayout({
   isGameComplete = false,
   onPlayAgain
 }: GameLayoutProps) {
+  // Enforce no-scroll at the document level while on game
+  useEffect(() => {
+    const html = document.documentElement
+    const body = document.body
+    const prevHtmlOverflow = html.style.overflow
+    const prevBodyOverflow = body.style.overflow
+    html.style.overflow = 'hidden'
+    body.style.overflow = 'hidden'
+    return () => {
+      html.style.overflow = prevHtmlOverflow
+      body.style.overflow = prevBodyOverflow
+    }
+  }, [])
   
 // Loading state
   if (isLoading) {

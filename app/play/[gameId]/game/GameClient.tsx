@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react'
 import GameLayout from '../../../components/game/GameLayout'
 import StarsHexa from '../../../components/games/StarsHexa'
 import PenaltyHexa from '../../../components/games/PenaltyHexa 2'
+import FindRed from '../../../components/games/FindRed'
+import LuckyWheel from '../../../components/LuckyWheel'
 
 interface GameClientProps {
   game: any
@@ -35,6 +37,11 @@ export default function GameClient({ game, cfg }: GameClientProps) {
   // Stars Hexa scoreboard: starsRemaining : flipsRemaining
   const [starsLeft, setStarsLeft] = useState(0)
   const [flipsLeft, setFlipsLeft] = useState(0)
+  // Find Red scoreboard: redsFound / targetReds and roundsUsed / totalRounds
+  const [findRedsFound, setFindRedsFound] = useState(0)
+  const [findTargetReds, setFindTargetReds] = useState(0)
+  const [findRoundsUsed, setFindRoundsUsed] = useState(0)
+  const [findTotalRounds, setFindTotalRounds] = useState(0)
 
   const onFlip = async (itemId: string) => {
     if (isTrial) return Promise.reject(new Error('Trial mode does not call backend'))
@@ -62,6 +69,29 @@ export default function GameClient({ game, cfg }: GameClientProps) {
       winEmoji={game.configuration?.starsHexa?.emojis?.win || '⭐️'}
       loseEmoji={game.configuration?.starsHexa?.emojis?.lose || '🍄'}
       onHUDUpdate={(starsRemaining, flipsRemaining) => { setStarsLeft(starsRemaining); setFlipsLeft(flipsRemaining); }}
+    />
+  ) : game.type === 'FIND_RED' ? (
+    <FindRed
+      config={game.configuration?.findRed}
+      platform={game.configuration?.platform}
+      gameId={cfg.meta.gameId}
+      isTrialMode={isTrial}
+      onHUDUpdate={(redsFound, targetReds, roundsUsed, totalRounds) => {
+        setFindRedsFound(redsFound)
+        setFindTargetReds(targetReds)
+        setFindRoundsUsed(roundsUsed)
+        setFindTotalRounds(totalRounds)
+      }}
+    />
+  ) : game.type === 'WHEEL_OF_FORTUNE' ? (
+    <LuckyWheel
+      segments={game.configuration?.wheelOfFortune?.segments || []}
+      onSpin={undefined}
+      onResult={undefined}
+      size={game.configuration?.wheelOfFortune?.size || 280}
+      theme={game.configuration?.wheelOfFortune?.theme || 'default'}
+      spinDuration={game.configuration?.wheelOfFortune?.durationMs || 4500}
+      rotations={4}
     />
   ) : (
     <PenaltyHexa
@@ -105,7 +135,15 @@ return (
         visitorBg: '#C00000FF',
         digitColor: '#FFFFFFFF',
         showLabels: false
-      } : undefined)}
+      } : (game.type === 'FIND_RED' ? {
+        // Map to redsFound / targetReds; we re-use the two-digit display semantics
+        home: findRedsFound,
+        visitor: findTargetReds,
+        homeBg: '#C00000FF',
+        visitorBg: '#C00000FF',
+        digitColor: '#FFFFFFFF',
+        showLabels: false
+      } : undefined))}
     />
   )
 }

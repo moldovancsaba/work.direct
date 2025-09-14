@@ -16,10 +16,10 @@ export interface ColorsPalette {
 }
 
 export interface PlayFlowResolvedConfig {
-  module: 'starsHexa' | 'penaltyShootout'
+  module: 'starsHexa' | 'penaltyShootout' | 'findRed' | 'wheelOfFortune'
   welcome: { title: string; subtitle?: string; ctaLabel?: string; colors?: ColorsPalette }
   rules: { title?: string; items?: string[]; customTexts?: Record<string, string>; colors?: ColorsPalette }
-  game: { component: 'StarsHexa' | 'PenaltyShootout'; config?: Record<string, unknown>; colors?: ColorsPalette; texts?: Record<string, string> }
+  game: { component: 'StarsHexa' | 'PenaltyShootout' | 'FindRed' | 'LuckyWheel'; config?: Record<string, unknown>; colors?: ColorsPalette; texts?: Record<string, string> }
   result: { title?: string; subtitle?: string; ctaLabel?: string; colors?: ColorsPalette }
   platform?: { texts: any; styles: any }
   meta: { gameId: string; ref?: string }
@@ -219,13 +219,106 @@ function toPenaltyConfig(game: Game): PlayFlowResolvedConfig {
   }
 }
 
+function toFindRedConfig(game: Game): PlayFlowResolvedConfig {
+  const g = game as any
+  const raw = g.configuration?.findRed || {}
+  const welcome = {
+    title: g.title || 'Get Shorty',
+    subtitle: g.description || '',
+    ctaLabel: 'Start',
+    colors: { background: raw.colors?.background || '#0B1220' }
+  }
+  const rules = {
+    title: 'Game Rules',
+    items: [
+      `Each round shows ${raw.packSize || 6} cards with ${raw.redsPerPack || 2} red` + ((raw.redsPerPack || 2) > 1 ? 's' : ''),
+      `You have ${raw.selectionsPerRound || 1} pick per round`,
+      `Find ${raw.targetReds || 3} reds in ${raw.totalRounds || 5} rounds to win`
+    ],
+    customTexts: {},
+    colors: welcome.colors
+  }
+  const gameCfg = {
+    component: 'FindRed' as const,
+    config: raw,
+    colors: welcome.colors,
+    texts: { shortyLabel: raw.texts?.shortyLabel || 'Shorty' }
+  }
+  const result = {
+    title: 'Results',
+    subtitle: '',
+    ctaLabel: 'Play Again',
+    colors: welcome.colors
+  }
+  return {
+    module: 'findRed',
+    welcome,
+    rules,
+    game: gameCfg,
+    result,
+    platform: derivePlatform(g),
+    meta: { gameId: g._id?.toString?.() || '' }
+  }
+}
+
+function toWheelConfig(game: Game): PlayFlowResolvedConfig {
+  const g = game as any
+  const raw = g.configuration?.wheelOfFortune || {}
+  const welcome = {
+    title: g.title || 'Wheel of Fortune',
+    subtitle: g.description || '',
+    ctaLabel: 'Spin',
+    colors: { background: '#0B1220' }
+  }
+  const rules = {
+    title: 'Game Rules',
+    items: [ 'Tap Spin and win the landing segment.' ],
+    customTexts: {},
+    colors: welcome.colors
+  }
+  const gameCfg = {
+    component: 'LuckyWheel' as const,
+    config: raw,
+    colors: welcome.colors,
+    texts: {}
+  }
+  const result = {
+    title: 'Results',
+    subtitle: '',
+    ctaLabel: 'Play Again',
+    colors: welcome.colors
+  }
+  return {
+    module: 'wheelOfFortune',
+    welcome,
+    rules,
+    game: gameCfg,
+    result,
+    platform: derivePlatform(g),
+    meta: { gameId: g._id?.toString?.() || '' }
+  }
+}
+
 export async function resolvePlayConfig(game: Game, options?: { ref?: string }): Promise<PlayFlowResolvedConfig> {
   const type = game.type
-  const base = type === 'STARS_HEXA' ? toStarsHexaConfig(game) : toPenaltyConfig(game)
-  // Preserve referral metadata if provided
-  if (options?.ref) {
-    base.meta.ref = options.ref
+  let base: PlayFlowResolvedConfig
+  switch (type) {
+    case 'STARS_HEXA':
+      base = toStarsHexaConfig(game)
+      break
+    case 'PENALTY_SHOOTOUT':
+      base = toPenaltyConfig(game)
+      break
+    case 'FIND_RED':
+      base = toFindRedConfig(game)
+      break
+    case 'WHEEL_OF_FORTUNE':
+      base = toWheelConfig(game)
+      break
+    default:
+      base = toStarsHexaConfig(game)
   }
+  if (options?.ref) base.meta.ref = options.ref
   return base
 }
 

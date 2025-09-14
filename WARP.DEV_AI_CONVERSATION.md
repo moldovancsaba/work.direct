@@ -2,6 +2,8 @@
 
 2025-09-13T12:44:07.090Z — Plan: Housekeeping — bump to v1.18.0; add whitespace to README; synchronize documentation timestamps; add release note; commit and push to main. No code changes. ISO 8601 timestamps with ms enforced.
 2025-09-13T16:27:18.176Z — Plan: Landing page UI tweak — disable scroll and remove margins on Hero/Main for full-screen experience; patch bump and docs sync per protocol; commit and push.
+2025-09-13T18:47:30.559Z — Plan: Admin editor polish — rename Platform Settings → Hero Settings; move Scoreboard Styles under Hero; add inline Cancel/Update action bars between all specified sections; minor version bump and docs sync; commit and push.
+2025-09-13T19:48:48.015Z — Plan: Enforce no-scroll across all play pages; add document-level overflow lock to the Game layout; minor version bump and docs sync; commit and push.
 
 Timestamp: 2025-09-06T16:58:38.000Z
 Author: Agent Mode (AI)

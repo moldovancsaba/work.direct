@@ -16,7 +16,7 @@ interface GameResultData {
   userScore?: number
   opponentScore?: number
   isTrialMode?: boolean
-  gameType: 'STARS_HEXA' | 'PENALTY_SHOOTOUT'
+  gameType: 'STARS_HEXA' | 'PENALTY_SHOOTOUT' | 'FIND_RED' | 'WHEEL_OF_FORTUNE'
   message?: string
 }
 
@@ -86,7 +86,7 @@ export default function GameResultClient({ gameId, initialGameData, participantU
       if (navigator.share) {
         await navigator.share({
           title: game.title || 'Join me in this game!',
-          text: `Check out this ${gameType === 'PENALTY_SHOOTOUT' ? 'penalty shootout' : 'Stars Hexa'} game!`,
+          text: `Check out this ${gameType === 'PENALTY_SHOOTOUT' ? 'penalty shootout' : gameType === 'STARS_HEXA' ? 'Stars Hexa' : gameType === 'FIND_RED' ? 'Get Shorty' : 'Wheel of Fortune'} game!`,
           url: referralUrl
         })
       } else {
@@ -170,6 +170,12 @@ export default function GameResultClient({ gameId, initialGameData, participantU
     if (gameType === 'STARS_HEXA') {
       return won ? 'You found all the stars!' : `You found ${starsFound} out of ${totalStars} stars`
     }
+    if (gameType === 'FIND_RED') {
+      return won ? 'You found Shorty!' : `You found ${starsFound} of ${totalStars} Shorties`
+    }
+    if (gameType === 'WHEEL_OF_FORTUNE') {
+      return won ? 'Winner!' : 'Better luck next spin!'
+    }
     if (gameType === 'PENALTY_SHOOTOUT') {
       const customTexts = game.configuration?.penaltyShootout?.texts
       // Use simple win/loss text without score display
@@ -189,6 +195,18 @@ export default function GameResultClient({ gameId, initialGameData, participantU
         const starsText = starsFound === 1 ? 'star' : 'stars'
         return `Good try! You found ${starsFound} ${starsText} out of ${totalStars}.`
       }
+    }
+
+    if (gameType === 'FIND_RED') {
+      if (won) {
+        return `Great! You found all Shorties!`
+      } else {
+        return `You found ${starsFound} / ${totalStars} Shorties.`
+      }
+    }
+
+    if (gameType === 'WHEEL_OF_FORTUNE') {
+      return won ? 'Congrats! The wheel landed on a winning segment.' : 'No reward this time — try another spin.'
     }
     
     if (gameType === 'PENALTY_SHOOTOUT') {

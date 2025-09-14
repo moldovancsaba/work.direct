@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import Link from 'next/link'
 
 // SimpleTextInput — stable component type (declared at module scope)
 // What: Renders a labeled input/textarea.
@@ -40,12 +41,14 @@ interface PlatformSettingsFormProps {
   styles: any
   onTextsChange: (next: Record<string, any>) => void
   onStylesChange: (next: any) => void
+  mode?: 'create' | 'edit'
+  saving?: boolean
 }
 
 // PlatformSettingsForm — Central texts/styles for 4-page flow
 // What: Provides TEXT_10..46 + hero/main/scoreboard styles
 // Why: Enforces consistent UI across all games; modules only fill the PLAY step.
-export default function PlatformSettingsForm({ texts, styles, onTextsChange, onStylesChange }: PlatformSettingsFormProps) {
+export default function PlatformSettingsForm({ texts, styles, onTextsChange, onStylesChange, mode = 'edit', saving = false }: PlatformSettingsFormProps) {
   const getT = (k: string, fb = '') => texts?.[k] ?? fb
   const setT = (k: string, v: string) => onTextsChange({ ...texts, [k]: v })
 
@@ -138,6 +141,47 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
             <input className="w-full px-3 py-2 border rounded-md" value={getS('hero.titleClass')} onChange={e => setS('hero.titleClass', e.target.value)} placeholder="text-2xl md:text-3xl font-bold text-white" />
           </div>
         </div>
+
+        {/* Scoreboard Styles (moved under Hero Settings, before Landing) */}
+        <div className="mt-6 pt-4 border-t">
+          <h4 className="text-sm font-semibold text-gray-800 mb-2">Scoreboard Styles</h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Home Card BG (CSS)</label>
+              <textarea className="w-full px-3 py-2 border rounded-md min-h-20" value={getS('scoreboard.homeBg')} onChange={e => setS('scoreboard.homeBg', e.target.value)} placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Visitor Card BG (CSS)</label>
+              <textarea className="w-full px-3 py-2 border rounded-md min-h-20" value={getS('scoreboard.visitorBg')} onChange={e => setS('scoreboard.visitorBg', e.target.value)} placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Digit Color (CSS)</label>
+              <textarea className="w-full px-3 py-2 border rounded-md min-h-20" value={getS('scoreboard.digitColor')} onChange={e => setS('scoreboard.digitColor', e.target.value)} placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 items-center">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Show Labels</label>
+              <input type="checkbox" checked={Boolean(getS('scoreboard.showLabels', ''))} onChange={e => setS('scoreboard.showLabels', e.target.checked)} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Home Label</label>
+              <input className="w-full px-3 py-2 border rounded-md" value={getS('scoreboard.homeLabel')} onChange={e => setS('scoreboard.homeLabel', e.target.value)} placeholder="HOME" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Visitor Label</label>
+              <input className="w-full px-3 py-2 border rounded-md" value={getS('scoreboard.visitorLabel')} onChange={e => setS('scoreboard.visitorLabel', e.target.value)} placeholder="VISITOR" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Inline Actions: Hero -> Landing */}
+      <div className="flex items-center justify-between pt-4">
+        <Link href="/admin/games" className="text-gray-600 hover:text-gray-800 transition-colors">Cancel</Link>
+        <button type="submit" disabled={saving} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium">
+          {saving ? (mode === 'create' ? 'Creating...' : 'Saving...') : (mode === 'create' ? 'Create Game' : 'Update Game')}
+        </button>
       </div>
 
       {/* Landing */}
@@ -220,6 +264,14 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
         </div>
       </div>
 
+      {/* Inline Actions: Landing -> Welcome Main */}
+      <div className="flex items-center justify-between pt-4">
+        <Link href="/admin/games" className="text-gray-600 hover:text-gray-800 transition-colors">Cancel</Link>
+        <button type="submit" disabled={saving} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium">
+          {saving ? (mode === 'create' ? 'Creating...' : 'Saving...') : (mode === 'create' ? 'Create Game' : 'Update Game')}
+        </button>
+      </div>
+
       {/* Rules Main */}
       <div className="bg-purple-50 p-4 rounded-lg">
         <h3 className="text-md font-medium text-gray-800 mb-2">Rules Main</h3>
@@ -242,6 +294,14 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
           </div>
           <SimpleTextInput code="NEXT_PLAY_BG" label="CTA Action BG (CSS)" multiline placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} value={getTNew('NEXT_PLAY_BG')} onChange={(v)=> setTNew('NEXT_PLAY_BG', v)} />
         </div>
+      </div>
+
+      {/* Inline Actions: Rules Main -> Result Main */}
+      <div className="flex items-center justify-between pt-4">
+        <Link href="/admin/games" className="text-gray-600 hover:text-gray-800 transition-colors">Cancel</Link>
+        <button type="submit" disabled={saving} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium">
+          {saving ? (mode === 'create' ? 'Creating...' : 'Saving...') : (mode === 'create' ? 'Create Game' : 'Update Game')}
+        </button>
       </div>
 
       {/* Result Main */}
@@ -358,6 +418,14 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
         </div>
       </div>
 
+      {/* Inline Actions: Result Main -> Main Styles */}
+      <div className="flex items-center justify-between pt-4">
+        <Link href="/admin/games" className="text-gray-600 hover:text-gray-800 transition-colors">Cancel</Link>
+        <button type="submit" disabled={saving} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium">
+          {saving ? (mode === 'create' ? 'Creating...' : 'Saving...') : (mode === 'create' ? 'Create Game' : 'Update Game')}
+        </button>
+      </div>
+
       {/* Main Styles */}
       <div className="bg-white p-4 rounded-lg">
         <h3 className="text-md font-medium text-gray-800 mb-2">Main Styles</h3>
@@ -389,6 +457,14 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
         </div>
       </div>
 
+      {/* Inline Actions: Main Styles -> Legal Documents */}
+      <div className="flex items-center justify-between pt-4">
+        <Link href="/admin/games" className="text-gray-600 hover:text-gray-800 transition-colors">Cancel</Link>
+        <button type="submit" disabled={saving} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium">
+          {saving ? (mode === 'create' ? 'Creating...' : 'Saving...') : (mode === 'create' ? 'Create Game' : 'Update Game')}
+        </button>
+      </div>
+
       {/* Legal Documents */}
       <div className="bg-white p-4 rounded-lg">
         <h3 className="text-md font-medium text-gray-800 mb-2">Legal Documents</h3>
@@ -399,39 +475,6 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
           <SimpleTextInput code="PRIVACY_BODY" label="Privacy Policy Body (multiline)" multiline value={getT('PRIVACY_BODY')} onChange={(v)=> setT('PRIVACY_BODY', v)} />
           <SimpleTextInput code="DELETION_TITLE" label="Data Deletion Title" value={getT('DELETION_TITLE')} onChange={(v)=> setT('DELETION_TITLE', v)} />
           <SimpleTextInput code="DELETION_BODY" label="Data Deletion Instructions (multiline)" multiline value={getT('DELETION_BODY')} onChange={(v)=> setT('DELETION_BODY', v)} />
-        </div>
-      </div>
-
-      {/* Scoreboard Styles */}
-      <div className="bg-white p-4 rounded-lg">
-        <h3 className="text-md font-medium text-gray-800 mb-2">Scoreboard Styles</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Home Card BG (CSS)</label>
-            <textarea className="w-full px-3 py-2 border rounded-md min-h-20" value={getS('scoreboard.homeBg')} onChange={e => setS('scoreboard.homeBg', e.target.value)} placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Visitor Card BG (CSS)</label>
-            <textarea className="w-full px-3 py-2 border rounded-md min-h-20" value={getS('scoreboard.visitorBg')} onChange={e => setS('scoreboard.visitorBg', e.target.value)} placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Digit Color (CSS)</label>
-            <textarea className="w-full px-3 py-2 border rounded-md min-h-20" value={getS('scoreboard.digitColor')} onChange={e => setS('scoreboard.digitColor', e.target.value)} placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} />
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 items-center">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Show Labels</label>
-            <input type="checkbox" checked={Boolean(getS('scoreboard.showLabels', ''))} onChange={e => setS('scoreboard.showLabels', e.target.checked)} />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Home Label</label>
-            <input className="w-full px-3 py-2 border rounded-md" value={getS('scoreboard.homeLabel')} onChange={e => setS('scoreboard.homeLabel', e.target.value)} placeholder="HOME" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Visitor Label</label>
-            <input className="w-full px-3 py-2 border rounded-md" value={getS('scoreboard.visitorLabel')} onChange={e => setS('scoreboard.visitorLabel', e.target.value)} placeholder="VISITOR" />
-          </div>
         </div>
       </div>
     </div>

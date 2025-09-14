@@ -147,7 +147,7 @@ export interface GameDescriptionProps {
 // Game Types and Interfaces
 // These define the structure for different game types and their configurations
 
-export type GameType = 'STARS_HEXA' | 'PENALTY_SHOOTOUT';
+export type GameType = 'STARS_HEXA' | 'PENALTY_SHOOTOUT' | 'FIND_RED' | 'WHEEL_OF_FORTUNE';
 
 // Lucky Wheel segment type used by the wheel component
 // What: Defines a segment with label and probability for spin logic
@@ -407,6 +407,41 @@ export interface GameConfiguration {
     colors?: GeneralColors
   }
 
+  // Find Red (Get Shorty) specific configuration
+  // What: Configuration for the "Get Shorty" game where players try to pick red cards.
+  // Why: Adds a simple, repeatable round-based card game with configurable difficulty and colors.
+  findRed?: {
+    // Pack parameters per round
+    packSize: number // X — total cards per round
+    redsPerPack: number // Y — red cards per round (1 ≤ Y ≤ X)
+    selectionsPerRound: number // number of picks allowed per round (1 ≤ selectionsPerRound ≤ X)
+
+    // Win condition
+    targetReds: number // Z — reds to find to win
+    totalRounds: number // W — total rounds in game (1 ≤ Z ≤ W)
+
+    // Presentation
+    theme?: 'default' | 'minimal'
+    texts?: {
+      // Display name for the red item — defaults to "Shorty" per request
+      shortyLabel?: string
+    }
+    colors?: {
+      // Global background (board or container) color
+      background?: string
+      // Foreground color for red (win) face
+      winForeground?: string
+      // Foreground color for neutral (non-red) face
+      neutralForeground?: string
+      // Card back color and border color
+      cardBack?: string
+      cardBorder?: string
+    }
+
+    // Optional default reward to attach on final win (uses existing Rewards system)
+    defaultRewardId?: string
+  }
+
   // Stars Hexa specific configuration
   starsHexa?: {
     hexagons: HexagonCard[]
@@ -550,6 +585,11 @@ export interface GameConfiguration {
     }
   }
   
+  // Wheel of Fortune configuration (optional)
+  // What: Enables standardized 4-page flow usage of the existing LuckyWheel component.
+  // Why: Reinstate wheel with the same Landing/Welcome/Rules/Game/Result workflow.
+  wheelOfFortune?: WheelOfFortuneConfiguration
+
   // General game settings
   allowMultipleAttempts: boolean
   maxAttemptsPerUser: number

@@ -18,6 +18,12 @@ const gameOutcomeSchema = new Schema<GameOutcome>({
     default: null // For Stars Hexa games - which hexagon was revealed
   },
   
+  // Wheel of Fortune specific field - which segment landed
+  segmentId: {
+    type: String,
+    default: null
+  },
+  
   starsFound: {
     type: Number,
     default: 0,

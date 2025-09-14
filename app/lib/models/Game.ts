@@ -153,8 +153,8 @@ const gameSchema = new Schema<Game>({
     type: String,
     required: [true, 'Game type is required'],
     enum: {
-      values: ['STARS_HEXA', 'PENALTY_SHOOTOUT'] as GameType[],
-      message: 'Game type must be: STARS_HEXA, PENALTY_SHOOTOUT'
+      values: ['STARS_HEXA', 'PENALTY_SHOOTOUT', 'FIND_RED', 'WHEEL_OF_FORTUNE'] as GameType[],
+      message: 'Game type must be: STARS_HEXA, PENALTY_SHOOTOUT, FIND_RED, WHEEL_OF_FORTUNE'
     }
   },
   
@@ -357,6 +357,51 @@ const gameSchema = new Schema<Game>({
         failedPenalty: { type: String, default: '#ffffff' }
       }
     },
+    // Find Red (Get Shorty) specific configuration — persisted to ensure traceability of all values
+    // What: Round-based card picking game where the user tries to find red cards.
+    // Why: Extend platform with a simple, fast, highly configurable game.
+    findRed: {
+      packSize: { type: Number, min: [3, 'packSize must be at least 3'], max: [32, 'packSize cannot exceed 32'], default: 6 },
+      redsPerPack: { type: Number, min: [1, 'redsPerPack must be at least 1'], default: 2 },
+      selectionsPerRound: { type: Number, min: [1, 'selectionsPerRound must be at least 1'], default: 1 },
+      targetReds: { type: Number, min: [1, 'targetReds must be at least 1'], default: 3 },
+      totalRounds: { type: Number, min: [1, 'totalRounds must be at least 1'], default: 5 },
+      theme: { type: String, enum: ['default', 'minimal'], default: 'default' },
+      texts: {
+        shortyLabel: { type: String, default: 'Shorty' }
+      },
+      colors: {
+        background: { type: String, default: '#0B1220', match: [/^#([0-9A-Fa-f]{6})$/, 'background must be hex color'] },
+        winForeground: { type: String, default: '#FF1A1A', match: [/^#([0-9A-Fa-f]{6})$/, 'winForeground must be hex color'] },
+        neutralForeground: { type: String, default: '#A0AEC0', match: [/^#([0-9A-Fa-f]{6})$/, 'neutralForeground must be hex color'] },
+        cardBack: { type: String, default: '#1F2937', match: [/^#([0-9A-Fa-f]{6})$/, 'cardBack must be hex color'] },
+        cardBorder: { type: String, default: '#374151', match: [/^#([0-9A-Fa-f]{6})$/, 'cardBorder must be hex color'] }
+      },
+      defaultRewardId: { type: String, default: '' }
+    },
+
+    // Wheel of Fortune configuration — integrates LuckyWheel into standardized flow
+    wheelOfFortune: {
+      segments: {
+        type: [new Schema({
+          id: { type: String, required: [true, 'Wheel segment id is required'] },
+          label: { type: String, required: [true, 'Wheel segment label is required'], trim: true, maxlength: 100 },
+          probability: { type: Number, min: [0, 'Probability cannot be negative'], max: [100, 'Probability cannot exceed 100'], default: 0 },
+          color: { type: String, match: [/^#[0-9A-Fa-f]{6}$/, 'Color must be a valid hex color'], default: '#3B82F6' },
+          backgroundColor: { type: String, match: [/^#[0-9A-Fa-f]{6}$/, 'Background must be a valid hex color'], default: '#3B82F6' },
+          isActive: { type: Boolean, default: true }
+        }, { _id: false })],
+        default: []
+      },
+      spins: { type: Number, default: 8 },
+      spinsPerGame: { type: Number, default: 1 },
+      durationMs: { type: Number, default: 4500 },
+      pointerAt: { type: String, enum: ['top', 'right', 'bottom', 'left'], default: 'top' },
+      size: { type: Number, default: 280 },
+      theme: { type: String, enum: ['default', 'colorful', 'minimal'], default: 'default' },
+      allowImmediateReplay: { type: Boolean, default: false }
+    },
+
     // Stars Hexa specific configuration
     starsHexa: {
       hexagons: {
@@ -750,6 +795,62 @@ gameSchema.pre('save', function(next) {
     ;(this as any).generateShareLink()
   }
   
+  // Validate Find Red configuration for FIND_RED games
+  if (this.type === 'FIND_RED') {
+    const cfg = this.configuration.findRed as any
+    if (!cfg) {
+      return next(new Error('Find Red configuration is required'))
+    }
+    // Reds per pack and selections constraints
+    if (typeof cfg.packSize !== 'number' || cfg.packSize < 3 || cfg.packSize > 32) {
+      return next(new Error('Find Red packSize must be between 3 and 32'))
+    }
+    if (typeof cfg.redsPerPack !== 'number' || cfg.redsPerPack < 1 || cfg.redsPerPack > cfg.packSize) {
+      return next(new Error('Find Red redsPerPack must be between 1 and packSize'))
+    }
+    if (typeof cfg.selectionsPerRound !== 'number' || cfg.selectionsPerRound < 1 || cfg.selectionsPerRound > cfg.packSize) {
+      return next(new Error('Find Red selectionsPerRound must be between 1 and packSize'))
+    }
+    if (typeof cfg.targetReds !== 'number' || cfg.targetReds < 1) {
+      return next(new Error('Find Red targetReds must be at least 1'))
+    }
+    if (typeof cfg.totalRounds !== 'number' || cfg.totalRounds < 1) {
+      return next(new Error('Find Red totalRounds must be at least 1'))
+    }
+    if (cfg.targetReds > cfg.totalRounds) {
+      return next(new Error('Find Red targetReds must be less than or equal to totalRounds'))
+    }
+    // Backfill defaults for texts/colors in case admin omitted them
+    const ensure = (this.configuration as any)
+    ensure.findRed = ensure.findRed || {}
+    ensure.findRed.texts = {
+      shortyLabel: cfg?.texts?.shortyLabel || 'Shorty'
+    }
+    ensure.findRed.colors = {
+      background: cfg?.colors?.background || '#0B1220',
+      winForeground: cfg?.colors?.winForeground || '#FF1A1A',
+      neutralForeground: cfg?.colors?.neutralForeground || '#A0AEC0',
+      cardBack: cfg?.colors?.cardBack || '#1F2937',
+      cardBorder: cfg?.colors?.cardBorder || '#374151'
+    }
+  }
+
+  // Validate Wheel of Fortune configuration
+  if (this.type === 'WHEEL_OF_FORTUNE') {
+    const cfg = (this.configuration as any).wheelOfFortune
+    if (!cfg || !Array.isArray(cfg.segments) || cfg.segments.length < 2) {
+      return next(new Error('Wheel of Fortune must have at least 2 segments'))
+    }
+    // Normalize probabilities: if all zeros or undefined, spread evenly
+    const probs = cfg.segments.map((s: any) => Number(s.probability || 0))
+    const sum = probs.reduce((a: number, b: number) => a + b, 0)
+    if (sum <= 0) {
+      const even = Math.round((100 / cfg.segments.length) * 1000) / 1000
+      cfg.segments = cfg.segments.map((s: any) => ({ ...s, probability: even }))
+      ;(this.configuration as any).wheelOfFortune = cfg
+    }
+  }
+
   // Validate Stars Hexa configuration for Stars Hexa games
   if (this.type === 'STARS_HEXA') {
     if (!this.configuration.starsHexa || !this.configuration.starsHexa.hexagons || this.configuration.starsHexa.hexagons.length !== 7) {
