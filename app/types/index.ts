@@ -162,7 +162,7 @@ export interface GameDescriptionProps {
 // Game Types and Interfaces
 // These define the structure for different game types and their configurations
 
-export type GameType = 'STARS_HEXA' | 'PENALTY_SHOOTOUT' | 'FIND_RED' | 'WHEEL_OF_FORTUNE';
+export type GameType = 'STARS_HEXA' | 'PENALTY_SHOOTOUT' | 'FIND_RED' | 'WHEEL_OF_FORTUNE' | 'QUIZZ';
 
 // Lucky Wheel segment type used by the wheel component
 // What: Defines a segment with label and probability for spin logic
@@ -409,6 +409,34 @@ export interface PlatformStyles {
   }
 }
 
+export interface QuizzAnswer {
+  text: string
+  isCorrect: boolean
+}
+
+export interface QuizzQuestion {
+  id: string
+  text: string
+  answers: [QuizzAnswer, QuizzAnswer, QuizzAnswer] // exactly three answers
+}
+
+export interface QuizzConfiguration {
+  // Map integration
+  mapName?: string // HexMap name reference (publicly resolvable)
+  activeCoords?: HexCoord[] // Optional embedded coords (fallback if no mapName)
+  // Gameplay
+  rounds: number // Y rounds (questions asked)
+  targetCorrect: number // X correct answers needed to win
+  questions: QuizzQuestion[] // Infinite possible questions (admin-managed)
+  theme?: 'default' | 'minimal'
+  texts?: {
+    questionCTA?: string
+    submitAnswer?: string
+    correctFeedback?: string
+    wrongFeedback?: string
+  }
+}
+
 export interface GameConfiguration {
   // Central platform configuration
   platform?: {
@@ -604,6 +632,9 @@ export interface GameConfiguration {
   // What: Enables standardized 4-page flow usage of the existing LuckyWheel component.
   // Why: Reinstate wheel with the same Landing/Welcome/Rules/Game/Result workflow.
   wheelOfFortune?: WheelOfFortuneConfiguration
+
+  // Quizz configuration (hexamap-based quiz)
+  quizz?: QuizzConfiguration
 
   // General game settings
   allowMultipleAttempts: boolean

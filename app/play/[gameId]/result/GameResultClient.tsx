@@ -16,7 +16,7 @@ interface GameResultData {
   userScore?: number
   opponentScore?: number
   isTrialMode?: boolean
-  gameType: 'STARS_HEXA' | 'PENALTY_SHOOTOUT' | 'FIND_RED' | 'WHEEL_OF_FORTUNE'
+  gameType: 'STARS_HEXA' | 'PENALTY_SHOOTOUT' | 'FIND_RED' | 'WHEEL_OF_FORTUNE' | 'QUIZZ'
   message?: string
 }
 
@@ -175,6 +175,9 @@ export default function GameResultClient({ gameId, initialGameData, participantU
     }
     if (gameType === 'WHEEL_OF_FORTUNE') {
       return won ? 'Winner!' : 'Better luck next spin!'
+    }
+    if (gameType === 'QUIZZ') {
+      return won ? 'Quiz Winner!' : 'Quiz over — try again!'
     }
     if (gameType === 'PENALTY_SHOOTOUT') {
       const customTexts = game.configuration?.penaltyShootout?.texts

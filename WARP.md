@@ -249,8 +249,8 @@ const schema = new Schema({
 
 ---
 
-**Current Version**: 1.26.0  
-**Last Updated**: 2025-09-15T16:28:12.000Z
+**Current Version**: 1.27.0  
+**Last Updated**: 2025-09-15T17:12:04.000Z
 **Maintainer**: AI Development Team
 
 ## Important Notes for WARP Instances

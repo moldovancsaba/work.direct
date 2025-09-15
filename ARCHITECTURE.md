@@ -1,6 +1,6 @@
 # ARCHITECTURE.md — PlayMass
 
-Last Updated: 2025-09-15T11:11:36.000Z
+Last Updated: 2025-09-15T17:12:04.000Z
 
 ## Overview
 PlayMass is a Next.js (App Router) application with MongoDB/Mongoose persistence and a modular game system. This document describes current system components and their roles, dependencies, and status.
@@ -35,7 +35,12 @@ PlayMass is a Next.js (App Router) application with MongoDB/Mongoose persistence
 
 ### Game Engine
 - Role: Provide different game types with centralized platform configuration
-- Status: Active; Stars Hexa, Penalty Shootout; Wheel component prepared
+- Status: Active; Stars Hexa, Penalty Shootout, Quizz; Wheel component prepared
+
+### HexMap System
+- Role: Provide reusable axial coordinates for hex-based games
+- Dependencies: HexMap model (MongoDB), admin creator (/admin/hexacreator), public API /api/maps/[name]
+- Status: Active; referenced by Quizz (optional mapName) and future hex games
 
 ## Configuration
 - Required environment variables:

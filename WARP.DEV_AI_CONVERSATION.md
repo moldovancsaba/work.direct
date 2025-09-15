@@ -3,6 +3,10 @@
 2025-09-15T15:54:13.000Z — Plan: Hexa Creator (Admin) initial implementation
 
 2025-09-15T16:28:12.000Z — Delivery: Hexa Creator, hexmaps API/model, geometry refactor, warnings removed
+
+2025-09-15T17:12:04.000Z — Plan: Finalize and release QUIZZ (Hexamap Quiz)
+- Tasks: Version bump (minor), docs sync (README, ROADMAP, TASKLIST, RELEASE_NOTES, ARCHITECTURE, LEARNINGS, WARP.md), commit, push, deploy
+- Compliance: ISO 8601 timestamps with milliseconds (UTC), no tests, reuse-before-creation, no breadcrumbs
 - Added /admin/hexacreator page (infinite honeycomb, axial labels, CRUD)
 - Implemented /api/admin/hexmaps (list/create) and /api/admin/hexmaps/[id] (read/update/delete-soft)
 - Created HexMap model; removed duplicate index definition on name to avoid Mongoose warnings

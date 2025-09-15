@@ -219,6 +219,38 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // QUIZZ defaults and validation
+    if (type === 'QUIZZ') {
+      const cfg = processedConfiguration.quizz || {}
+      const rounds = Number(cfg.rounds ?? 5)
+      const targetCorrect = Number(cfg.targetCorrect ?? 3)
+      const questions = Array.isArray(cfg.questions) ? cfg.questions : []
+      // Normalize questions to ensure exactly 3 answers each with isCorrect flag
+      const normQuestions = questions.map((q: any, idx: number) => ({
+        id: q?.id || `q-${idx + 1}`,
+        text: String(q?.text || '').slice(0,300),
+        answers: (Array.isArray(q?.answers) ? q.answers : []).slice(0,3).map((a: any) => ({
+          text: String(a?.text || '').slice(0,200),
+          isCorrect: !!a?.isCorrect
+        }))
+      })).filter((q: any) => q.text && Array.isArray(q.answers) && q.answers.length === 3)
+
+      processedConfiguration.quizz = {
+        mapName: cfg.mapName || '',
+        activeCoords: Array.isArray(cfg.activeCoords) ? cfg.activeCoords : [],
+        rounds,
+        targetCorrect,
+        theme: cfg.theme || 'default',
+        texts: {
+          questionCTA: cfg?.texts?.questionCTA || '',
+          submitAnswer: cfg?.texts?.submitAnswer || 'Submit',
+          correctFeedback: cfg?.texts?.correctFeedback || 'Correct!',
+          wrongFeedback: cfg?.texts?.wrongFeedback || 'Try again'
+        },
+        questions: normQuestions
+      }
+    }
+
     // Ensure platform container exists for 4-page flow (texts/styles)
     processedConfiguration.platform = processedConfiguration.platform || { texts: {}, styles: {} }
 

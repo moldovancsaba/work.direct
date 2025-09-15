@@ -567,6 +567,41 @@ const gameSchema = new Schema<Game>({
         failedPenalty: { type: String, default: '#ffffff' }
       }
     },
+
+    // Quizz (hexamap-based quiz) configuration
+    quizz: {
+      mapName: { type: String, default: '' },
+      activeCoords: {
+        type: [new Schema({ q: { type: Number, required: true }, r: { type: Number, required: true } }, { _id: false })],
+        default: []
+      },
+      rounds: { type: Number, min: [1, 'rounds must be at least 1'], default: 5 },
+      targetCorrect: { type: Number, min: [1, 'targetCorrect must be at least 1'], default: 3 },
+      theme: { type: String, enum: ['default', 'minimal'], default: 'default' },
+      texts: {
+        questionCTA: { type: String, default: '' },
+        submitAnswer: { type: String, default: 'Submit' },
+        correctFeedback: { type: String, default: 'Correct!' },
+        wrongFeedback: { type: String, default: 'Try again' }
+      },
+      questions: {
+        type: [new Schema({
+          id: { type: String, required: [true, 'Question id is required'] },
+          text: { type: String, required: [true, 'Question text is required'], trim: true, maxlength: 300 },
+          answers: {
+            type: [new Schema({
+              text: { type: String, required: true, trim: true, maxlength: 200 },
+              isCorrect: { type: Boolean, default: false }
+            }, { _id: false })],
+            validate: {
+              validator: function(v: any[]) { return Array.isArray(v) && v.length === 3 },
+              message: 'Exactly 3 answers are required'
+            }
+          }
+        }, { _id: false })],
+        default: []
+      }
+    },
     
     // General game settings applicable to all game types
     allowMultipleAttempts: {
