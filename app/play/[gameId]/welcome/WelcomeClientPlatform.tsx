@@ -123,23 +123,14 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
   // Facebook login handler using JS SDK popup
   const handleFacebookLogin = async () => {
     setFbError(null)
-    // Fallback to legacy redirect flow when SDK not ready or App ID missing
-    const fallbackRedirect = () => {
-      try { setFbLoading(true) } catch {}
-      window.location.href = '/api/auth/facebook/start'
-    }
-
     if (!hasAppId) {
-      // If NEXT_PUBLIC_FACEBOOK_APP_ID missing at build-time, use server redirect
-      fallbackRedirect()
+      setFbError('Facebook App ID is not configured for this build.')
       return
     }
     if (!window.FB) {
-      // SDK not yet ready — fallback to server redirect flow
-      fallbackRedirect()
+      setFbError('Facebook SDK is not ready. Please try again shortly.')
       return
     }
-
     setFbLoading(true)
     try {
       // FB.login presents the popup; request minimal scope for name+email
@@ -163,9 +154,7 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
               onNext(`/play/${gameId}/rules`)
               return
             }
-            setFbError(data?.error || 'Facebook login failed. Please try the legacy login flow.')
-            // Fall back to server redirect if SDK flow did not yield a valid session
-            fallbackRedirect()
+            setFbError(data?.error || 'Facebook login failed. Please try again.')
           } else if (response && response.status === 'not_authorized') {
             setFbError('Facebook login was not authorized.')
           } else {
@@ -173,17 +162,15 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
             setFbError('Facebook login was cancelled.')
           }
         } catch (e) {
-          setFbError('Unexpected error during Facebook login. Redirecting to legacy flow...')
-          fallbackRedirect()
+          setFbError('Unexpected error during Facebook login. Please try again.')
         } finally {
           setFbLoading(false)
         }
       }, { scope: 'public_profile,email', return_scopes: true })
     } catch (e) {
-      console.error('FB.login initiation error:', e)
-      setFbError('Unable to initiate Facebook login. Redirecting to legacy flow...')
-      fallbackRedirect()
       setFbLoading(false)
+      console.error('FB.login initiation error:', e)
+      setFbError('Unable to initiate Facebook login. Please check SDK readiness and App ID.')
     }
   }
 
@@ -234,7 +221,7 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
           digitColor: styles?.scoreboard?.digitColor || '#FFFFFFFF'
         }}
       />
-      <MainBlock backgroundClass={mainBg}>
+      <MainBlock backgroundCss={mainBg}>
         {description && (
           <p
             className={(styles?.main?.pClass || 'text-base mb-4') + ' text-center'}
@@ -304,8 +291,11 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
           </div>
           </div>
         </div>
-        <FooterLinks gameId={gameId} />
       </MainBlock>
+      {/* Footer links pinned to bottom */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-full">
+        <FooterLinks gameId={gameId} />
+      </div>
     </div>
   )
 }

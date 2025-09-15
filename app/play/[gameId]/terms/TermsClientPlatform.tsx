@@ -11,13 +11,16 @@ export default function TermsClientPlatform({ gameId, texts, styles }: { gameId:
   const body = texts?.TERMS_BODY || ''
   return (
     <div className="min-h-screen w-full" style={{ backgroundColor: '#000000FF', color: '#FFFFFFFF', fontFamily: '"Noto Sans", sans-serif' }}>
-      <HeroBlock backgroundClass={heroBg} title={title} />
-      <MainBlock backgroundClass={mainBg}>
+      <HeroBlock backgroundCss={heroBg} title={title} />
+      <MainBlock backgroundCss={mainBg}>
         <div className={styles?.main?.pClass || 'text-base'} style={{ whiteSpace: 'pre-wrap' }}>
           {body}
         </div>
-        <FooterLinks gameId={gameId} />
       </MainBlock>
+      {/* Footer links pinned to bottom */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-full">
+        <FooterLinks gameId={gameId} />
+      </div>
     </div>
   )
 }

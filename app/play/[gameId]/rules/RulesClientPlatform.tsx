@@ -55,7 +55,7 @@ export default function RulesClientPlatform({ gameId, texts, styles, refCode }: 
           digitColor: styles?.scoreboard?.digitColor || '#FFFFFFFF'
         }}
       />
-      <MainBlock backgroundClass={mainBg}>
+      <MainBlock backgroundCss={mainBg}>
         <div className="w-full h-full flex justify-center">
           <div className="h-full w-[80vw] min-w-[80vw] max-w-none space-y-4">
           <h2 className={styles?.main?.h2Class || 'text-xl font-semibold'}>{texts?.TEXT_21 || 'Rules'}</h2>
@@ -87,8 +87,11 @@ export default function RulesClientPlatform({ gameId, texts, styles, refCode }: 
           </div>
           </div>
         </div>
-        <FooterLinks gameId={gameId} />
       </MainBlock>
+      {/* Footer links pinned to bottom */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-full">
+        <FooterLinks gameId={gameId} />
+      </div>
     </div>
   )
 }

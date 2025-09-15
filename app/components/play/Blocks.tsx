@@ -67,15 +67,17 @@ function HeroBlockInner({ backgroundClass, backgroundCss, title, scoreboard, isL
 export const HeroBlock = React.memo(HeroBlockInner)
 HeroBlock.displayName = 'HeroBlock'
 
-function MainBlockInner({ backgroundClass, children, isLanding = false, isGame = false }: { backgroundClass?: string; children: React.ReactNode; isLanding?: boolean; isGame?: boolean }) {
+function MainBlockInner({ backgroundCss, children, isLanding = false, isGame = false }: { backgroundCss?: string; children: React.ReactNode; isLanding?: boolean; isGame?: boolean }) {
+  const bg = extractBackgroundValue(backgroundCss)
   return (
     <div
-      className={`w-full ${backgroundClass || ''}`}
+      className={`w-full`}
       style={{
         width: '100vw',
         height: isLanding ? '80vh' : '76vh',
         marginBottom: isLanding ? '0' : '2vh',
-        backgroundColor: '#444444FF',
+        background: bg || undefined,
+        backgroundColor: bg ? undefined : '#444444FF',
         color: '#FFFFFFFF',
         fontFamily: '"Noto Sans", sans-serif',
         padding: (isLanding || isGame) ? '0' : '24px',
