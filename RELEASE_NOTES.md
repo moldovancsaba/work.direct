@@ -1,9 +1,17 @@
 # 📝 RELEASE_NOTES.md - PlayMass
 
-**Current Version**: 1.25.0
-**Last Updated**: 2025-09-15T12:45:05.000Z
+**Current Version**: 1.26.0
+**Last Updated**: 2025-09-15T16:28:12.000Z
 
 ## 🔹 Version History
+
+### [v1.26.0] — 2025-09-15T16:28:12.000Z
+- Feature: Hexa Map Creator admin page at /admin/hexacreator with infinite honeycomb grid (Penalty engine), axial q,r labels, selection ring (radius 4), and full CRUD
+- API: Admin hexmaps endpoints — GET/POST /api/admin/hexmaps, GET/PUT/DELETE /api/admin/hexmaps/[id] (soft delete by default)
+- Model: HexMap with unique name, coords[], radius=4, hexCount (computed), tags[], isActive; text index for name,tags search
+- Refactor: Shared hex geometry utilities (axialToPixel, rotatePoint, hexVertices, hexDistance) and PenaltyHexa switched to shared module
+- Fix: Next.js App Router param typing for admin hexmaps/[id]; add StarsHexa onRoundUpdate prop to satisfy GameClient usage
+- Chore: Remove duplicate Mongoose index definition to eliminate warnings
 
 ### [v1.25.0] — 2025-09-15T12:45:05.000Z
 - UI: Remove duplicate legal footers on play pages; keep a single footer pinned to the bottom of the screen

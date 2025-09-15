@@ -39,6 +39,12 @@ export default function AdminLayout({
       href: '/admin/settings',
       icon: '⚙️',
       current: pathname.startsWith('/admin/settings')
+    },
+    {
+      name: 'Hexa Creator',
+      href: '/admin/hexacreator',
+      icon: '🧩',
+      current: pathname.startsWith('/admin/hexacreator')
     }
   ]
 

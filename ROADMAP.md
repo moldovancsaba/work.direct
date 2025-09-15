@@ -1,10 +1,21 @@
 # ROADMAP.md — PlayMass
 
-Last Updated: 2025-09-15T12:45:05.000Z
+Last Updated: 2025-09-15T16:28:12.000Z
 - Forward-looking plan for modular game architecture and Stars Hexa refactor within PlayMass.
 - Priorities and dependencies are explicitly stated to enable parallelization where safe.
 
 Q3 2025 — Modular Game System Rollout
+
+Milestone: Hexa Creator (Admin)
+- Priority: CRITICAL
+- Target: 2025-09-16T18:00:00.000Z
+- Dependencies: Admin Auth (MVP), MongoDB
+- Deliverables:
+  - Admin page /admin/hexacreator with infinite honeycomb grid (Penalty engine)
+  - Map CRUD via /api/admin/hexmaps: create, list, update, delete (soft)
+  - HexMap model with unique name, coords[], radius=4, tags[], hexCount
+  - Unique names (e.g., FLOWER, 7cloud, 7river), radius ring constraint (≤4)
+  - Search by name/tag in editor (name substring, tag filter)
 
 Milestone: Core Module System (Registry + Config Resolver)
 - Priority: CRITICAL

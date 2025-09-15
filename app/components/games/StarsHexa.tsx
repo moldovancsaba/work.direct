@@ -21,9 +21,7 @@ interface StarsHexaProps {
   loseEmoji?: string
   // HUD updater for parent to show stars remaining : flips remaining in hero scoreboard
   onHUDUpdate?: (starsRemaining: number, flipsRemaining: number) => void
-  // Round updater for parent to show current round (left) and total rounds (right) in the hero scoreboard
-  // WHAT: Expose currentRound/totalRounds to the parent layout (GameClient) so the header scoreboard can reflect round progression.
-  // WHY: Product requirement — in Hexa games, the scoreboard must display the actual round on the left and all rounds on the right.
+  // Optional round reporting to parent (currentRound, totalRounds)
   onRoundUpdate?: (currentRound: number, totalRounds: number) => void
 }
 
@@ -153,7 +151,8 @@ export default function StarsHexa({
   referralUuid,
   winEmoji = '⭐️',
   loseEmoji = '🍄',
-  onHUDUpdate
+  onHUDUpdate,
+  onRoundUpdate
 }: StarsHexaProps) {
   const router = useRouter()
   const params = useParams()
@@ -161,16 +160,6 @@ export default function StarsHexa({
   // Configuration values
   const flipsPerRound = maxFlipsPerAttempt || maxFlipsPerRound
   const totalRounds = attemptsRemaining || maxRounds
-  
-  // Inform parent of initial round/total and on any change
-  useEffect(() => {
-    // Guard: only call when callback is provided
-    if (typeof onRoundUpdate === 'function') {
-      onRoundUpdate(gameState.currentRound, totalRounds || 0)
-    }
-    // Justification: This runs on mount (after INITIALIZE_GAME) and whenever the current round changes,
-    // enabling the header scoreboard to show "currentRound : totalRounds" as requested.
-  }, [gameState.currentRound, totalRounds, onRoundUpdate])
   
   // Optimized game state with useReducer for batched updates
   const [gameState, dispatch] = useReducer(gameReducer, {
@@ -182,6 +171,13 @@ export default function StarsHexa({
     isGameComplete: false,
     gameResult: null
   })
+  
+  // Inform parent of initial round/total and on any change
+  useEffect(() => {
+    if (typeof onRoundUpdate === 'function') {
+      onRoundUpdate(gameState.currentRound, totalRounds || 0)
+    }
+  }, [gameState.currentRound, totalRounds, onRoundUpdate])
   
   // Layout state for hexagon positioning
   const stageRef = useRef<HTMLDivElement>(null)

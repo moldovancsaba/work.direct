@@ -1,6 +1,6 @@
-1.25.0
+1.26.0
 
-**Last Updated**: 2025-09-15T12:45:05.000Z
+**Last Updated**: 2025-09-15T16:28:12.000Z
 
 ## 🔹 Priority Task Queue
 
@@ -70,6 +70,15 @@
   - ✅ Update type definitions and maintain backward compatibility
 
 ### 🚧 In Progress
+
+- Hexa Creator (Admin) — Owner: AI Developer — Expected: 2025-09-16T18:00:00.000Z — Priority: CRITICAL
+  - Build shared hex geometry utilities (Penalty-compatible) for reuse
+  - Create HexMap model: name (unique), coords[], radius=4, hexCount, tags[], isActive
+  - Admin API: /api/admin/hexmaps (GET list+search, POST create)
+  - Admin API: /api/admin/hexmaps/[id] (GET, PUT, DELETE-soft)
+  - Admin UI: /admin/hexacreator with infinite grid, q,r labels, click toggles (#44AA44 → #44AAAA)
+  - Map CRUD in UI: save, load, update, delete, clear
+  - Sync versions and governance docs; ISO timestamps with ms (UTC)
 
 - Basic Admin Login Integration — Owner: AI Developer — Expected: 2025-09-10T18:00:00.000Z — Priority: CRITICAL
   - Implement MVP auth: /api/admin/login (POST/DELETE), /api/admin/auth (GET)
