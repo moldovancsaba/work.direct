@@ -28,6 +28,7 @@ export interface GameLayoutProps {
   theme?: 'default' | 'purple' | 'blue' | 'colorful'
   backgroundGradient?: string
   containerClassName?: string
+  heroBackgroundCss?: string
   
   // Penalty scoreboard (optional)
   penaltyScore?: { home: number; visitor: number; homeBg?: string; visitorBg?: string; digitColor?: string; showLabels?: boolean; homeLabel?: string; visitorLabel?: string }
@@ -69,6 +70,7 @@ export default function GameLayout({
   theme = 'default',
   backgroundGradient,
   containerClassName,
+  heroBackgroundCss,
   penaltyScore,
   isLoading = false,
   isGameComplete = false,
@@ -112,6 +114,7 @@ export default function GameLayout({
     >
 {/* HERO (18%) */}
 <HeroBlock
+        backgroundCss={heroBackgroundCss}
         title={penaltyScore ? undefined : `${titleIcon ? `${titleIcon} ` : ''}${title}`}
         {...(penaltyScore ? { scoreboard: {
           home: penaltyScore.home,

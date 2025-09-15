@@ -1,9 +1,18 @@
 # 📝 RELEASE_NOTES.md - PlayMass
 
-**Current Version**: 1.22.0
-**Last Updated**: 2025-09-14T16:12:23.000Z
+**Current Version**: 1.23.0
+**Last Updated**: 2025-09-15T10:36:24.000Z
 
 ## 🔹 Version History
+
+### [v1.23.0] — 2025-09-15T10:36:24.000Z
+- Changed: UI labels "Stars Hexa" → "Hexa" (internal id STARS_HEXA preserved)
+- Added: Consistent "Game Settings & Configuration" subheading across editors
+- Improved: Edit save workflow keeps you on the page and shows ISO timestamp
+- Fixed: Hero Background (CSS) now applies to Hero across Landing/Welcome/Rules/Game/Result
+- Improved: "Continue with Facebook" aligned next to primary Next button with identical size
+- Fixed: INVITE_REFERRAL now shares/copies a referral link using participant uuid instead of navigating back
+- Docs: Updated metadata and README keywords; version/timestamps synchronized (ISO 8601 with ms UTC)
 
 ### [v1.22.0] — 2025-09-14T16:12:23.000Z
 - Admin: Fixed login route and auth hook import; /admin/login now resolves correctly

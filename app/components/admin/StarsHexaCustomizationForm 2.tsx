@@ -55,7 +55,7 @@ interface StarsHexaCustomizationFormProps {
 }
 
 const defaultTexts: StarsHexaTexts = {
-  welcomeTitle: 'Welcome to Stars Hexa',
+  welcomeTitle: 'Welcome to Hexa',
   welcomeSubtitle: 'Find all the hidden stars to win!',
   ctaStart: 'Start',
   ctaGuest: 'Try Without Registration',
@@ -349,7 +349,7 @@ export default function StarsHexaCustomizationForm({
             <h4 className="text-md font-medium text-gray-800 mb-2">🎯 Welcome</h4>
             <p className="text-sm text-gray-600 mb-4">Texts shown on the Welcome screen</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {renderField('Welcome Title', 'welcomeTitle', 'Welcome to Stars Hexa')}
+              {renderField('Welcome Title', 'welcomeTitle', 'Welcome to Hexa')}
               {renderField('Welcome Subtitle', 'welcomeSubtitle', 'Find all the hidden stars to win!')}
               {renderField('Start Button', 'ctaStart', 'Start')}
               {renderField('Guest Button', 'ctaGuest', 'Try Without Registration')}

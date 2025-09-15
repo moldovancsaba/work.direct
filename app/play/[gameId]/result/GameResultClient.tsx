@@ -86,7 +86,7 @@ export default function GameResultClient({ gameId, initialGameData, participantU
       if (navigator.share) {
         await navigator.share({
           title: game.title || 'Join me in this game!',
-          text: `Check out this ${gameType === 'PENALTY_SHOOTOUT' ? 'penalty shootout' : gameType === 'STARS_HEXA' ? 'Stars Hexa' : gameType === 'FIND_RED' ? 'Get Shorty' : 'Wheel of Fortune'} game!`,
+          text: `Check out this ${gameType === 'PENALTY_SHOOTOUT' ? 'penalty shootout' : gameType === 'STARS_HEXA' ? 'Hexa' : gameType === 'FIND_RED' ? 'Get Shorty' : 'Wheel of Fortune'} game!`,
           url: referralUrl
         })
       } else {

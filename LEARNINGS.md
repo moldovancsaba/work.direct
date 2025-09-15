@@ -2,8 +2,8 @@
 
 This document captures implementation insights, technical decisions, and solutions to issues encountered during PlayMass development.
 
-**Current Version**: 1.22.0
-**Last Updated**: 2025-09-14T16:12:23.000Z
+**Current Version**: 1.23.0
+**Last Updated**: 2025-09-15T10:36:24.000Z
 
 ### Duplicate key on shareLinks.id (E11000) — Fixed in v1.22.0
 - What: Creating any game failed with E11000 due to a unique index on subdocument array field shareLinks.id across the collection.

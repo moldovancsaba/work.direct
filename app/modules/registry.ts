@@ -50,7 +50,7 @@ const wheelDefault: GameConfig = {
 export const REGISTRY: Record<GameType, GameModule> = {
   STARS_HEXA: {
     id: 'STARS_HEXA',
-    name: 'Stars Hexa',
+    name: 'Hexa',
     defaultConfig: { id: 'STARS_HEXA', name: 'Stars Hexa', version: '1.0.0', configuration: {} }
   },
   PENALTY_SHOOTOUT: {

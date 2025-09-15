@@ -59,7 +59,7 @@ export default function LandingClientPlatform({ gameId, texts, styles, refCode }
 
   return (
     <div className="fixed inset-0 w-screen h-screen overflow-hidden" style={{ backgroundColor: '#000000FF', color: '#FFFFFFFF', fontFamily: '"Noto Sans", sans-serif' }}>
-      <HeroBlock backgroundClass={heroBg} title={title} scoreboard={{ home: 0, visitor: 0, homeBg: styles?.scoreboard?.homeBg || '#C00000FF', digitColor: styles?.scoreboard?.digitColor || '#FFFFFFFF' }} isLanding={true} />
+      <HeroBlock backgroundCss={heroBg} title={title} scoreboard={{ home: 0, visitor: 0, homeBg: styles?.scoreboard?.homeBg || '#C00000FF', digitColor: styles?.scoreboard?.digitColor || '#FFFFFFFF' }} isLanding={true} />
       <MainBlock backgroundClass={mainBg} isLanding={true}>
         <div className="relative w-full h-full">
           {/* Background cover image */}

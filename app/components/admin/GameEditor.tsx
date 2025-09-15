@@ -44,6 +44,11 @@ export default function GameEditor({ mode, gameId, initialGameType, hideTypeSele
   const [loading, setLoading] = useState(mode === 'edit')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Saved-state indicators for staying on page after update
+  // What: Show a non-intrusive success banner with ISO 8601 timestamp after saving.
+  // Why: Allow progressive edits without being redirected back to list.
+  const [saveSuccess, setSaveSuccess] = useState(false)
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null)
 
   // Game meta
   const [title, setTitle] = useState('')
@@ -388,7 +393,13 @@ const [platformStyles, setPlatformStyles] = useState<Record<string, any>>({})
         })
         const data = await res.json()
         if (!res.ok) throw new Error(data.error || 'Failed to update game')
-        router.push('/admin/games')
+        // Stay on the edit page and show a success indicator.
+        // What: Do not navigate away after saving.
+        // Why: Allow incremental saving without losing context.
+        setSaveSuccess(true)
+        setLastSavedAt(new Date().toISOString())
+        // Auto-hide the success message after a short delay
+        setTimeout(() => setSaveSuccess(false), 3000)
         return
       }
 
@@ -408,7 +419,7 @@ const [platformStyles, setPlatformStyles] = useState<Record<string, any>>({})
     }
   }
 
-  const gameTypeName = gameType === 'STARS_HEXA' ? 'Stars Hexa' : gameType === 'PENALTY_SHOOTOUT' ? 'Penalty Shootout' : 'Game'
+  const gameTypeName = gameType === 'STARS_HEXA' ? 'Hexa' : gameType === 'PENALTY_SHOOTOUT' ? 'Penalty Shootout' : 'Game' // UI label only; keep internal id 'STARS_HEXA'
 
   if (loading) {
     return (
@@ -440,6 +451,12 @@ const [platformStyles, setPlatformStyles] = useState<Record<string, any>>({})
             <p className="text-red-700 mt-1">{error}</p>
           </div>
         )}
+        {saveSuccess && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center gap-2"><span className="text-green-600">✅</span><span className="text-green-800 font-medium">Saved</span></div>
+            {lastSavedAt && <p className="text-green-700 mt-1">Saved at {lastSavedAt}</p>}
+          </div>
+        )}
 
         <form onSubmit={handleCreateOrUpdate} className="space-y-8">
           {/* Basic Information */}
@@ -467,7 +484,7 @@ const [platformStyles, setPlatformStyles] = useState<Record<string, any>>({})
                   <label className="block text-sm font-medium text-gray-700 mb-2">Game Type</label>
                   <select value={gameType} onChange={(e) => setGameType(e.target.value as GameType)}
                     className="w-full px-4 py-3 bg-white text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" style={{ backgroundColor: '#ffffff', color: '#000000' }}>
-                    <option value="STARS_HEXA" className="bg-white text-black">Stars Hexa</option>
+                    <option value="STARS_HEXA" className="bg-white text-black">Hexa</option>
                     <option value="PENALTY_SHOOTOUT" className="bg-white text-black">Penalty Shootout</option>
                     <option value="FIND_RED" className="bg-white text-black">Get Shorty (Find Red)</option>
                     <option value="WHEEL_OF_FORTUNE" className="bg-white text-black">Wheel of Fortune</option>
@@ -511,7 +528,7 @@ const [platformStyles, setPlatformStyles] = useState<Record<string, any>>({})
 {/* Stars Hexa Configuration */}
           {gameType === 'STARS_HEXA' && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Stars Hexa Customization</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Hexa Customization</h2>
               <StarsHexaCustomizationForm
                 texts={starsHexaTexts}
                 colors={starsHexaColors}
@@ -544,6 +561,10 @@ const [platformStyles, setPlatformStyles] = useState<Record<string, any>>({})
           {gameType === 'FIND_RED' && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Get Shorty Settings</h2>
+              {/* Consistent subheading across all editors */}
+              {/* What: Add "Game Settings & Configuration" for parity with other game forms. */}
+              {/* Why: Enforce consistent admin UX per request. */}
+              <h3 className="text-lg font-semibold text-gray-800 mt-6">Game Settings &amp; Configuration</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Cards per Round (X)</label>

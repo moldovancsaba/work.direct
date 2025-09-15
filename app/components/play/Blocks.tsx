@@ -6,15 +6,30 @@ import SplitFlapScoreboard from '../game/SplitFlapScoreboard'
 // HeroBlock — unified hero section used across play flow pages
 // What: Renders the exact same SplitFlapScoreboard module used on the Game page.
 // Why: Product requirement — identical layout/module across Welcome, Rules, Game, Result.
-function HeroBlockInner({ backgroundClass, title, scoreboard, isLanding = false }: { backgroundClass?: string; title?: string; scoreboard?: { home: number; visitor: number; showLabels?: boolean; homeLabel?: string; visitorLabel?: string; homeBg?: string; visitorBg?: string; digitColor?: string }; isLanding?: boolean }) {
+function extractBackgroundValue(css?: string): string | undefined {
+  if (!css) return undefined
+  const grad = css.match(/linear-gradient\([^\)]+\)/i)
+  if (grad) return grad[0]
+  const bg = css.match(/background:\s*([^;]+);?/i)
+  if (bg && bg[1]) return bg[1].trim()
+  return undefined
+}
+
+// HeroBlock — unified hero section used across play flow pages
+// What: Renders the exact same SplitFlapScoreboard module used on the Game page and applies configurable background CSS.
+// Why: Product requirement — identical layout/module and ensure "Hero Background (CSS)" is actually used.
+function HeroBlockInner({ backgroundClass, backgroundCss, title, scoreboard, isLanding = false }: { backgroundClass?: string; backgroundCss?: string; title?: string; scoreboard?: { home: number; visitor: number; showLabels?: boolean; homeLabel?: string; visitorLabel?: string; homeBg?: string; visitorBg?: string; digitColor?: string }; isLanding?: boolean }) {
+  const bg = extractBackgroundValue(backgroundCss)
   return (
     <div
-className={`w-full ${backgroundClass || ''} ${isLanding ? '' : 'px-4'} text-center`}
+      className={`w-full ${backgroundClass || ''} ${isLanding ? '' : 'px-4'} text-center`}
       style={{
         marginTop: isLanding ? '0' : '2vh',
         marginBottom: isLanding ? '0' : '2vh',
         height: isLanding ? '20vh' : '18vh',
-        backgroundColor: '#000000FF',
+        // Apply configured CSS background when provided; fallback to default color
+        background: bg || undefined,
+        backgroundColor: bg ? undefined : '#000000FF',
         color: '#FFFFFFFF',
         fontFamily: '"Noto Sans", sans-serif',
         display: 'flex',
