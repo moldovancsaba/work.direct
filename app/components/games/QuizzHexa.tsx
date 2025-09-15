@@ -121,8 +121,9 @@ export default function QuizzHexa({ mapName, activeCoords, rounds, targetCorrect
     const isCorrect = Boolean(q.answers[answerIndex]?.isCorrect)
     const newCorrect = isCorrect ? (correct + 1) : correct
 
-    // Clear overlay
+    // Clear overlay and flip cue on the clicked hex
     setOverlay(null)
+    setRevealedKey(null)
 
     // Early finish if reached target
     if (newCorrect >= targetCorrect) {
@@ -132,17 +133,19 @@ export default function QuizzHexa({ mapName, activeCoords, rounds, targetCorrect
       return
     }
 
-    // Advance round
+    // If this was the last round, finish without incrementing beyond total
+    if (currentRound >= rounds) {
+      const won = newCorrect >= targetCorrect
+      setCorrect(newCorrect)
+      setDone(true)
+      onResult?.({ correct: newCorrect, rounds, won })
+      return
+    }
+
+    // Otherwise advance to the next round
     const nextRound = currentRound + 1
     setCurrentRound(nextRound)
     setCorrect(newCorrect)
-
-    // Finish at last round (success or fail)
-    if (nextRound > rounds) {
-      const won = newCorrect >= targetCorrect
-      setDone(true)
-      onResult?.({ correct: newCorrect, rounds, won })
-    }
   }
 
   const svgContent = useMemo(() => {
