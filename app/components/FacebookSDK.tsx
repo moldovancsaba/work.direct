@@ -10,7 +10,7 @@ export default function FacebookSDK() {
     <>
       <Script
         id="fb-sdk"
-        src="https://connect.facebook.net/en_GB/sdk.js"
+        src={`https://connect.facebook.net/en_GB/sdk.js#xfbml=1&version=v23.0&appId=${encodeURIComponent(process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || '804700345578279')}`}
         strategy="afterInteractive"
         onError={() => {
           try {
@@ -23,20 +23,8 @@ export default function FacebookSDK() {
         {`
           window.fbAsyncInit = function() {
             try {
-              var appId = '${process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || ''}';
-              if (!appId || !String(appId).trim()) {
-                console.error('[FB SDK] Missing NEXT_PUBLIC_FACEBOOK_APP_ID');
-                window.__fbReady = false;
-                window.__fbError = 'MISSING_APP_ID';
-                window.dispatchEvent(new Event('fb-sdk-error'));
-                return;
-              }
-              FB.init({
-                appId: appId,
-                cookie: true,
-                xfbml: true,
-                version: 'v23.0'
-              });
+              // When using the hash params (xfbml=1 & appId & version), SDK self-initializes.
+              // We only set readiness flags and dispatch a custom event for the app to detect readiness.
               window.__fbReady = true;
               window.dispatchEvent(new Event('fb-sdk-ready'));
             } catch (e) {
