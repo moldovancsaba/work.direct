@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback, useReducer } from 'react'
+import { useState, useEffect, useRef, useCallback, useReducer, useMemo } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { PenaltyCard, GameOutcome } from '../../types'
 import { axialToPixel, rotatePoint, hexVertices, SQRT3 } from '@/lib/hex/geometry'
@@ -103,20 +103,16 @@ type GameAction =
   | { type: 'COMPLETE_GAME'; payload: { result: GameOutcome } }
   | { type: 'RESET_GAME' }
 
-// EXACT coordinates from reference HTML - the 11 highlighted hexagons (numbered 1-11)
-const HIGHLIGHT_LIST = [
+// Session-selected 11 active axial coords from a random #soccer map (fallback to default 11)
+// WHAT: Use Hexa Creator maps tagged "soccer" to position the 11 penalty players.
+// WHY: Product requirement to align Penalty hex positions with curated maps.
+const DEFAULT_FORMATION: Array<[number, number]> = [
   [-1, -1], [-2, 1], [-1, 0], [0, -1], [1, -2],
   [-1, 1], [0, 0], [1, -1], [0, 1], [1, 0], [1, 1]
 ]
 
-// Create map for fast lookup: "q,r" -> player number (1-11)
-const HIGHLIGHTS = new Map(HIGHLIGHT_LIST.map((coord, idx) => [`${coord[0]},${coord[1]}`, idx]))
-
-// Boundaries for responsive fit (from reference HTML)
-const FIT_TOP: [number, number] = [-1, -1]
-const FIT_BOTTOM: [number, number] = [1, 1]
-const FIT_LEFT: [number, number] = [-2, 2]
-const FIT_RIGHT: [number, number] = [2, -2]
+// Selected axial coordinates for this session and selected map id (for audit/traceability)
+const SELECT_KEY_PREFIX = 'playmass:penalty:sel'
 
 // Ultra-fast game state reducer - PENALTY SHOOTOUT IMPLEMENTATION
 const gameReducer = (state: GameState, action: GameAction): GameState => {
@@ -254,7 +250,11 @@ export default function PenaltyHexa({
     gameResult: null,
     opponentScore: 0
   })
-  
+
+  // Session-selected active axial coordinates for this game
+  const [selectedAxial, setSelectedAxial] = useState<Array<[number, number]>>(DEFAULT_FORMATION)
+  const [selectedMapId, setSelectedMapId] = useState<string | null>(null)
+
   // Layout state for hexagon positioning (EXACT COPY FROM STARS_HEXA)
   const stageRef = useRef<HTMLDivElement>(null)
   const [hexWidth, setHexWidth] = useState(120)
@@ -307,6 +307,68 @@ export default function PenaltyHexa({
       })
     }
   }, [players, gameState.players.length])
+
+  // Select 11 highlighted positions from random #soccer map (session-stable)
+  useEffect(() => {
+    const selectSoccerMap = async () => {
+      try {
+        const gid = (gameId || (params.gameId as string))
+        const sidKeyBase = `playmass:session:${gid}`
+        let sessionId = 'trial'
+        try {
+          const raw = localStorage.getItem(sidKeyBase)
+          if (raw) {
+            const parsed = JSON.parse(raw)
+            if (parsed?.sessionId) sessionId = parsed.sessionId
+          }
+        } catch {}
+        const selKey = `${SELECT_KEY_PREFIX}:${gid}:${sessionId}`
+        const existing = localStorage.getItem(selKey)
+        if (existing) {
+          const parsed = JSON.parse(existing)
+          if (Array.isArray(parsed?.coords) && parsed.coords.length === 11) {
+            setSelectedAxial(parsed.coords)
+            setSelectedMapId(parsed.mapId || null)
+            return
+          }
+        }
+
+        // Fetch a random active #soccer map
+        const res = await fetch(`/api/hexmaps/random?tag=soccer`, { cache: 'no-store' })
+        let coords: Array<[number, number]>
+        let mapId: string | null = null
+        if (res.ok) {
+          const data = await res.json()
+          const all: Array<{ q: number; r: number }> = data?.data?.coords || []
+          mapId = data?.data?._id || null
+          const shuffled = [...all]
+          for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1))
+            ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+          }
+          if (shuffled.length >= 11) {
+            coords = shuffled.slice(0, 11).map(c => [c.q, c.r]) as Array<[number, number]>
+          } else {
+            coords = DEFAULT_FORMATION
+          }
+        } else {
+          coords = DEFAULT_FORMATION
+          mapId = null
+        }
+        setSelectedAxial(coords)
+        setSelectedMapId(mapId)
+        const gid2 = (gameId || (params.gameId as string))
+        const selKey2 = `${SELECT_KEY_PREFIX}:${gid2}:${sessionId}`
+        localStorage.setItem(selKey2, JSON.stringify({ mapId, coords }))
+      } catch (e) {
+        // On failure, simply keep DEFAULT_FORMATION
+        setSelectedAxial(DEFAULT_FORMATION)
+        setSelectedMapId(null)
+      }
+    }
+    selectSoccerMap()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Update parent component with score changes - FIXED: Remove onScoreUpdate from dependencies to prevent infinite loops
   useEffect(() => {
@@ -364,30 +426,13 @@ export default function PenaltyHexa({
     }
   }, [gameState.flipsUsed, gameState.goalsScored, gameState.opponentScore, gameState.isGameComplete, gameState.totalGoals, gameState.players, flipsPerRound, onResult])
 
-  // Layout positioning using EXACT axial coordinates from football formation reference
+  // Layout positioning using selected axial coordinates
   const getHexagonPosition = (position: number) => {
-    // EXACT coordinates from reference HTML - proper football formation
-    const axialCoords = [
-      [-1, -1], // Position 0 - Player #1
-      [-2,  1], // Position 1 - Player #2  
-      [-1,  0], // Position 2 - Player #3
-      [ 0, -1], // Position 3 - Player #4
-      [ 1, -2], // Position 4 - Player #5
-      [-1,  1], // Position 5 - Player #6
-      [ 0,  0], // Position 6 - Player #7 (center)
-      [ 1, -1], // Position 7 - Player #8
-      [ 0,  1], // Position 8 - Player #9
-      [ 1,  0], // Position 9 - Player #10
-      [ 1,  1]  // Position 10 - Player #11
-    ]
-    
-    const coord = axialCoords[position] || [0, 0]
+    const coord = selectedAxial[position] || [0, 0]
     const [q, r] = coord
     const s = hexWidth // Use hexWidth as the radius
-    // EXACT axial to pixel conversion from reference (flat-top BEFORE rotation)
     const x = s * (1.5 * q)
     const y = s * ((SQRT3/2) * q + SQRT3 * r)
-    
     return { x, y }
   }
 
@@ -416,31 +461,19 @@ export default function PenaltyHexa({
   // EXACT math from reference HTML for responsive grid layout
   // Using shared geometry utilities: axialToPixel, rotatePoint, hexVertices, SQRT3
 
-  // Compute rotated extrema box using boundary hexes - EXACT from reference
+  // Compute rotated bounding box from all selected active hexes (dynamic fit)
   const computeFitBox = (s: number) => {
-    const rotatedHexExtrema = (q: number, r: number) => {
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+    for (const [q, r] of selectedAxial) {
       const c = axialToPixel(q, r, s)
       const verts = hexVertices(c.x, c.y, s).map(p => rotatePoint(p.x, p.y))
-      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
       verts.forEach(v => {
         if (v.x < minX) minX = v.x
         if (v.x > maxX) maxX = v.x
         if (v.y < minY) minY = v.y
         if (v.y > maxY) maxY = v.y
       })
-      return { minX, minY, maxX, maxY }
     }
-
-    const top = rotatedHexExtrema(...FIT_TOP)
-    const bottom = rotatedHexExtrema(...FIT_BOTTOM)
-    const left = rotatedHexExtrema(...FIT_LEFT)
-    const right = rotatedHexExtrema(...FIT_RIGHT)
-
-    const minY = Math.min(top.minY, bottom.minY, left.minY, right.minY)
-    const maxY = Math.max(top.maxY, bottom.maxY, left.maxY, right.maxY)
-    const minX = Math.min(top.minX, bottom.minX, left.minX, right.minX)
-    const maxX = Math.max(top.maxX, bottom.maxX, left.maxX, right.maxX)
-
     return { minX, minY, maxX, maxY, w: maxX - minX, h: maxY - minY }
   }
 
@@ -518,6 +551,10 @@ export default function PenaltyHexa({
     
     const hexagons = []
     
+    // Build a lookup map for highlighted positions: "q,r" -> player index
+    const highlightsMap = new Map<string, number>()
+    selectedAxial.forEach((coord, idx) => highlightsMap.set(`${coord[0]},${coord[1]}`, idx))
+
     for (let r = rMin; r <= rMax; r++) {
       for (let q = qMin; q <= qMax; q++) {
         // center before rotation - EXACT from reference
@@ -539,8 +576,8 @@ export default function PenaltyHexa({
         if (maxX < -s || minX > vw + s || maxY < -s || minY > vh + s) continue
         
         const key = `${q},${r}`
-        const isHighlighted = HIGHLIGHTS.has(key)
-        const playerIndex = HIGHLIGHTS.get(key)
+        const isHighlighted = highlightsMap.has(key)
+        const playerIndex = highlightsMap.get(key)
         const player = isHighlighted && playerIndex !== undefined ? gameState.players[playerIndex] : null
         const isClickable = isHighlighted && player && !disabled && !gameState.isGameComplete && 
                            gameState.flipsUsed < flipsPerRound && !player.isRevealed

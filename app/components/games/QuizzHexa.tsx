@@ -10,10 +10,11 @@ interface QuizzHexaProps {
   rounds: number
   targetCorrect: number
   questions: QuizzQuestion[]
+  overlayBg?: string
   onResult?: (result: { correct: number; rounds: number; won: boolean }) => void
 }
 
-export default function QuizzHexa({ mapName, activeCoords, rounds, targetCorrect, questions, onResult }: QuizzHexaProps) {
+export default function QuizzHexa({ mapName, activeCoords, rounds, targetCorrect, questions, overlayBg = 'rgba(0,0,0,0.6)', onResult }: QuizzHexaProps) {
   const stageRef = useRef<HTMLDivElement>(null)
   const [coords, setCoords] = useState<HexCoord[]>([])
   const [hexSize, setHexSize] = useState(80)
@@ -22,6 +23,7 @@ export default function QuizzHexa({ mapName, activeCoords, rounds, targetCorrect
   const [revealedKey, setRevealedKey] = useState<string | null>(null)
   const [questionMap, setQuestionMap] = useState<Record<string, QuizzQuestion>>({})
   const [overlay, setOverlay] = useState<{ key: string; q: QuizzQuestion } | null>(null)
+  const [done, setDone] = useState(false)
 
   // Default fallback 2-3-2 formation around origin
   const defaultSeven: HexCoord[] = useMemo(() => ([
@@ -107,25 +109,39 @@ export default function QuizzHexa({ mapName, activeCoords, rounds, targetCorrect
   }, [coords])
 
   const handleFlip = (key: string) => {
-    if (overlay) return
+    if (overlay || done) return
     setRevealedKey(key)
     const q = questionMap[key]
     if (q) setOverlay({ key, q })
   }
 
   const handleAnswer = (answerIndex: number) => {
-    if (!overlay) return
+    if (!overlay || done) return
     const { key, q } = overlay
     const isCorrect = Boolean(q.answers[answerIndex]?.isCorrect)
-    if (isCorrect) setCorrect(prev => prev + 1)
+    const newCorrect = isCorrect ? (correct + 1) : correct
 
-    const nextRound = currentRound + 1
-    setCurrentRound(nextRound)
+    // Clear overlay
     setOverlay(null)
 
+    // Early finish if reached target
+    if (newCorrect >= targetCorrect) {
+      setCorrect(newCorrect)
+      setDone(true)
+      onResult?.({ correct: newCorrect, rounds: currentRound, won: true })
+      return
+    }
+
+    // Advance round
+    const nextRound = currentRound + 1
+    setCurrentRound(nextRound)
+    setCorrect(newCorrect)
+
+    // Finish at last round (success or fail)
     if (nextRound > rounds) {
-      const won = (isCorrect ? correct + 1 : correct) >= targetCorrect
-      onResult?.({ correct: isCorrect ? correct + 1 : correct, rounds, won })
+      const won = newCorrect >= targetCorrect
+      setDone(true)
+      onResult?.({ correct: newCorrect, rounds, won })
     }
   }
 
@@ -154,11 +170,11 @@ export default function QuizzHexa({ mapName, activeCoords, rounds, targetCorrect
         <g key={k}>
           <polygon
             points={points}
-            fill={'#228be6'}
+            fill={revealedKey === k ? '#60a5fa' : '#228be6'}
             opacity={1}
             stroke="#ffffff"
             strokeWidth={Math.max(1, s * 0.06)}
-            style={{ cursor: 'pointer', transition: 'fill 120ms' }}
+            style={{ cursor: done ? 'not-allowed' : 'pointer', transition: 'fill 120ms' }}
             onClick={() => handleFlip(k)}
           />
           <text x={cx} y={cy} fill="#ffffff" fontSize={Math.max(10, s * 0.35)} fontWeight={600} textAnchor="middle" dominantBaseline="middle" style={{ pointerEvents: 'none' }}>{k}</text>
@@ -169,7 +185,7 @@ export default function QuizzHexa({ mapName, activeCoords, rounds, targetCorrect
   }, [coords, hexSize, questionMap])
 
   const overlayContent = overlay ? (
-    <div className="absolute inset-0 grid place-items-center bg-black/60">
+    <div className="absolute inset-0 grid place-items-center" style={{ background: overlayBg }}>
       <div className="relative" style={{ width: 0, height: 0 }}>
         <div style={{ transform: 'rotate(30deg)' }}>
           <div

@@ -429,6 +429,7 @@ export interface QuizzConfiguration {
   targetCorrect: number // X correct answers needed to win
   questions: QuizzQuestion[] // Infinite possible questions (admin-managed)
   theme?: 'default' | 'minimal'
+  overlayBg?: string // Background overlay CSS color for the question modal (e.g., rgba(0,0,0,0.6))
   texts?: {
     questionCTA?: string
     submitAnswer?: string

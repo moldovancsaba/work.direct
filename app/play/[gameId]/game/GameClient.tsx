@@ -170,6 +170,7 @@ export default function GameClient({ game, cfg }: GameClientProps) {
       rounds={game.configuration?.quizz?.rounds || 5}
       targetCorrect={game.configuration?.quizz?.targetCorrect || 3}
       questions={game.configuration?.quizz?.questions || []}
+      overlayBg={game.configuration?.quizz?.overlayBg || 'rgba(0,0,0,0.6)'}
       onResult={(r)=>{
         const result: GameOutcome = {
           type: r.won ? 'WIN' : 'LOSE', starsFound: r.correct, totalStarsInGame: r.rounds, foundAllStars: r.won, value: `${r.correct}/${r.rounds}`, rewardIds: [], message: r.won ? 'You won the quiz!' : 'Quiz over'

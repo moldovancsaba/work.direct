@@ -67,7 +67,7 @@ export default function QuizzCustomizationForm({ config, onChange }: QuizzCustom
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Map Name (HexMap)</label>
           <input className="w-full px-3 py-2 border rounded" value={mapName} onChange={(e)=>{ const v = e.target.value; setMapName(v); emit(questions, { mapName: v }) }} placeholder="FLOWER or 7cloud" />
@@ -79,6 +79,10 @@ export default function QuizzCustomizationForm({ config, onChange }: QuizzCustom
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Target Correct (X)</label>
           <input type="number" min={1} className="w-full px-3 py-2 border rounded" value={targetCorrect} onChange={(e)=>{ const n = Number(e.target.value)||1; setTargetCorrect(n); emit(questions, { targetCorrect: n }) }} />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Overlay Background (CSS color)</label>
+          <input className="w-full px-3 py-2 border rounded" defaultValue={config?.overlayBg || 'rgba(0,0,0,0.6)'} onChange={(e)=> emit(questions, { overlayBg: e.target.value })} placeholder="e.g. rgba(0,0,0,0.6) or #00000099" />
         </div>
       </div>
 

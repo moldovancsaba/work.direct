@@ -588,6 +588,7 @@ const gameSchema = new Schema<Game>({
       rounds: { type: Number, min: [1, 'rounds must be at least 1'], default: 5 },
       targetCorrect: { type: Number, min: [1, 'targetCorrect must be at least 1'], default: 3 },
       theme: { type: String, enum: ['default', 'minimal'], default: 'default' },
+      overlayBg: { type: String, default: 'rgba(0,0,0,0.6)' },
       texts: {
         questionCTA: { type: String, default: '' },
         submitAnswer: { type: String, default: 'Submit' },
