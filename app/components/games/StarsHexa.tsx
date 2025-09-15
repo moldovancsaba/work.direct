@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback, useReducer } from 'react'
+import { useState, useEffect, useRef, useCallback, useReducer, useMemo } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { HexagonCard, GameOutcome } from '../../types'
+import { axialToPixel, rotatePoint, hexVertices, SQRT3 } from '../../lib/hex/geometry'
 
 interface StarsHexaProps {
   hexagons: HexagonCard[]
@@ -23,6 +24,14 @@ interface StarsHexaProps {
   onHUDUpdate?: (starsRemaining: number, flipsRemaining: number) => void
   // Optional round reporting to parent (currentRound, totalRounds)
   onRoundUpdate?: (currentRound: number, totalRounds: number) => void
+  // Hex grid styling (front/back/edge colors) coming from editor
+  hexGridStyles?: {
+    activeHexBg?: string
+    flipGoodBg?: string
+    flipBadBg?: string
+    inactiveHexBg?: string
+    edgeStrokeColor?: string
+  }
 }
 
 // Game state interface for useReducer
@@ -152,7 +161,8 @@ export default function StarsHexa({
   winEmoji = '⭐️',
   loseEmoji = '🍄',
   onHUDUpdate,
-  onRoundUpdate
+  onRoundUpdate,
+  hexGridStyles
 }: StarsHexaProps) {
   const router = useRouter()
   const params = useParams()
@@ -181,8 +191,9 @@ export default function StarsHexa({
   
   // Layout state for hexagon positioning
   const stageRef = useRef<HTMLDivElement>(null)
-  const [hexWidth, setHexWidth] = useState(120)
-  const [scale, setScale] = useState(1)
+  // Geometry sizing: we compute radius (s). The visual hex width W = 2*s.
+  const [radius, setRadius] = useState(60)
+  const [scale, setScale] = useState(1) // kept for compatibility; will remain 1 after fit calc
 
   // Auto-flip back timer for non-matching cards
   const autoFlipTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -238,26 +249,17 @@ export default function StarsHexa({
     onHUDUpdate(starsRemaining, flipsRemaining)
   }, [gameState.starsFound, gameState.flipsUsed, gameState.totalStars, maxFlipsPerAttempt, maxFlipsPerRound, onHUDUpdate])
 
-  // Layout positioning using axial coordinates
+  // Selected axial coordinates for this session (7 active hexes)
+  const [selectedAxial, setSelectedAxial] = useState<Array<{ q: number; r: number }>>([])
+  const [selectedMapId, setSelectedMapId] = useState<string | null>(null)
+
+  // Layout positioning using selected axial coordinates
   const getHexagonPosition = (position: number) => {
-    const axialCoords = [
-      { q: 0, r: -1 },   // Position 0 (top left)
-      { q: 1, r: -1 },   // Position 1 (top right)
-      { q: -1, r: 0 },   // Position 2 (middle left)
-      { q: 0, r: 0 },    // Position 3 (center)
-      { q: 1, r: 0 },    // Position 4 (middle right)
-      { q: -1, r: 1 },   // Position 5 (bottom left)
-      { q: 0, r: 1 }     // Position 6 (bottom right)
-    ]
-    
-    const coord = axialCoords[position] || { q: 0, r: 0 }
-    const W = hexWidth
-    
-    // Flat-top axial to pixel conversion
-    const x = 0.75 * W * coord.q
-    const y = (Math.sqrt(3) / 4 * W) * coord.q + (Math.sqrt(3) / 2 * W) * coord.r
-    
-    return { x, y }
+    const coord = selectedAxial[position] || { q: 0, r: 0 }
+    const s = radius // geometry radius; visual width W = 2*s
+
+    const p = axialToPixel(coord.q, coord.r, s)
+    return { x: p.x, y: p.y }
   }
 
   // ULTRA-FAST hexagon flip handler - NO BLOCKING, NO DEBOUNCING
@@ -344,38 +346,49 @@ export default function StarsHexa({
     }, 0) // Run immediately but non-blocking
   }, [disabled, gameState, flipsPerRound, totalRounds, onFlip, onResult])
 
-  // Layout calculation for responsive hexagons within container
+  // Compute rotated bounding box for a given radius over selected active axial coords
+  const computeFitBox = useCallback((s: number) => {
+    if (selectedAxial.length !== 7) return { w: 0, h: 0 }
+
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+    for (const { q, r } of selectedAxial) {
+      const c = axialToPixel(q, r, s)
+      const verts = hexVertices(c.x, c.y, s).map((p) => rotatePoint(p.x, p.y))
+      for (const v of verts) {
+        if (v.x < minX) minX = v.x
+        if (v.x > maxX) maxX = v.x
+        if (v.y < minY) minY = v.y
+        if (v.y > maxY) maxY = v.y
+      }
+    }
+    return { w: maxX - minX, h: maxY - minY }
+  }, [selectedAxial])
+
+  // Layout calculation for responsive hexagons within container (fit to active 7 only)
   useEffect(() => {
     const updateLayout = () => {
-      if (!stageRef.current) return
-      
-      // Use container dimensions instead of viewport
-      const containerRect = stageRef.current.getBoundingClientRect()
-      const containerWidth = containerRect.width || 800
-      const containerHeight = containerRect.height || 600
-      const margin = 0.9
-      
-      const W_w = (containerWidth * margin) / 2.5
-      const W_h = (containerHeight * margin) / Math.sqrt(3)
-      let W = Math.floor(Math.min(W_w, W_h))
-      if (W < 40) W = 40
-      if (W > 120) W = 120
-      
-      setHexWidth(W)
-      
-      const estimatedWidth = W * 2.5
-      const estimatedHeight = W * Math.sqrt(3)
-      const scaleW = (containerWidth * margin) / estimatedWidth
-      const scaleH = (containerHeight * margin) / estimatedHeight
-      const finalScale = Math.min(scaleW, scaleH, 1)
-      
-      setScale(finalScale)
+      if (!stageRef.current || selectedAxial.length !== 7) return
+
+      const rect = stageRef.current.getBoundingClientRect()
+      const vw = rect.width || 800
+      const vh = rect.height || 600
+      const margin = 0.96
+
+      // Start with a base radius, then scale to fit the rotated bounding box
+      const s0 = Math.max(16, Math.min(vw, vh) / 10)
+      const box0 = computeFitBox(s0)
+      if (box0.w <= 0 || box0.h <= 0) return
+      const scaleCalc = Math.min((vw * margin) / box0.w, (vh * margin) / box0.h)
+      const s = s0 * scaleCalc
+
+      setRadius(s)
+      setScale(1)
     }
-    
+
     updateLayout()
     window.addEventListener('resize', updateLayout)
     return () => window.removeEventListener('resize', updateLayout)
-  }, [])
+  }, [computeFitBox, selectedAxial])
 
   // Redirect to results IMMEDIATELY when game completes - no delay
   useEffect(() => {
@@ -398,13 +411,96 @@ export default function StarsHexa({
     }
   }, [gameState.isGameComplete, gameState.starsFound, gameState.totalStars, gameState.flipsUsed, gameState.currentRound, gameId, params.gameId, isTrialMode, referralUuid, router])
 
+  // Resolve hex grid styles with sensible fallbacks
+  const resolvedStyles = useMemo(() => ({
+    activeHexBg: (hexGridStyles?.activeHexBg || 'linear-gradient(135deg, #4a90e2, #7bd389)') as string,
+    flipGoodBg: (hexGridStyles?.flipGoodBg || '#ff9500') as string,
+    flipBadBg: (hexGridStyles?.flipBadBg || '#ff66aa') as string,
+    edgeStrokeColor: (hexGridStyles?.edgeStrokeColor || '#4fc3f7') as string
+  }), [hexGridStyles])
+
+  // Session-stable random map selection (per sessionId if available)
+  useEffect(() => {
+    const selectMapAndPositions = async () => {
+      try {
+        const sidKeyBase = `playmass:session:${gameId || (params.gameId as string)}`
+        let sessionId = 'trial'
+        try {
+          const raw = localStorage.getItem(sidKeyBase)
+          if (raw) {
+            const parsed = JSON.parse(raw)
+            if (parsed?.sessionId) sessionId = parsed.sessionId
+          }
+        } catch {}
+        const selKey = `playmass:hexa:sel:${gameId || (params.gameId as string)}:${sessionId}`
+        const existing = localStorage.getItem(selKey)
+        if (existing) {
+          const parsed = JSON.parse(existing)
+          if (Array.isArray(parsed?.coords) && parsed.coords.length === 7) {
+            setSelectedAxial(parsed.coords)
+            setSelectedMapId(parsed.mapId || null)
+            return
+          }
+        }
+        // Fetch a random active #water map
+        const res = await fetch(`/api/hexmaps/random?tag=water`, { cache: 'no-store' })
+        let coords: Array<{ q: number; r: number }>
+        let mapId: string | null = null
+        if (res.ok) {
+          const data = await res.json()
+          const all: Array<{ q: number; r: number }> = data?.data?.coords || []
+          mapId = data?.data?._id || null
+          // Shuffle and take first 7 coords; if fewer than 7, fall back to default layout
+          const shuffled = shuffleArray(all)
+          if (shuffled.length >= 7) {
+            coords = shuffled.slice(0, 7)
+          } else {
+            coords = [
+              { q: 0, r: -1 },
+              { q: 1, r: -1 },
+              { q: -1, r: 0 },
+              { q: 0, r: 0 },
+              { q: 1, r: 0 },
+              { q: -1, r: 1 },
+              { q: 0, r: 1 }
+            ]
+          }
+        } else {
+          // No maps for tag — fall back to default 2-3-2
+          coords = [
+            { q: 0, r: -1 },
+            { q: 1, r: -1 },
+            { q: -1, r: 0 },
+            { q: 0, r: 0 },
+            { q: 1, r: 0 },
+            { q: -1, r: 1 },
+            { q: 0, r: 1 }
+          ]
+          mapId = null
+        }
+        setSelectedAxial(coords)
+        setSelectedMapId(mapId)
+        localStorage.setItem(selKey, JSON.stringify({ mapId, coords }))
+      } catch (e) {
+        // As a last resort, redirect to result page rather than show an error page
+        try {
+          const targetGameId = gameId || (params.gameId as string)
+          if (targetGameId) {
+            router.push(`/play/${targetGameId}/result?won=false&error=map`)
+          }
+        } catch {}
+      }
+    }
+    selectMapAndPositions()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   return (
     <div 
       ref={stageRef}
       className="relative w-full h-full grid place-items-center bg-white/5 backdrop-blur-sm rounded-2xl"
       style={{
-        minHeight: '100%',
-        background: 'radial-gradient(800px 500px at 50% 50%, #1a2b4c 0%, #0f1629 50%, #0a0f1f 100%)'
+        minHeight: '100%'
       }}
     >
       <div 
@@ -425,6 +521,9 @@ export default function StarsHexa({
             const isClickable = !disabled && !gameState.isGameComplete && 
                                gameState.flipsUsed < flipsPerRound && !hexagon.isRevealed
             
+            const W = radius * 2
+            const H = W * (SQRT3 / 2)
+
             return (
               <button
                 key={hexagon.id}
@@ -435,8 +534,8 @@ export default function StarsHexa({
                     : 'cursor-not-allowed'
                 }`}
                 style={{
-                  width: `${hexWidth}px`,
-                  height: `${hexWidth * 0.8660254037844386}px`,
+                  width: `${W}px`,
+                  height: `${H}px`,
                   left: `${position.x}px`,
                   top: `${position.y}px`,
                   transform: 'translate(-50%, -50%)',
@@ -466,10 +565,11 @@ export default function StarsHexa({
                   >
                     {/* Front face - TEXT */}
                     <div 
-                      className="absolute inset-0 border-2 border-blue-400 box-border"
+                      className="absolute inset-0 box-border"
                       style={{
                         backfaceVisibility: 'hidden',
-                        background: 'linear-gradient(135deg, #4a90e2, #7bd389)',
+                        background: resolvedStyles.activeHexBg,
+                        border: `2px solid ${resolvedStyles.edgeStrokeColor}`,
                         clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)'
                       }}
                     >
@@ -484,16 +584,17 @@ export default function StarsHexa({
                     
                     {/* Back face - STAR or MUSHROOM */}
                     <div 
-                      className="absolute inset-0 border-2 border-pink-400 box-border"
+                      className="absolute inset-0 box-border"
                       style={{
                         backfaceVisibility: 'hidden',
-                        background: hexagon.hasHiddenStar ? '#ff9500' : '#ff66aa',
+                        background: hexagon.hasHiddenStar ? resolvedStyles.flipGoodBg : resolvedStyles.flipBadBg,
+                        border: `2px solid ${resolvedStyles.edgeStrokeColor}`,
                         transform: 'rotateY(180deg)',
                         clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)'
                       }}
                     >
                       <div className="absolute inset-0 grid place-items-center" style={{ transform: 'rotate(-30deg)' }}>
-<div className="text-3xl font-bold text-white drop-shadow-lg select-none">
+                        <div className="text-3xl font-bold text-white drop-shadow-lg select-none">
                           {hexagon.hasHiddenStar ? (winEmoji || '⭐️') : (loseEmoji || '🍄')}
                         </div>
                       </div>

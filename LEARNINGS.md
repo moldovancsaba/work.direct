@@ -2,8 +2,8 @@
 
 This document captures implementation insights, technical decisions, and solutions to issues encountered during PlayMass development.
 
-**Current Version**: 1.27.0
-**Last Updated**: 2025-09-15T17:12:04.000Z
+**Current Version**: 1.28.0
+**Last Updated**: 2025-09-15T17:30:23.000Z
 
 ### QUIZZ: Fixed-length answers and map integration
 - What: QUIZZ requires exactly 3 answers per question (tuple) and supports multiple correct answers; questions map onto active hex coordinates.

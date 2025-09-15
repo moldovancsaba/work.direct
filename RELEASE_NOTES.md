@@ -1,9 +1,12 @@
 # 📝 RELEASE_NOTES.md - PlayMass
 
-**Current Version**: 1.27.0
-**Last Updated**: 2025-09-15T17:12:04.000Z
+**Current Version**: 1.28.0
+**Last Updated**: 2025-09-15T17:30:23.000Z
 
 ## 🔹 Version History
+
+### [v1.28.0] — 2025-09-15T17:30:23.000Z
+- Fix: Allow QUIZZ game type in Game model enum so admin can create QUIZZ games without validation errors
 
 ### [v1.27.0] — 2025-09-15T17:12:04.000Z
 - New Game Type: QUIZZ (Hexamap Quiz) released
