@@ -7,6 +7,8 @@
 2025-09-15T17:12:04.000Z — Plan: Finalize and release QUIZZ (Hexamap Quiz)
 - Tasks: Version bump (minor), docs sync (README, ROADMAP, TASKLIST, RELEASE_NOTES, ARCHITECTURE, LEARNINGS, WARP.md), commit, push, deploy
 - Compliance: ISO 8601 timestamps with milliseconds (UTC), no tests, reuse-before-creation, no breadcrumbs
+
+2025-09-15T17:30:23.000Z — Fix: Add QUIZZ to Game model enum to unblock admin creation; bump to v1.28.0 and redeploy
 - Added /admin/hexacreator page (infinite honeycomb, axial labels, CRUD)
 - Implemented /api/admin/hexmaps (list/create) and /api/admin/hexmaps/[id] (read/update/delete-soft)
 - Created HexMap model; removed duplicate index definition on name to avoid Mongoose warnings

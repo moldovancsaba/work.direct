@@ -158,8 +158,8 @@ const gameSchema = new Schema<Game>({
     type: String,
     required: [true, 'Game type is required'],
     enum: {
-      values: ['STARS_HEXA', 'PENALTY_SHOOTOUT', 'FIND_RED', 'WHEEL_OF_FORTUNE'] as GameType[],
-      message: 'Game type must be: STARS_HEXA, PENALTY_SHOOTOUT, FIND_RED, WHEEL_OF_FORTUNE'
+      values: ['STARS_HEXA', 'PENALTY_SHOOTOUT', 'FIND_RED', 'WHEEL_OF_FORTUNE', 'QUIZZ'] as GameType[],
+      message: 'Game type must be: STARS_HEXA, PENALTY_SHOOTOUT, FIND_RED, WHEEL_OF_FORTUNE, QUIZZ'
     }
   },
   
@@ -448,6 +448,16 @@ const gameSchema = new Schema<Game>({
           accent: { type: String, match: [/^#[0-9A-Fa-f]{6}$/, 'Color must be a valid hex color'], default: '#F59E0B' },
           bg: { type: String, match: [/^#[0-9A-Fa-f]{6}$/, 'Color must be a valid hex color'], default: '#0B1220' },
           text: { type: String, match: [/^#[0-9A-Fa-f]{6}$/, 'Color must be a valid hex color'], default: '#FFFFFF' }
+        },
+        // Hex grid specific styling for the main block (accepts any CSS-safe string for backgrounds)
+        // WHAT: Allow admin to customize the Stars Hexa visuals without hardcoding, including gradients.
+        // WHY: Product requirement to brand the active/inactive faces and edges per game.
+        hexGrid: {
+          activeHexBg: { type: String, default: '' },
+          flipGoodBg: { type: String, default: '' },
+          flipBadBg: { type: String, default: '' },
+          inactiveHexBg: { type: String, default: '' },
+          edgeStrokeColor: { type: String, default: '' }
         }
       },
       // Emoji customization for Stars Hexa

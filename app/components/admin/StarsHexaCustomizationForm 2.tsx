@@ -35,6 +35,16 @@ export interface StarsHexaColors {
     bg?: string
     text?: string
   }
+  // Optional hex grid styling used by StarsHexa renderer
+  // What: Allows admin to configure visual backgrounds/strokes for hex shapes
+  // Why: Keep visual parity with current defaults while enabling customization
+  hexGrid?: {
+    activeHexBg?: string
+    flipGoodBg?: string
+    flipBadBg?: string
+    inactiveHexBg?: string
+    edgeStrokeColor?: string
+  }
 }
 
 export interface StarsHexaSettings {
@@ -74,6 +84,15 @@ const defaultColors: StarsHexaColors = {
     accent: '#F59E0B',
     bg: '#0B1220',
     text: '#FFFFFF'
+  },
+  // Hex grid style defaults — backgrounds allow CSS (e.g., gradients); stroke is color.
+  // WHAT: Provide sensible defaults that match current visuals if admin does not customize.
+  hexGrid: {
+    activeHexBg: 'linear-gradient(135deg, #4a90e2, #7bd389)',
+    flipGoodBg: '#ff9500',
+    flipBadBg: '#ff66aa',
+    inactiveHexBg: 'rgba(255,255,255,0.06)',
+    edgeStrokeColor: '#4fc3f7'
   }
 }
 
@@ -104,7 +123,11 @@ export default function StarsHexaCustomizationForm({
   }, [hideTextAndColors, activeTab])
   const [currentTexts, setCurrentTexts] = useState<Partial<StarsHexaTexts>>({ ...defaultTexts, ...texts })
   const [currentColors, setCurrentColors] = useState<Partial<StarsHexaColors>>({
-    palette: { ...defaultColors.palette, ...(colors.palette || {}) }
+    palette: { ...defaultColors.palette, ...(colors.palette || {}) },
+    hexGrid: {
+      ...defaultColors.hexGrid,
+      ...(colors as any)?.hexGrid
+    }
   })
   const [currentSettings, setCurrentSettings] = useState<StarsHexaSettings>({ ...defaultSettings, ...settings })
 
@@ -113,7 +136,10 @@ export default function StarsHexaCustomizationForm({
   }, [texts])
 
   useEffect(() => {
-    setCurrentColors({ palette: { ...defaultColors.palette, ...(colors.palette || {}) } })
+    setCurrentColors({
+      palette: { ...defaultColors.palette, ...(colors.palette || {}) },
+      hexGrid: { ...defaultColors.hexGrid, ...(colors as any)?.hexGrid }
+    })
   }, [colors])
 
   useEffect(() => {
@@ -127,7 +153,13 @@ export default function StarsHexaCustomizationForm({
   }, [currentTexts, currentColors, currentSettings, onChange])
 
   const updateColor = useCallback((key: 'primary' | 'accent' | 'bg' | 'text', value: string) => {
-    const next = { palette: { ...(currentColors.palette || {}), [key]: value } }
+    const next = { ...currentColors, palette: { ...(currentColors.palette || {}), [key]: value } }
+    setCurrentColors(next)
+    onChange(currentTexts, next, currentSettings)
+  }, [currentTexts, currentColors, currentSettings, onChange])
+
+  const updateHexGrid = useCallback((key: 'activeHexBg' | 'flipGoodBg' | 'flipBadBg' | 'inactiveHexBg' | 'edgeStrokeColor', value: string) => {
+    const next = { ...currentColors, hexGrid: { ...(currentColors as any).hexGrid, [key]: value } }
     setCurrentColors(next)
     onChange(currentTexts, next, currentSettings)
   }, [currentTexts, currentColors, currentSettings, onChange])
@@ -302,6 +334,65 @@ export default function StarsHexaCustomizationForm({
             </div>
           </div>
           
+          {/* Hex Grid Styles (Main Block) */}
+          <div className="bg-cyan-50 p-6 rounded-lg">
+            <h4 className="text-lg font-medium text-gray-800 mb-4 flex items-center gap-2">
+              <span className="text-2xl">🎨</span>
+              <span>Main Block — Hex Grid Styles</span>
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Active Hex Background</label>
+                <input
+                  type="text"
+                  value={(currentColors as any)?.hexGrid?.activeHexBg || ''}
+                  onChange={(e) => updateHexGrid('activeHexBg', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., linear-gradient(135deg, #4a90e2, #7bd389) or #4a90e2"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Flip Good Background</label>
+                <input
+                  type="text"
+                  value={(currentColors as any)?.hexGrid?.flipGoodBg || ''}
+                  onChange={(e) => updateHexGrid('flipGoodBg', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="#ff9500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Flip Bad Background</label>
+                <input
+                  type="text"
+                  value={(currentColors as any)?.hexGrid?.flipBadBg || ''}
+                  onChange={(e) => updateHexGrid('flipBadBg', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="#ff66aa"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Inactive Hex Background</label>
+                <input
+                  type="text"
+                  value={(currentColors as any)?.hexGrid?.inactiveHexBg || ''}
+                  onChange={(e) => updateHexGrid('inactiveHexBg', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="rgba(255,255,255,0.06)"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Edge Stroke Color</label>
+                <input
+                  type="color"
+                  value={(currentColors as any)?.hexGrid?.edgeStrokeColor || '#4fc3f7'}
+                  onChange={(e) => updateHexGrid('edgeStrokeColor', e.target.value)}
+                  className="w-20 h-10 border border-gray-300 rounded-md"
+                />
+              </div>
+            </div>
+          </div>
+
           {/* Hexagon Cards Editor */}
           <div className="bg-purple-50 p-6 rounded-lg">
             <h4 className="text-lg font-medium text-gray-800 mb-4 flex items-center gap-2">

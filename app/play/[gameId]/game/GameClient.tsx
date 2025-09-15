@@ -130,6 +130,13 @@ export default function GameClient({ game, cfg }: GameClientProps) {
       referralUuid={ref || undefined}
       winEmoji={game.configuration?.starsHexa?.emojis?.win || '⭐️'}
       loseEmoji={game.configuration?.starsHexa?.emojis?.lose || '🍄'}
+      hexGridStyles={{
+        activeHexBg: game.configuration?.starsHexa?.colors?.hexGrid?.activeHexBg,
+        flipGoodBg: game.configuration?.starsHexa?.colors?.hexGrid?.flipGoodBg,
+        flipBadBg: game.configuration?.starsHexa?.colors?.hexGrid?.flipBadBg,
+        inactiveHexBg: game.configuration?.starsHexa?.colors?.hexGrid?.inactiveHexBg,
+        edgeStrokeColor: game.configuration?.starsHexa?.colors?.hexGrid?.edgeStrokeColor,
+      }}
       onHUDUpdate={(starsRemaining, flipsRemaining) => { setStarsLeft(starsRemaining); setFlipsLeft(flipsRemaining); }}
       onRoundUpdate={(current, total) => { setHexaCurrentRound(current); setHexaTotalRounds(total); }}
     />
