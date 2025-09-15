@@ -212,7 +212,7 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
       style={{ backgroundColor: '#000000FF', color: '#FFFFFFFF', fontFamily: '"Noto Sans", sans-serif' }}
     >
       <HeroBlock
-        backgroundClass={heroBg}
+        backgroundCss={heroBg}
         title={title}
         scoreboard={{
           home: 0,
@@ -232,29 +232,6 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
         )}
         <div className="w-full h-full flex justify-center">
           <div className="h-full w-[80vw] min-w-[80vw] max-w-none space-y-3">
-          {/* Facebook Login Plugin (XFBML) */}
-          <div className="text-center" ref={fbPluginContainerRef}>
-            <div
-              className="fb-login-button"
-              data-width=""
-              data-size="large"
-              data-button-type="continue_with"
-              data-layout="default"
-              data-auto-logout-link="false"
-              data-use-continue-as="true"
-              data-scope="public_profile,email"
-            />
-            {!hasAppId && (
-              <p className="text-sm text-red-300 mt-2">Facebook App ID is not configured. Please set NEXT_PUBLIC_FACEBOOK_APP_ID and restart.</p>
-            )}
-            {hasAppId && !fbReady && (
-              <p className="text-sm text-gray-300 mt-2">Facebook login is initializing…</p>
-            )}
-            {fbError && (
-              <p className="text-sm text-red-300 mt-2">{fbError}</p>
-            )}
-          </div>
-
           <UnifiedRegistration
             onRegister={async (p) => {
               try {
@@ -292,6 +269,11 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
               // Helper texts
               contactRequiredError: texts?.TEXT_26 || 'Please provide either email or phone number',
               tryWithoutRegText: texts?.TEXT_27 || 'Want to try without registration?'
+            }}
+            extraPrimaryAction={{
+              label: 'Continue with Facebook',
+              onClick: handleFacebookLogin,
+              bgCss: texts?.NEXT_LOGIN_BG || texts?.TEXT_18_BG || ''
             }}
           />
           </div>

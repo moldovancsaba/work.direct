@@ -1,6 +1,6 @@
 # ROADMAP.md — PlayMass
 
-Last Updated: 2025-09-14T16:12:23.000Z
+Last Updated: 2025-09-15T10:36:24.000Z
 - Forward-looking plan for modular game architecture and Stars Hexa refactor within PlayMass.
 - Priorities and dependencies are explicitly stated to enable parallelization where safe.
 

@@ -46,7 +46,7 @@ export default function RulesClientPlatform({ gameId, texts, styles, refCode }: 
       style={{ backgroundColor: '#000000FF', color: '#FFFFFFFF', fontFamily: '"Noto Sans", sans-serif' }}
     >
       <HeroBlock
-        backgroundClass={heroBg}
+        backgroundCss={heroBg}
         title={title}
         scoreboard={{
           home: 0,

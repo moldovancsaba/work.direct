@@ -59,6 +59,11 @@ export interface UnifiedRegistrationProps {
   // Layout control
   hideHeader?: boolean
   containerMode?: 'fullscreen' | 'embedded'
+
+  // Optional extra primary action rendered next to the main submit button (same sizing)
+  // What: Allows placing "Continue with Facebook" next to the primary Next button.
+  // Why: Aligns UX and solves XFBML sizing inconsistencies.
+  extraPrimaryAction?: { label: string; onClick: () => void; bgCss?: string }
 }
 
 /**
@@ -98,7 +103,8 @@ export default function UnifiedRegistration({
   hideHeader = false,
   containerMode = 'fullscreen',
   primaryButtonBgCss,
-  trialButtonBgCss
+  trialButtonBgCss,
+  extraPrimaryAction
 }: UnifiedRegistrationProps) {
   
   // Form state management
@@ -313,15 +319,37 @@ export default function UnifiedRegistration({
               </div>
             )}
 
-            {/* Submit button */}
-            <button
-              type="submit"
-              disabled={isLoading || isSubmitting}
-              className={`w-full text-white py-5 px-6 text-xl rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${themeClasses.button}`}
-              style={primaryBg ? { background: primaryBg } : undefined}
-            >
-              {isSubmitting ? 'Registering...' : (customTexts?.startPlayingButton || 'Start Playing')}
-            </button>
+            {/* Submit + Extra Primary actions */}
+            {(function() {
+              const primaryButton = (
+                <button
+                  type="submit"
+                  disabled={isLoading || isSubmitting}
+                  className={`w-full text-white py-5 px-6 text-xl rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${themeClasses.button}`}
+                  style={primaryBg ? { background: primaryBg } : undefined}
+                >
+                  {isSubmitting ? 'Registering...' : (customTexts?.startPlayingButton || 'Start Playing')}
+                </button>
+              )
+              if (typeof (extraPrimaryAction as any) !== 'undefined' && extraPrimaryAction) {
+                const extraBg = extractBackgroundValue(extraPrimaryAction.bgCss) || primaryBg
+                return (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {primaryButton}
+                    <button
+                      type="button"
+                      onClick={extraPrimaryAction.onClick}
+                      disabled={isLoading || isSubmitting}
+                      className={`w-full text-white py-5 px-6 text-xl rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${themeClasses.button}`}
+                      style={extraBg ? { background: extraBg } : undefined}
+                    >
+                      {extraPrimaryAction.label}
+                    </button>
+                  </div>
+                )
+              }
+              return primaryButton
+            })()}
           </form>
           
           {/* Trial mode option */}

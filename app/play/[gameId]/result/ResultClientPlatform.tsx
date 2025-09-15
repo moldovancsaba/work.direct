@@ -50,8 +50,27 @@ export default function ResultClientPlatform({ gameId, texts, styles, won, refCo
     window.location.href = `${path}${q}`
   }
 
-  const onInviteLanding = () => {
-    navigateWithRef(`/play/${gameId}/landing`)
+  // Share/copy invite instead of navigating back to Welcome/Landing
+  // What: Use Web Share API with clipboard fallback and include participant uuid as ref.
+  // Why: "Invite Friends" should share a link, not navigate away.
+  const onInviteShare = async () => {
+    const ref = getReferralUuid()
+    const origin = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || '')
+    const url = `${origin}/play/${gameId}${ref ? `?ref=${encodeURIComponent(ref)}` : ''}`
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: texts?.CTA_TITLE || 'PlayMass', text: texts?.TEXT_42 || 'Join me in this game!', url })
+        return
+      }
+    } catch (e) {
+      // fall back to clipboard
+    }
+    try {
+      await navigator.clipboard.writeText(url)
+      alert('Invite link copied to clipboard!')
+    } catch {
+      alert(`Invite link: ${url}`)
+    }
   }
 
   // Enforce no-scroll at the document level while on result
@@ -74,7 +93,7 @@ export default function ResultClientPlatform({ gameId, texts, styles, won, refCo
       style={{ backgroundColor: '#000000FF', color: '#FFFFFFFF', fontFamily: '"Noto Sans", sans-serif' }}
     >
       <HeroBlock
-        backgroundClass={heroBg}
+        backgroundCss={heroBg}
         title={title}
         scoreboard={{
           home: 0,
@@ -160,7 +179,7 @@ export default function ResultClientPlatform({ gameId, texts, styles, won, refCo
           {/* Secondary Actions Grid: Invite + Play Again */}
           <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4">
             <button
-              onClick={onInviteLanding}
+              onClick={onInviteShare}
               className='px-6 py-3 text-white rounded-lg text-2xl px-9 py-5'
               style={{ background: extractBackgroundValue(texts?.TEXT_45_BG) }}
             >

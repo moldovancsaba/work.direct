@@ -174,6 +174,7 @@ return (
       gameType={game.type}
       title={(cfg as any)?.platform?.texts?.TEXT_30 || game.title}
       subtitle={headerSubtitle}
+      heroBackgroundCss={platformStyles?.hero?.background}
       gameContent={content}
       penaltyScore={game.type === 'PENALTY_SHOOTOUT' ? {
         home: homeScore,

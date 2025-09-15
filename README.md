@@ -1,11 +1,11 @@
 # PlayMass - Interactive Game Platform
 
-Current Version: 1.22.0
-Last Updated: 2025-09-14T16:12:23.000Z
+Current Version: 1.23.0
+Last Updated: 2025-09-15T10:36:24.000Z
 
 ## 🎮 Features
 
-- **Stars Hexa Games**: Interactive hexagonal star-finding games with customizable text and hidden stars
+- **Hexa Games**: Interactive hexagonal star-finding games with customizable text and hidden stars
 - **Penalty Shootout Games**: Professional football penalty games with split-flap scoreboard animations
 - **Rewards Management**: Complete reward system with points, coupons, physical prizes, and custom rewards
 - **Participant Management**: Track players across multiple games and sessions
