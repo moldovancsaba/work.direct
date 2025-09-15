@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { axialToPixel, rotatePoint, hexVertices, polygonPointsString, SQRT3 } from '@/lib/hex/geometry'
+import { axialToPixel, rotatePoint, hexVertices, polygonPointsString, SQRT3 } from '../../lib/hex/geometry'
 import type { QuizzQuestion, HexCoord } from '../../types'
 
 interface QuizzHexaProps {
@@ -23,7 +23,18 @@ export default function QuizzHexa({ mapName, activeCoords, rounds, targetCorrect
   const [questionMap, setQuestionMap] = useState<Record<string, QuizzQuestion>>({})
   const [overlay, setOverlay] = useState<{ key: string; q: QuizzQuestion } | null>(null)
 
-  // Load coords from map API if mapName provided
+  // Default fallback 2-3-2 formation around origin
+  const defaultSeven: HexCoord[] = useMemo(() => ([
+    { q: 0, r: -1 },
+    { q: 1, r: -1 },
+    { q: -1, r: 0 },
+    { q: 0, r: 0 },
+    { q: 1, r: 0 },
+    { q: -1, r: 1 },
+    { q: 0, r: 1 }
+  ]), [])
+
+  // Load coords from map API if mapName provided (or use fallback)
   useEffect(() => {
     let aborted = false
     const load = async () => {
@@ -32,14 +43,21 @@ export default function QuizzHexa({ mapName, activeCoords, rounds, targetCorrect
         return
       }
       if (mapName) {
-        const res = await fetch(`/api/maps/${encodeURIComponent(mapName)}`, { cache: 'no-store' })
-        const data = await res.json()
-        if (!aborted && res.ok && data?.success) setCoords(data.data.coords || [])
+        try {
+          const res = await fetch(`/api/maps/${encodeURIComponent(mapName)}`, { cache: 'no-store' })
+          const data = await res.json()
+          if (!aborted && res.ok && data?.success && Array.isArray(data?.data?.coords) && data.data.coords.length > 0) {
+            setCoords(data.data.coords)
+            return
+          }
+        } catch {}
       }
+      // Fallback to default seven if nothing loaded
+      if (!aborted) setCoords(defaultSeven)
     }
     load()
     return () => { aborted = true }
-  }, [mapName, activeCoords])
+  }, [mapName, activeCoords, defaultSeven])
 
   // Assign random questions to keys of coords; use only as many as available
   useEffect(() => {
@@ -53,21 +71,40 @@ export default function QuizzHexa({ mapName, activeCoords, rounds, targetCorrect
     setQuestionMap(map)
   }, [coords, questions])
 
-  // Layout
+  // Layout - compute hex size to fit all coordinates
   useEffect(() => {
-    const resize = () => {
+    const computeFitAndResize = () => {
       const el = stageRef.current
-      if (!el) return
+      if (!el || coords.length === 0) return
       const r = el.getBoundingClientRect()
       const vw = r.width || 800
       const vh = r.height || 600
-      const s0 = Math.max(24, Math.min(vw, vh) / 10)
-      setHexSize(s0 * 0.96)
+      const margin = 0.92
+      // Start with a base size and compute rotated bounding box
+      const base = Math.max(16, Math.min(vw, vh) / 10)
+      const box = (() => {
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+        for (const c of coords) {
+          const center = axialToPixel(c.q, c.r, base)
+          const verts = hexVertices(center.x, center.y, base).map(p => rotatePoint(p.x, p.y))
+          for (const v of verts) {
+            if (v.x < minX) minX = v.x
+            if (v.x > maxX) maxX = v.x
+            if (v.y < minY) minY = v.y
+            if (v.y > maxY) maxY = v.y
+          }
+        }
+        return { w: maxX - minX, h: maxY - minY }
+      })()
+      if (box.w > 0 && box.h > 0) {
+        const scale = Math.min((vw * margin) / box.w, (vh * margin) / box.h)
+        setHexSize(base * scale)
+      }
     }
-    resize()
-    window.addEventListener('resize', resize)
-    return () => window.removeEventListener('resize', resize)
-  }, [])
+    computeFitAndResize()
+    window.addEventListener('resize', computeFitAndResize)
+    return () => window.removeEventListener('resize', computeFitAndResize)
+  }, [coords])
 
   const handleFlip = (key: string) => {
     if (overlay) return

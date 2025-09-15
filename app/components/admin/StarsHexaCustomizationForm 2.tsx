@@ -35,9 +35,6 @@ export interface StarsHexaColors {
     bg?: string
     text?: string
   }
-  // Optional hex grid styling used by StarsHexa renderer
-  // What: Allows admin to configure visual backgrounds/strokes for hex shapes
-  // Why: Keep visual parity with current defaults while enabling customization
   hexGrid?: {
     activeHexBg?: string
     flipGoodBg?: string
