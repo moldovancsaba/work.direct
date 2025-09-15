@@ -35,9 +35,14 @@ export default function GameClient({ game, cfg }: GameClientProps) {
   // Scoreboard state
   const [homeScore, setHomeScore] = useState(0)
   const [visitorScore, setVisitorScore] = useState(0)
-  // Stars Hexa scoreboard: starsRemaining : flipsRemaining
+  // Stars Hexa HUD (legacy): starsRemaining : flipsRemaining (kept for potential UI use)
   const [starsLeft, setStarsLeft] = useState(0)
   const [flipsLeft, setFlipsLeft] = useState(0)
+  // Stars Hexa rounds for header scoreboard: currentRound : totalRounds
+  // WHAT: Track these at the GameClient level to feed the hero scoreboard via GameLayout.
+  // WHY: Product requirement — show the actual round on the left and all rounds on the right.
+  const [hexaCurrentRound, setHexaCurrentRound] = useState(1)
+  const [hexaTotalRounds, setHexaTotalRounds] = useState(0)
   // Find Red scoreboard: redsFound / targetReds and roundsUsed / totalRounds
   const [findRedsFound, setFindRedsFound] = useState(0)
   const [findTargetReds, setFindTargetReds] = useState(0)
@@ -125,6 +130,7 @@ export default function GameClient({ game, cfg }: GameClientProps) {
       winEmoji={game.configuration?.starsHexa?.emojis?.win || '⭐️'}
       loseEmoji={game.configuration?.starsHexa?.emojis?.lose || '🍄'}
       onHUDUpdate={(starsRemaining, flipsRemaining) => { setStarsLeft(starsRemaining); setFlipsLeft(flipsRemaining); }}
+      onRoundUpdate={(current, total) => { setHexaCurrentRound(current); setHexaTotalRounds(total); }}
     />
   ) : game.type === 'FIND_RED' ? (
     <FindRed
@@ -187,11 +193,12 @@ return (
         homeLabel: platformStyles?.scoreboard?.homeLabel,
         visitorLabel: platformStyles?.scoreboard?.visitorLabel
       } : (game.type === 'STARS_HEXA' ? {
-        home: starsLeft,
-        visitor: flipsLeft,
-        homeBg: '#C00000FF',
-        visitorBg: '#C00000FF',
-        digitColor: '#FFFFFFFF',
+        // Display current round (left) and total rounds (right) for Hexa, per product requirement
+        home: hexaCurrentRound,
+        visitor: hexaTotalRounds,
+        homeBg: platformStyles?.scoreboard?.homeBg || '#C00000FF',
+        visitorBg: platformStyles?.scoreboard?.visitorBg || '#C00000FF',
+        digitColor: platformStyles?.scoreboard?.digitColor || '#FFFFFFFF',
         showLabels: false
       } : (game.type === 'FIND_RED' ? {
         // Map to redsFound / targetReds; we re-use the two-digit display semantics
