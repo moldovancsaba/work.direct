@@ -29,6 +29,7 @@ export interface GameLayoutProps {
   backgroundGradient?: string
   containerClassName?: string
   heroBackgroundCss?: string
+  mainBackgroundCss?: string
   
   // Penalty scoreboard (optional)
   penaltyScore?: { home: number; visitor: number; homeBg?: string; visitorBg?: string; digitColor?: string; showLabels?: boolean; homeLabel?: string; visitorLabel?: string }
@@ -71,6 +72,7 @@ export default function GameLayout({
   backgroundGradient,
   containerClassName,
   heroBackgroundCss,
+  mainBackgroundCss,
   penaltyScore,
   isLoading = false,
   isGameComplete = false,
@@ -129,7 +131,7 @@ export default function GameLayout({
       />
 
       {/* MAIN (76%) */}
-      <MainBlock isGame={true}>
+      <MainBlock backgroundCss={mainBackgroundCss} isGame={true}>
         {/* Game content only - fills the entire main block */}
         <div className="w-full h-full">
           <div className="w-full h-full">
@@ -137,6 +139,10 @@ export default function GameLayout({
           </div>
         </div>
       </MainBlock>
+      {/* Footer links pinned to bottom */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-full">
+        <FooterLinks gameId={gameId} />
+      </div>
     </div>
   )
 }

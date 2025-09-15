@@ -60,7 +60,7 @@ export default function LandingClientPlatform({ gameId, texts, styles, refCode }
   return (
     <div className="fixed inset-0 w-screen h-screen overflow-hidden" style={{ backgroundColor: '#000000FF', color: '#FFFFFFFF', fontFamily: '"Noto Sans", sans-serif' }}>
       <HeroBlock backgroundCss={heroBg} title={title} scoreboard={{ home: 0, visitor: 0, homeBg: styles?.scoreboard?.homeBg || '#C00000FF', digitColor: styles?.scoreboard?.digitColor || '#FFFFFFFF' }} isLanding={true} />
-      <MainBlock backgroundClass={mainBg} isLanding={true}>
+      <MainBlock backgroundCss={mainBg} isLanding={true}>
         <div className="relative w-full h-full">
           {/* Background cover image */}
           {imageUrl && (
@@ -91,6 +91,10 @@ export default function LandingClientPlatform({ gameId, texts, styles, refCode }
           </div>
         </div>
       </MainBlock>
+      {/* Footer links pinned to bottom across the page */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-full">
+        <FooterLinks gameId={gameId} />
+      </div>
     </div>
   )
 }

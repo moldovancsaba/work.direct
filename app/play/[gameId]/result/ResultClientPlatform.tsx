@@ -102,7 +102,7 @@ export default function ResultClientPlatform({ gameId, texts, styles, won, refCo
           digitColor: styles?.scoreboard?.digitColor || '#FFFFFFFF'
         }}
       />
-      <MainBlock backgroundClass={mainBg}>
+      <MainBlock backgroundCss={mainBg}>
         <div className="w-full h-full flex justify-center">
           <div className="h-full w-[80vw] min-w-[80vw] max-w-none space-y-6 text-center flex flex-col items-center justify-center">
           {/* Result headline based on win/lose */}
@@ -197,6 +197,10 @@ export default function ResultClientPlatform({ gameId, texts, styles, won, refCo
         </div>
         <FooterLinks gameId={gameId} />
       </MainBlock>
+      {/* Footer links pinned to bottom */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-full">
+        <FooterLinks gameId={gameId} />
+      </div>
     </div>
   )
 }
