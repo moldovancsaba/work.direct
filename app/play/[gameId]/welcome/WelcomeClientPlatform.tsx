@@ -270,11 +270,20 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
               contactRequiredError: texts?.TEXT_26 || 'Please provide either email or phone number',
               tryWithoutRegText: texts?.TEXT_27 || 'Want to try without registration?'
             }}
-            extraPrimaryAction={{
-              label: fbLoading ? 'Connecting…' : 'Continue with Facebook',
-              onClick: () => { if (!fbLoading) handleFacebookLogin() },
-              bgCss: texts?.NEXT_LOGIN_BG || texts?.TEXT_18_BG || ''
-            }}
+            extraPrimaryNode={
+              <div ref={fbPluginContainerRef} className="flex justify-center w-full">
+                <div
+                  className="fb-login-button"
+                  data-width=""
+                  data-size=""
+                  data-button-type=""
+                  data-layout=""
+                  data-auto-logout-link="false"
+                  data-use-continue-as="false"
+                  data-scope="public_profile,email"
+                />
+              </div>
+            }
           />
 
           {/* Facebook login status and errors */}
@@ -292,8 +301,8 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
           </div>
         </div>
       </MainBlock>
-      {/* Footer links pinned to bottom */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-full">
+      {/* Footer links pinned to bottom of screen */}
+      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 w-full z-50">
         <FooterLinks gameId={gameId} />
       </div>
     </div>

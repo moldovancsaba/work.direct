@@ -64,6 +64,9 @@ export interface UnifiedRegistrationProps {
   // What: Allows placing "Continue with Facebook" next to the primary Next button.
   // Why: Aligns UX and solves XFBML sizing inconsistencies.
   extraPrimaryAction?: { label: string; onClick: () => void; bgCss?: string }
+  // Optional extra primary node (e.g., Facebook plugin) rendered next to the primary button
+  // What: Place <div class="fb-login-button">...</div> in the same row
+  extraPrimaryNode?: React.ReactNode
 }
 
 /**
@@ -104,7 +107,8 @@ export default function UnifiedRegistration({
   containerMode = 'fullscreen',
   primaryButtonBgCss,
   trialButtonBgCss,
-  extraPrimaryAction
+  extraPrimaryAction,
+  extraPrimaryNode
 }: UnifiedRegistrationProps) {
   
   // Form state management
@@ -331,6 +335,16 @@ export default function UnifiedRegistration({
                   {isSubmitting ? 'Registering...' : (customTexts?.startPlayingButton || 'Start Playing')}
                 </button>
               )
+              if (extraPrimaryNode) {
+                return (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-center">
+                    {primaryButton}
+                    <div className="w-full flex items-center justify-center">
+                      {extraPrimaryNode}
+                    </div>
+                  </div>
+                )
+              }
               if (typeof (extraPrimaryAction as any) !== 'undefined' && extraPrimaryAction) {
                 const extraBg = extractBackgroundValue(extraPrimaryAction.bgCss) || primaryBg
                 return (
