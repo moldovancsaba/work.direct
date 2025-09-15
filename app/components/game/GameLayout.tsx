@@ -139,10 +139,6 @@ export default function GameLayout({
           </div>
         </div>
       </MainBlock>
-      {/* Footer links pinned to bottom of screen */}
-      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 w-full z-50">
-        <FooterLinks gameId={gameId} />
-      </div>
     </div>
   )
 }

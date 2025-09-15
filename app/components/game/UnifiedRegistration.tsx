@@ -329,14 +329,17 @@ export default function UnifiedRegistration({
                 <button
                   type="submit"
                   disabled={isLoading || isSubmitting}
-className={`w-full text-white py-5 px-6 text-xl rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${themeClasses.button}`}
+                  className={`w-full text-white text-xl rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${themeClasses.button}`}
                   style={{
                     ...(primaryBg ? { background: primaryBg } : {}),
-                    height: '40px',
+                    minHeight: '48px',
                     minWidth: '240px',
                     maxWidth: '400px',
                     width: '100%',
-                    margin: '0 auto'
+                    margin: '0 auto',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
                   }}
                 >
                   {isSubmitting ? 'Registering...' : (customTexts?.startPlayingButton || 'Start Playing')}
@@ -355,7 +358,7 @@ className={`w-full text-white py-5 px-6 text-xl rounded-lg font-medium transitio
               if (typeof (extraPrimaryAction as any) !== 'undefined' && extraPrimaryAction) {
                 const extraBg = extractBackgroundValue(extraPrimaryAction.bgCss) || primaryBg
                 return (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-center">
                     {primaryButton}
                     <button
                       type="button"
@@ -382,14 +385,17 @@ className={`w-full text-white py-5 px-6 text-xl rounded-lg font-medium transitio
               <button
                 onClick={handleTrialMode}
                 disabled={isLoading}
-className={`w-full text-white py-5 px-6 text-xl rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${themeClasses.trialButton}`}
+className={`w-full text-white text-xl rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${themeClasses.trialButton}`}
                 style={{
                   ...(trialBg ? { background: trialBg } : {}),
-                  height: '40px',
+                  minHeight: '48px',
                   minWidth: '240px',
                   maxWidth: '400px',
                   width: '100%',
-                  margin: '0 auto'
+                  margin: '0 auto',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
                 }}
               >
                 {customTexts?.tryWithoutRegButton || 'Try Without Registration'}

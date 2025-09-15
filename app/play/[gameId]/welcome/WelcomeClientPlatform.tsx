@@ -271,19 +271,17 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
               tryWithoutRegText: texts?.TEXT_27 || 'Want to try without registration?'
             }}
             extraPrimaryNode={
-              <div ref={fbPluginContainerRef} className="flex justify-center w-full" style={{ minHeight: '64px' }}>
-                <div style={{ transform: 'scale(1.15)', transformOrigin: 'center' }}>
-                  <div
-                    className="fb-login-button"
-                    data-width=""
-                    data-size="large"
-                    data-button-type="continue_with"
-                    data-layout="default"
-                    data-auto-logout-link="false"
-                    data-use-continue-as="false"
-                    data-scope="public_profile,email"
-                  />
-                </div>
+              <div ref={fbPluginContainerRef} className="flex justify-center items-center w-full" style={{ minHeight: '48px', minWidth: '240px', maxWidth: '400px', width: '100%', margin: '0 auto' }}>
+                <div
+                  className="fb-login-button"
+                  data-width=""
+                  data-size="large"
+                  data-button-type="continue_with"
+                  data-layout="default"
+                  data-auto-logout-link="false"
+                  data-use-continue-as="false"
+                  data-scope="public_profile,email"
+                />
               </div>
             }
           />

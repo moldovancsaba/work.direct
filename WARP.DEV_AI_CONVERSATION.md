@@ -1,5 +1,7 @@
 # WARP.DEV_AI_CONVERSATION.md — Planning Log
 
+2025-09-15T12:45:05.000Z — Delivery: UI/UX fixes — remove duplicate footers, keep pinned footer with safe bottom padding; increase button height and center text; align Welcome Next button with Facebook button side-by-side; bump to v1.25.0; docs synced; commit and push to main.
+
 2025-09-15T11:11:36.000Z — Delivery: Facebook login button reliability — fallback to legacy OAuth when SDK not ready; status feedback and connecting state; minor version bump to v1.24.0; docs synchronized; commit and push to main.
 
 2025-09-15T10:36:24.000Z — Delivery: UI/UX fixes and renames — Hexa rename, editor save stays on page with timestamp, Hero Background CSS applied across play flow, aligned Facebook button next to Next, INVITE_REFERRAL shares/copies referral link; version bump to v1.23.0; docs synchronized; commit and push to main.
