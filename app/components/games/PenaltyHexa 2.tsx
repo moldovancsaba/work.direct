@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useReducer } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { PenaltyCard, GameOutcome } from '../../types'
+import { axialToPixel, rotatePoint, hexVertices, SQRT3 } from '@/lib/hex/geometry'
 
 interface PenaltyTexts {
   // Registration texts
@@ -383,8 +384,6 @@ export default function PenaltyHexa({
     const coord = axialCoords[position] || [0, 0]
     const [q, r] = coord
     const s = hexWidth // Use hexWidth as the radius
-    const SQRT3 = Math.sqrt(3)
-    
     // EXACT axial to pixel conversion from reference (flat-top BEFORE rotation)
     const x = s * (1.5 * q)
     const y = s * ((SQRT3/2) * q + SQRT3 * r)
@@ -415,39 +414,13 @@ export default function PenaltyHexa({
   }, [disabled, gameState.isGameComplete, gameState.flipsUsed, gameState.players, flipsPerRound, onFlip, onResult, isTrialMode])
 
   // EXACT math from reference HTML for responsive grid layout
-  const DEG = Math.PI / 180
-  const ROT = 30 * DEG // rotate hex geometry by +30°
-  const cosR = Math.cos(ROT)
-  const sinR = Math.sin(ROT)
-  const SQRT3 = Math.sqrt(3)
-
-  // axial -> pixel center (flat-top) BEFORE rotation - EXACT from reference
-  const axialToPixel = (q: number, r: number, s: number) => {
-    const x = s * (1.5 * q)
-    const y = s * ((SQRT3/2) * q + SQRT3 * r)
-    return { x, y }
-  }
-
-  // Rotate a point (x,y) by +30° about the origin - EXACT from reference
-  const rot = (x: number, y: number) => {
-    return { x: x * cosR - y * sinR, y: x * sinR + y * cosR }
-  }
-
-  // Hex vertices around (cx,cy) BEFORE rotation - EXACT from reference
-  const hexVertices = (cx: number, cy: number, s: number) => {
-    const pts = []
-    for (let i = 0; i < 6; i++) {
-      const a = i * Math.PI / 3 // 0,60,...,300 (flat-top)
-      pts.push({ x: cx + s * Math.cos(a), y: cy + s * Math.sin(a) })
-    }
-    return pts
-  }
+  // Using shared geometry utilities: axialToPixel, rotatePoint, hexVertices, SQRT3
 
   // Compute rotated extrema box using boundary hexes - EXACT from reference
   const computeFitBox = (s: number) => {
     const rotatedHexExtrema = (q: number, r: number) => {
       const c = axialToPixel(q, r, s)
-      const verts = hexVertices(c.x, c.y, s).map(p => rot(p.x, p.y))
+      const verts = hexVertices(c.x, c.y, s).map(p => rotatePoint(p.x, p.y))
       let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
       verts.forEach(v => {
         if (v.x < minX) minX = v.x
@@ -551,7 +524,7 @@ export default function PenaltyHexa({
         const c = axialToPixel(q, r, s)
         // rotate each vertex, then offset to screen center - EXACT from reference
         const verts = hexVertices(c.x, c.y, s).map(p => {
-          const rr = rot(p.x, p.y)
+          const rr = rotatePoint(p.x, p.y)
           return { x: rr.x + offsetX, y: rr.y + offsetY }
         })
         

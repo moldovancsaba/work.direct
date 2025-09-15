@@ -1,5 +1,24 @@
 # WARP.DEV_AI_CONVERSATION.md — Planning Log
 
+2025-09-15T15:54:13.000Z — Plan: Hexa Creator (Admin) initial implementation
+
+2025-09-15T16:28:12.000Z — Delivery: Hexa Creator, hexmaps API/model, geometry refactor, warnings removed
+- Added /admin/hexacreator page (infinite honeycomb, axial labels, CRUD)
+- Implemented /api/admin/hexmaps (list/create) and /api/admin/hexmaps/[id] (read/update/delete-soft)
+- Created HexMap model; removed duplicate index definition on name to avoid Mongoose warnings
+- Extracted shared hex geometry and refactored PenaltyHexa to reuse it
+- Fixed App Router param signatures and StarsHexa prop mismatch (onRoundUpdate)
+- Local production build verified; ready to deploy
+- Create shared hex geometry utilities extracted from Penalty (axial→pixel, rotation, vertices, distance)
+- Add HexMap model (unique name, coords[], radius=4, hexCount, tags[], isActive, createdBy)
+- Implement admin API routes: /api/admin/hexmaps (GET, POST), /api/admin/hexmaps/[id] (GET, PUT, DELETE-soft)
+- Build /admin/hexacreator UI with infinite honeycomb (Penalty engine):
+  - All hexes default #44AA44; label each hex with axial q,r
+  - Toggle on click to #44AAAA if within radius≤4; outside ring shown at reduced opacity
+  - Full CRUD: save, load, update, delete; search by name or tag
+- Add Admin nav link “Hexa Creator”; admin-gated via existing useAdminAuth
+- Version bump (patch) and doc sync across README, TASKLIST, ROADMAP, WARP.md, RELEASE_NOTES with ISO 8601 ms timestamps (UTC)
+
 2025-09-15T12:45:05.000Z — Delivery: UI/UX fixes — remove duplicate footers, keep pinned footer with safe bottom padding; increase button height and center text; align Welcome Next button with Facebook button side-by-side; bump to v1.25.0; docs synced; commit and push to main.
 
 2025-09-15T11:11:36.000Z — Delivery: Facebook login button reliability — fallback to legacy OAuth when SDK not ready; status feedback and connecting state; minor version bump to v1.24.0; docs synchronized; commit and push to main.

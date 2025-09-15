@@ -9,6 +9,21 @@ export interface BaseDocument {
   updatedAt: Date
 }
 
+// Hex maps for reusable axial coordinate layouts
+// WHAT: Shareable named sets of axial hex coordinates that multiple hex-based games can use as levels/maps.
+// WHY: Centralize map creation and reuse (e.g., "FLOWER", "7cloud", "7river"), enabling randomization and filtering by size/tags.
+export interface HexCoord { q: number; r: number }
+
+export interface HexMap extends BaseDocument {
+  name: string // Unique, human-readable identifier; used as reference in game configs
+  coords: HexCoord[] // Axial coordinates included in the map (within radius)
+  radius: number // Maximum hex distance from origin allowed in this map (e.g., 4)
+  hexCount: number // Derived: coords.length
+  tags?: string[] // Optional hashtags for search and grouping (stored lowercase)
+  isActive: boolean // Soft delete / archival toggle
+  createdBy: string // Admin identifier
+}
+
 // Centralized Game System Types
 // These interfaces support the centralized game environment architecture
 
