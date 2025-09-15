@@ -53,12 +53,12 @@ export default function QuizzCustomizationForm({ config, onChange }: QuizzCustom
     emit(next)
   }
 
-  const emit = (qs = questions) => {
+  const emit = (qs = questions, override?: Partial<QuizzConfiguration>) => {
     onChange({
-      mapName,
+      mapName: override?.mapName ?? mapName,
       activeCoords: config?.activeCoords || [],
-      rounds,
-      targetCorrect,
+      rounds: override?.rounds ?? rounds,
+      targetCorrect: override?.targetCorrect ?? targetCorrect,
       questions: qs,
       theme: config?.theme || 'default',
       texts: config?.texts || { submitAnswer: 'Submit', correctFeedback: 'Correct!', wrongFeedback: 'Try again' }
@@ -70,15 +70,15 @@ export default function QuizzCustomizationForm({ config, onChange }: QuizzCustom
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Map Name (HexMap)</label>
-          <input className="w-full px-3 py-2 border rounded" value={mapName} onChange={(e)=>{ setMapName(e.target.value); emit() }} placeholder="FLOWER or 7cloud" />
+          <input className="w-full px-3 py-2 border rounded" value={mapName} onChange={(e)=>{ const v = e.target.value; setMapName(v); emit(questions, { mapName: v }) }} placeholder="FLOWER or 7cloud" />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Rounds (Y)</label>
-          <input type="number" min={1} className="w-full px-3 py-2 border rounded" value={rounds} onChange={(e)=>{ setRounds(Number(e.target.value)||1); emit() }} />
+          <input type="number" min={1} className="w-full px-3 py-2 border rounded" value={rounds} onChange={(e)=>{ const n = Number(e.target.value)||1; setRounds(n); emit(questions, { rounds: n }) }} />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Target Correct (X)</label>
-          <input type="number" min={1} className="w-full px-3 py-2 border rounded" value={targetCorrect} onChange={(e)=>{ setTargetCorrect(Number(e.target.value)||1); emit() }} />
+          <input type="number" min={1} className="w-full px-3 py-2 border rounded" value={targetCorrect} onChange={(e)=>{ const n = Number(e.target.value)||1; setTargetCorrect(n); emit(questions, { targetCorrect: n }) }} />
         </div>
       </div>
 
