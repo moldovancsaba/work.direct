@@ -1,9 +1,16 @@
 # 📝 RELEASE_NOTES.md - PlayMass
 
-**Current Version**: 1.23.0
-**Last Updated**: 2025-09-15T10:36:24.000Z
+**Current Version**: 1.24.0
+**Last Updated**: 2025-09-15T11:11:36.000Z
 
 ## 🔹 Version History
+
+### [v1.24.0] — 2025-09-15T11:11:36.000Z
+- Fix: "Continue with Facebook" button now works reliably
+  - Fallback to legacy OAuth redirect (/api/auth/facebook/start) if SDK not ready or App ID missing
+  - Status feedback under buttons (initializing/errors), button shows "Connecting…" during in-flight
+  - Maintains JS SDK popup path when available; server verification remains unchanged
+- Build: Verified Next.js build
 
 ### [v1.23.0] — 2025-09-15T10:36:24.000Z
 - Changed: UI labels "Stars Hexa" → "Hexa" (internal id STARS_HEXA preserved)
