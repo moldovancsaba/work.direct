@@ -329,8 +329,15 @@ export default function UnifiedRegistration({
                 <button
                   type="submit"
                   disabled={isLoading || isSubmitting}
-                  className={`w-full text-white py-5 px-6 text-xl rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${themeClasses.button}`}
-                  style={primaryBg ? { background: primaryBg } : undefined}
+className={`w-full text-white py-5 px-6 text-xl rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${themeClasses.button}`}
+                  style={{
+                    ...(primaryBg ? { background: primaryBg } : {}),
+                    height: '40px',
+                    minWidth: '240px',
+                    maxWidth: '400px',
+                    width: '100%',
+                    margin: '0 auto'
+                  }}
                 >
                   {isSubmitting ? 'Registering...' : (customTexts?.startPlayingButton || 'Start Playing')}
                 </button>
@@ -375,8 +382,15 @@ export default function UnifiedRegistration({
               <button
                 onClick={handleTrialMode}
                 disabled={isLoading}
-                className={`w-full text-white py-5 px-6 text-xl rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${themeClasses.trialButton}`}
-                style={trialBg ? { background: trialBg } : undefined}
+className={`w-full text-white py-5 px-6 text-xl rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${themeClasses.trialButton}`}
+                style={{
+                  ...(trialBg ? { background: trialBg } : {}),
+                  height: '40px',
+                  minWidth: '240px',
+                  maxWidth: '400px',
+                  width: '100%',
+                  margin: '0 auto'
+                }}
               >
                 {customTexts?.tryWithoutRegButton || 'Try Without Registration'}
               </button>

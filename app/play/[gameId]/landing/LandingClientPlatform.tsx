@@ -80,7 +80,7 @@ export default function LandingClientPlatform({ gameId, texts, styles, refCode }
             <button
               onClick={() => onNext(buildHrefForAction(action))}
               className={`${styles?.main?.buttonPrimaryClass || 'px-6 py-3 text-white rounded-lg'} text-2xl px-9 py-5`}
-              style={{ background: extractBackgroundValue(texts?.NEXT_WELCOME_BG) }}
+style={{ background: extractBackgroundValue(texts?.NEXT_WELCOME_BG), height: '40px', minWidth: '240px', maxWidth: '400px', width: '100%', margin: '0 auto' }}
             >
               {ctaText}
             </button>
