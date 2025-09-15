@@ -24,9 +24,9 @@ function HeroBlockInner({ backgroundClass, backgroundCss, title, scoreboard, isL
     <div
       className={`w-full ${backgroundClass || ''} ${isLanding ? '' : 'px-4'} text-center`}
       style={{
-        marginTop: isLanding ? '0' : '2vh',
-        marginBottom: isLanding ? '0' : '2vh',
-        height: isLanding ? '20vh' : '18vh',
+        marginTop: '0',
+        marginBottom: '0',
+        height: '20vh',
         // Apply configured CSS background when provided; fallback to default color
         background: bg || undefined,
         backgroundColor: bg ? undefined : '#000000FF',
@@ -75,12 +75,13 @@ function MainBlockInner({ backgroundCss, children, isLanding = false, isGame = f
       style={{
         width: '100vw',
         height: isLanding ? '80vh' : '76vh',
-        marginBottom: isLanding ? '0' : '2vh',
+        marginBottom: '0',
         background: bg || undefined,
         backgroundColor: bg ? undefined : '#444444FF',
         color: '#FFFFFFFF',
         fontFamily: '"Noto Sans", sans-serif',
         padding: (isLanding || isGame) ? '0' : '24px',
+        paddingBottom: (isLanding || isGame) ? '0' : '96px',
         overflow: (isLanding || isGame) ? 'hidden' : 'auto',
         borderRadius: 0,
         textAlign: 'center'

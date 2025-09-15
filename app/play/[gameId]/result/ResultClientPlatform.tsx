@@ -139,8 +139,8 @@ export default function ResultClientPlatform({ gameId, texts, styles, won, refCo
                         (e.currentTarget as HTMLAnchorElement).className = styles.main.buttonPrimaryClass
                       }
                     }}
-                    className={`${styles?.main?.buttonPrimaryClass || 'px-6 py-3 bg-blue-600 text-white rounded-lg'} text-2xl px-9 py-5 text-center`}
-                    style={{ background: extractBackgroundValue(btn?.bg) || extractBackgroundValue(texts?.CTA1_BG) }}
+                    className={`${styles?.main?.buttonPrimaryClass || 'px-6 py-3 bg-blue-600 text-white rounded-lg'} text-2xl text-center block`}
+                    style={{ background: extractBackgroundValue(btn?.bg) || extractBackgroundValue(texts?.CTA1_BG), minHeight: '48px', minWidth: '240px', maxWidth: '400px', width: '100%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   >
                     {btn.text}
                   </a>
@@ -167,8 +167,8 @@ export default function ResultClientPlatform({ gameId, texts, styles, won, refCo
                       (e.currentTarget as HTMLAnchorElement).className = styles.main.buttonPrimaryClass
                     }
                   }}
-                  className={`${styles?.main?.buttonPrimaryClass || 'px-6 py-3 bg-blue-600 text-white rounded-lg'} text-2xl px-9 py-5 text-center`}
-                  style={{ background: extractBackgroundValue(texts?.CTA1_BG) }}
+                  className={`${styles?.main?.buttonPrimaryClass || 'px-6 py-3 bg-blue-600 text-white rounded-lg'} text-2xl text-center block`}
+                  style={{ background: extractBackgroundValue(texts?.CTA1_BG), minHeight: '48px', minWidth: '240px', maxWidth: '400px', width: '100%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
                   {texts?.TEXT_44 || 'Open CTA'}
                 </a>
@@ -180,22 +180,21 @@ export default function ResultClientPlatform({ gameId, texts, styles, won, refCo
           <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4">
             <button
               onClick={onInviteShare}
-              className='px-6 py-3 text-white rounded-lg text-2xl px-9 py-5'
-              style={{ background: extractBackgroundValue(texts?.TEXT_45_BG) }}
+              className='px-6 py-3 text-white rounded-lg text-2xl block'
+              style={{ background: extractBackgroundValue(texts?.TEXT_45_BG), minHeight: '48px', minWidth: '240px', maxWidth: '400px', width: '100%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               {texts?.TEXT_45 || 'Invite Friend'}
             </button>
             <button
               onClick={() => navigateWithRef(`/play/${gameId}/welcome`)}
-              className={`${styles?.main?.buttonPrimaryClass || 'px-6 py-3 text-white rounded-lg'} text-2xl px-9 py-5`}
-              style={{ background: extractBackgroundValue(texts?.TEXT_46_BG) }}
+              className={`${styles?.main?.buttonPrimaryClass || 'px-6 py-3 text-white rounded-lg'} text-2xl block`}
+              style={{ background: extractBackgroundValue(texts?.TEXT_46_BG), minHeight: '48px', minWidth: '240px', maxWidth: '400px', width: '100%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               {texts?.TEXT_46 || 'Play Again'}
             </button>
           </div>
           </div>
         </div>
-        <FooterLinks gameId={gameId} />
       </MainBlock>
       {/* Footer links pinned to bottom of screen */}
       <div className="fixed bottom-4 left-1/2 -translate-x-1/2 w-full z-50">

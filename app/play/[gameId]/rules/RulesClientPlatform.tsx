@@ -71,10 +71,10 @@ export default function RulesClientPlatform({ gameId, texts, styles, refCode }: 
           <div className="pt-4">
             <button
               onClick={() => onNext(`/play/${gameId}/game`)}
-              className={`${styles?.main?.buttonPrimaryClass || 'px-6 py-3 bg-blue-600 text-white rounded-lg'} text-2xl px-9 py-5`}
+              className={`${styles?.main?.buttonPrimaryClass || 'px-6 py-3 bg-blue-600 text-white rounded-lg'} text-2xl`}
               style={(function () {
                 const css = texts?.TEXT_25_BG as string | undefined
-const base: any = { height: '40px', minWidth: '240px', maxWidth: '400px', width: '100%', margin: '0 auto' }
+const base: any = { minHeight: '48px', minWidth: '240px', maxWidth: '400px', width: '100%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }
                 if (!css) return base
                 const grad = css.match(/linear-gradient\([^\)]+\)/i)
 if (grad) return { ...base, background: grad[0] }

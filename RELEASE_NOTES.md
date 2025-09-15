@@ -1,9 +1,16 @@
 # 📝 RELEASE_NOTES.md - PlayMass
 
-**Current Version**: 1.24.0
-**Last Updated**: 2025-09-15T11:11:36.000Z
+**Current Version**: 1.25.0
+**Last Updated**: 2025-09-15T12:45:05.000Z
 
 ## 🔹 Version History
+
+### [v1.25.0] — 2025-09-15T12:45:05.000Z
+- UI: Remove duplicate legal footers on play pages; keep a single footer pinned to the bottom of the screen
+- UX: Added safe bottom padding to Main content so the pinned footer never overlaps content
+- UI: Increased button height to min 48px and vertically centered text to accommodate longer labels
+- Welcome: Aligned “Next With Login Button” beside and vertically centered with the “Continue with Facebook” button; side-by-side on md+ screens, stacked on small screens
+- Layout: Removed black gaps between HERO and MAIN and below MAIN by eliminating external margins and adding controlled padding
 
 ### [v1.24.0] — 2025-09-15T11:11:36.000Z
 - Fix: "Continue with Facebook" button now works reliably

@@ -79,15 +79,11 @@ export default function LandingClientPlatform({ gameId, texts, styles, refCode }
           <div className="absolute inset-0 flex items-center justify-center p-4">
             <button
               onClick={() => onNext(buildHrefForAction(action))}
-              className={`${styles?.main?.buttonPrimaryClass || 'px-6 py-3 text-white rounded-lg'} text-2xl px-9 py-5`}
-style={{ background: extractBackgroundValue(texts?.NEXT_WELCOME_BG), height: '40px', minWidth: '240px', maxWidth: '400px', width: '100%', margin: '0 auto' }}
+              className={`${styles?.main?.buttonPrimaryClass || 'px-6 py-3 text-white rounded-lg'} text-2xl`}
+style={{ background: extractBackgroundValue(texts?.NEXT_WELCOME_BG), minHeight: '48px', minWidth: '240px', maxWidth: '400px', width: '100%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               {ctaText}
             </button>
-          </div>
-          {/* Footer links pinned to bottom */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-full">
-            <FooterLinks gameId={gameId} />
           </div>
         </div>
       </MainBlock>
