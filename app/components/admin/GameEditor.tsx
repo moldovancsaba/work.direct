@@ -7,6 +7,7 @@ import PenaltyCustomizationForm from './PenaltyCustomizationForm 2'
 import StarsHexaCustomizationForm from './StarsHexaCustomizationForm 2'
 import GeneralCustomizationForm from './GeneralCustomizationForm'
 import PlatformSettingsForm from './PlatformSettingsForm'
+import QuizzCustomizationForm from './QuizzCustomizationForm'
 import { GameType } from '../../types'
 
 interface HexagonCard {
@@ -270,6 +271,8 @@ const [platformStyles, setPlatformStyles] = useState<Record<string, any>>({})
     setHexagons(prev => prev.map((hex, i) => i === index ? { ...hex, [field]: value } : hex))
   }
 
+  const payloadRef = { current: {} as any }
+
   const handleCreateOrUpdate = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
@@ -383,6 +386,18 @@ const [platformStyles, setPlatformStyles] = useState<Record<string, any>>({})
           colors: penaltyColors,
           gameSettings: penaltyGameSettings
         }
+      } else if (gameType === 'QUIZZ') {
+        const q = (payloadRef.current || {}).quizz || {}
+        const qs = Array.isArray(q.questions) ? q.questions : []
+        payload.configuration.quizz = {
+          mapName: q.mapName || '',
+          activeCoords: Array.isArray(q.activeCoords) ? q.activeCoords : [],
+          rounds: Number(q.rounds || 5),
+          targetCorrect: Number(q.targetCorrect || 3),
+          questions: qs,
+          theme: q.theme || 'default',
+          texts: q.texts || { submitAnswer: 'Submit', correctFeedback: 'Correct!', wrongFeedback: 'Try again' }
+        }
       }
 
       if (mode === 'edit' && gameId) {
@@ -488,6 +503,7 @@ const [platformStyles, setPlatformStyles] = useState<Record<string, any>>({})
                     <option value="PENALTY_SHOOTOUT" className="bg-white text-black">Penalty Shootout</option>
                     <option value="FIND_RED" className="bg-white text-black">Get Shorty (Find Red)</option>
                     <option value="WHEEL_OF_FORTUNE" className="bg-white text-black">Wheel of Fortune</option>
+                    <option value="QUIZZ" className="bg-white text-black">Quizz</option>
                   </select>
                 </div>
               )}
@@ -525,7 +541,7 @@ const [platformStyles, setPlatformStyles] = useState<Record<string, any>>({})
             />
           </div>
 
-{/* Stars Hexa Configuration */}
+          {/* Stars Hexa Configuration */}
           {gameType === 'STARS_HEXA' && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Hexa Customization</h2>
@@ -556,6 +572,20 @@ const [platformStyles, setPlatformStyles] = useState<Record<string, any>>({})
               {mode === 'create' ? 'Create Game' : 'Update Game'}
             </button>
           </div>
+
+          {/* Quizz Configuration */}
+          {gameType === 'QUIZZ' && (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Quizz Settings</h2>
+              <QuizzCustomizationForm
+                config={undefined}
+                onChange={(q)=>{
+                  // store temp in local state by piggybacking platform texts/styles; final save uses payload below
+                  (payloadRef as any).current = { ...(payloadRef?.current || {}), quizz: q }
+                }}
+              />
+            </div>
+          )}
 
           {/* Find Red (Get Shorty) Configuration */}
           {gameType === 'FIND_RED' && (

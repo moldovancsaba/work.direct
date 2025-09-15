@@ -1,7 +1,7 @@
 # PlayMass - Interactive Game Platform
 
-Current Version: 1.26.0
-Last Updated: 2025-09-15T16:28:12.000Z
+Current Version: 1.27.0
+Last Updated: 2025-09-15T17:12:04.000Z
 
 ## 🎮 Features
 
@@ -124,6 +124,7 @@ app/
 - `GET /api/auth/session` - Get current end-user session (POC)
 - `POST /api/auth/session` - Create/refresh end-user session for 24h (POC)
 - `GET /api/health` - System health check
+- `GET /api/maps/[name]` - Get public HexMap by name (coords, radius, hexCount)
 
 ## 🎲 Game Types
 
@@ -133,6 +134,13 @@ app/
 - Hidden stars (1-3 per game) for discovery gameplay
 - Visual themes (default, colorful, minimal)
 - Limited attempts and flip mechanics
+
+### Quizz (Hexamap Quiz)
+- Hexamap-based quiz: click any active hex to flip and zoom into a question overlay
+- Exactly 3 answers per question; multiple correct answers allowed
+- Win condition: get X correct answers within Y rounds (configurable)
+- Questions are randomly assigned to active hex coordinates each play
+- Supports saved maps by name via Hexa Map Creator (optional mapName)
 
 ### Penalty Shootout
 - Professional football penalty game simulation

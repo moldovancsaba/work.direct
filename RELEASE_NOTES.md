@@ -1,9 +1,20 @@
 # 📝 RELEASE_NOTES.md - PlayMass
 
-**Current Version**: 1.26.0
-**Last Updated**: 2025-09-15T16:28:12.000Z
+**Current Version**: 1.27.0
+**Last Updated**: 2025-09-15T17:12:04.000Z
 
 ## 🔹 Version History
+
+### [v1.27.0] — 2025-09-15T17:12:04.000Z
+- New Game Type: QUIZZ (Hexamap Quiz) released
+  - Types: Added 'QUIZZ' to GameType; QuizzQuestion with exactly 3 answers (multiple correct supported)
+  - Model: Extended Game schema with configuration.quizz (rounds, targetCorrect, questions[], optional mapName, activeCoords[])
+  - Admin: QuizzCustomizationForm for adding/removing questions (3 answers), rounds and target correct
+  - Runtime: QuizzHexa gameplay component with overlay hex question UI and round/score tracking
+  - Registry/Editor: Integrated into module registry and GameEditor (create/edit)
+  - Result: Result client updated to handle QUIZZ outcomes
+- Public API: GET /api/maps/[name] to fetch active HexMap by name (coords, radius, hexCount)
+- Docs: Updated README, ARCHITECTURE, TASKLIST, ROADMAP, LEARNINGS, WARP.md; synchronized timestamps (ISO 8601 UTC with ms)
 
 ### [v1.26.0] — 2025-09-15T16:28:12.000Z
 - Feature: Hexa Map Creator admin page at /admin/hexacreator with infinite honeycomb grid (Penalty engine), axial q,r labels, selection ring (radius 4), and full CRUD

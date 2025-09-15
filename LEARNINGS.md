@@ -2,8 +2,17 @@
 
 This document captures implementation insights, technical decisions, and solutions to issues encountered during PlayMass development.
 
-**Current Version**: 1.25.0
-**Last Updated**: 2025-09-15T12:45:05.000Z
+**Current Version**: 1.27.0
+**Last Updated**: 2025-09-15T17:12:04.000Z
+
+### QUIZZ: Fixed-length answers and map integration
+- What: QUIZZ requires exactly 3 answers per question (tuple) and supports multiple correct answers; questions map onto active hex coordinates.
+- Why: Enforces consistent UI layout and gameplay expectations; multiple correct options enable richer questions.
+- How:
+  - Types: QuizzAnswer[] typed as a 3-length tuple [A,B,C]; editor enforces exactly three answers with multi-correct checkboxes.
+  - Model: Game.configuration.quizz validates answers length and persists mapName or explicit activeCoords[] for flexibility.
+  - Gameplay: On flip, show overlay hex (rotated to maintain hex geometry); advance round and track correct count; finish after Y rounds with won = correct >= X.
+- Notes: Reused shared honeycomb geometry and the HexMap system; added public GET /api/maps/[name] for map fetch by name.
 
 ### Duplicate key on shareLinks.id (E11000) — Fixed in v1.22.0
 - What: Creating any game failed with E11000 due to a unique index on subdocument array field shareLinks.id across the collection.

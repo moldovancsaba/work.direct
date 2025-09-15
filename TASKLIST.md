@@ -1,10 +1,17 @@
-1.26.0
+1.27.0
 
-**Last Updated**: 2025-09-15T16:28:12.000Z
+**Last Updated**: 2025-09-15T17:12:04.000Z
 
 ## 🔹 Priority Task Queue
 
-### ✅ Recently Completed
+- Title: Production deploy — QUIZZ release
+  - Owner: AI Developer
+  - Expected Delivery: 2025-09-15T17:30:00.000Z
+  - Priority: CRITICAL
+- Title: Post-release validation — QUIZZ end-to-end (admin create/edit, runtime play)
+  - Owner: AI Developer
+  - Expected Delivery: 2025-09-15T18:00:00.000Z
+  - Priority: HIGH
 - Facebook JS SDK Login Integration — Completed: 2025-09-12T08:38:38.000Z | Owner: AI Developer | Priority: HIGH
   - ✅ Global SDK loader in app/layout.tsx with readiness event
   - ✅ POST /api/auth/facebook/client verifies token, sets httpOnly user-session cookie

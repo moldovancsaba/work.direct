@@ -67,5 +67,10 @@ export const REGISTRY: Record<GameType, GameModule> = {
     id: 'WHEEL_OF_FORTUNE',
     name: 'Wheel of Fortune',
     defaultConfig: wheelDefault
+  },
+  QUIZZ: {
+    id: 'QUIZZ',
+    name: 'Quizz',
+    defaultConfig: { id: 'QUIZZ' as any, name: 'Quizz', version: '1.0.0', configuration: { quizz: { rounds: 5, targetCorrect: 3, questions: [], theme: 'default' } } }
   }
 }

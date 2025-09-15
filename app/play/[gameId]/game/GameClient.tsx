@@ -6,6 +6,7 @@ import StarsHexa from '../../../components/games/StarsHexa'
 import PenaltyHexa from '../../../components/games/PenaltyHexa 2'
 import FindRed from '../../../components/games/FindRed'
 import LuckyWheel from '../../../components/LuckyWheel'
+import QuizzHexa from '../../../components/games/QuizzHexa'
 import { GameOutcome, WheelSegment } from '../../../types'
 
 interface GameClientProps {
@@ -154,6 +155,21 @@ export default function GameClient({ game, cfg }: GameClientProps) {
       theme={game.configuration?.wheelOfFortune?.theme || 'default'}
       spinDuration={game.configuration?.wheelOfFortune?.durationMs || 4500}
       rotations={4}
+    />
+  ) : game.type === 'QUIZZ' ? (
+    <QuizzHexa
+      mapName={game.configuration?.quizz?.mapName}
+      activeCoords={game.configuration?.quizz?.activeCoords}
+      rounds={game.configuration?.quizz?.rounds || 5}
+      targetCorrect={game.configuration?.quizz?.targetCorrect || 3}
+      questions={game.configuration?.quizz?.questions || []}
+      onResult={(r)=>{
+        const result: GameOutcome = {
+          type: r.won ? 'WIN' : 'LOSE', starsFound: r.correct, totalStarsInGame: r.rounds, foundAllStars: r.won, value: `${r.correct}/${r.rounds}`, rewardIds: [], message: r.won ? 'You won the quiz!' : 'Quiz over'
+        };
+        setHexaCurrentRound(r.rounds); setHexaTotalRounds(game.configuration?.quizz?.targetCorrect || 0);
+        // we could call backend if needed
+      }}
     />
   ) : (
     <PenaltyHexa

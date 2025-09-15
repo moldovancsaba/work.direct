@@ -219,6 +219,10 @@ export default function HexaCreatorPage() {
 
     const s = hexSize
 
+    // Center the axial origin (0,0) at the exact middle of the viewport
+    const offsetX = vw / 2
+    const offsetY = vh / 2
+
     // Determine range
     const { qMin, qMax, rMin, rMax } = computeVisibleRange()
 
@@ -227,7 +231,11 @@ export default function HexaCreatorPage() {
     for (let r = rMin; r <= rMax; r++) {
       for (let q = qMin; q <= qMax; q++) {
         const center = axialToPixel(q, r, s)
-        const verts = hexVertices(center.x, center.y, s).map(p => rotatePoint(p.x, p.y))
+        // Rotate, then translate so that (0,0) sits at screen center
+        const verts = hexVertices(center.x, center.y, s).map(p => {
+          const rp = rotatePoint(p.x, p.y)
+          return { x: rp.x + offsetX, y: rp.y + offsetY }
+        })
         const points = polygonPointsString(verts)
         const k = keyOf(q, r)
         const isSelected = selected.has(k)
