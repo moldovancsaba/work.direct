@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     const docs = await HexMapModel.aggregate([
       { $match: match },
       { $sample: { size: 1 } },
-      { $project: { _id: 1, name: 1, coords: 1, radius: 1, tags: 1, isActive: 1, createdAt: 1, updatedAt: 1 } }
+      { $project: { _id: 1, name: 1, coords: 1, radius: 1, tags: 1, isActive: 1, backgroundImageUrl: 1, createdAt: 1, updatedAt: 1 } }
     ])
 
     if (!docs || docs.length === 0) {

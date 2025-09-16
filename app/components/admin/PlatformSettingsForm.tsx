@@ -43,12 +43,21 @@ interface PlatformSettingsFormProps {
   onStylesChange: (next: any) => void
   mode?: 'create' | 'edit'
   saving?: boolean
+  // Layout controls:
+  // modeSections: 'text' renders only textual/content segments for left subcolumn
+  // modeSections: 'buttons' renders only button settings for right subcolumn
+  modeSections?: 'text' | 'buttons'
+  // section: render only a single section (hero | main | landing | welcome | rules | result | legal)
+  section?: 'hero' | 'main' | 'landing' | 'welcome' | 'rules' | 'result' | 'legal'
+  hideInlineActions?: boolean
+  // When true, hide internal section titles to prevent duplication with parent segment headers
+  hideSectionTitles?: boolean
 }
 
 // PlatformSettingsForm — Central texts/styles for 4-page flow
 // What: Provides TEXT_10..46 + hero/main/scoreboard styles
 // Why: Enforces consistent UI across all games; modules only fill the PLAY step.
-export default function PlatformSettingsForm({ texts, styles, onTextsChange, onStylesChange, mode = 'edit', saving = false }: PlatformSettingsFormProps) {
+export default function PlatformSettingsForm({ texts, styles, onTextsChange, onStylesChange, mode = 'edit', saving = false, modeSections, section, hideInlineActions = false, hideSectionTitles = false }: PlatformSettingsFormProps) {
   const getT = (k: string, fb = '') => texts?.[k] ?? fb
   const setT = (k: string, v: string) => onTextsChange({ ...texts, [k]: v })
 
@@ -119,11 +128,15 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
     onTextsChange(next)
   }
 
+  const showText = !modeSections || modeSections === 'text'
+  const showButtons = !modeSections || modeSections === 'buttons'
+
   return (
     <div className="space-y-8">
       {/* Hero Settings */}
+{showText && (!section || section === 'hero') && (
       <div className="bg-slate-50 p-4 rounded-lg">
-        <h3 className="text-md font-medium text-gray-800 mb-2">Hero Settings</h3>
+        {!hideSectionTitles && <h3 className="text-md font-medium text-gray-800 mb-2">Hero Settings</h3>}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <SimpleTextInput code="LANDING_TITLE" label="Landing Title" placeholder="" value={getT('LANDING_TITLE')} onChange={(v)=> setT('LANDING_TITLE', v)} />
           <SimpleTextInput code="TEXT_10" label="Welcome Title" placeholder="Welcome" value={getT('TEXT_10')} onChange={(v)=> setT('TEXT_10', v)} />
@@ -175,63 +188,84 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
           </div>
         </div>
       </div>
+      )}
 
       {/* Inline Actions: Hero -> Landing */}
-      <div className="flex items-center justify-between pt-4">
+{!hideInlineActions && !section && (
+        <div className="flex items-center justify-between pt-4">
         <Link href="/admin/games" className="text-gray-600 hover:text-gray-800 transition-colors">Cancel</Link>
         <button type="submit" disabled={saving} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium">
           {saving ? (mode === 'create' ? 'Creating...' : 'Saving...') : (mode === 'create' ? 'Create Game' : 'Update Game')}
         </button>
       </div>
+      )}
 
       {/* Landing */}
+{(showText || showButtons) && (!section || section === 'landing') && (
       <div className="bg-emerald-50 p-4 rounded-lg">
-        <h3 className="text-md font-medium text-gray-800 mb-2">Landing</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <SimpleTextInput code="LANDING_IMAGE_URL" label="Landing Image URL" placeholder="https://..." value={getT('LANDING_IMAGE_URL')} onChange={(v)=> setT('LANDING_IMAGE_URL', v)} />
-        </div>
-        <div className="mt-4 border border-gray-300 rounded-lg p-4 space-y-2">
-          <label className="block text-sm font-semibold text-gray-800">Next Welcome Button</label>
-          <SimpleTextInput code="NEXT_WELCOME_TEXT" label="Button Text" value={getT('NEXT_WELCOME_TEXT')} onChange={(v)=> setT('NEXT_WELCOME_TEXT', v)} />
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Button Action</label>
-            <select className="w-full px-3 py-2 border rounded-md" value={getT('NEXT_WELCOME_ACTION') || 'GO_TO_WELCOME'} onChange={(e)=> setT('NEXT_WELCOME_ACTION', e.target.value)}>
-              <option value="GO_TO_WELCOME">GO_TO_WELCOME</option>
-            </select>
-          </div>
-          <SimpleTextInput code="NEXT_WELCOME_BG" label="Button BG (CSS)" multiline placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} value={getT('NEXT_WELCOME_BG')} onChange={(v)=> setT('NEXT_WELCOME_BG', v)} />
+        {!hideSectionTitles && <h3 className="text-md font-medium text-gray-800 mb-2">Landing</h3>}
+        <div className="space-y-4">
+          {showText && (
+            <div className="grid grid-cols-1 gap-4">
+              <SimpleTextInput code="LANDING_IMAGE_URL" label="Landing Image URL" placeholder="https://..." value={getT('LANDING_IMAGE_URL')} onChange={(v)=> setT('LANDING_IMAGE_URL', v)} />
+            </div>
+          )}
+          {/* Buttons: Next Welcome (right subcolumn only) */}
+          {showButtons && (
+            <div className="border border-gray-300 rounded-lg p-4 space-y-2">
+              <label className="block text-sm font-semibold text-gray-800">Next Welcome Button</label>
+              <SimpleTextInput code="NEXT_WELCOME_TEXT" label="Button Text" value={getT('NEXT_WELCOME_TEXT')} onChange={(v)=> setT('NEXT_WELCOME_TEXT', v)} />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Button Action</label>
+                <select className="w-full px-3 py-2 border rounded-md" value={getT('NEXT_WELCOME_ACTION') || 'GO_TO_WELCOME'} onChange={(e)=> setT('NEXT_WELCOME_ACTION', e.target.value)}>
+                  <option value="GO_TO_WELCOME">GO_TO_WELCOME</option>
+                </select>
+              </div>
+              <SimpleTextInput code="NEXT_WELCOME_BG" label="Button BG (CSS)" multiline placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} value={getT('NEXT_WELCOME_BG')} onChange={(v)=> setT('NEXT_WELCOME_BG', v)} />
+            </div>
+          )}
         </div>
       </div>
+      )}
 
       {/* Welcome Main */}
+{(showText || showButtons) && (!section || section === 'welcome') && (
       <div className="bg-blue-50 p-4 rounded-lg">
-        <h3 className="text-md font-medium text-gray-800 mb-2">Welcome Main</h3>
+        {!hideSectionTitles && <h3 className="text-md font-medium text-gray-800 mb-2">Welcome Main</h3>}
         <div className="space-y-4">
-          {/* Description (Markdown-capable) - single full-width, multiline */}
-          <SimpleTextInput code="TEXT_11" label="Description (Markdown)" placeholder="Supports Markdown. Use line breaks and **bold** as needed." multiline value={getT('TEXT_11')} onChange={(v)=> setT('TEXT_11', v)} />
+          {showText && (
+            <>
+              {/* Description (Markdown-capable) - single full-width, multiline */}
+              <SimpleTextInput code="TEXT_11" label="Description (Markdown)" placeholder="Supports Markdown. Use line breaks and **bold** as needed." multiline value={getT('TEXT_11')} onChange={(v)=> setT('TEXT_11', v)} />
 
-          {/* Name pair */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <SimpleTextInput code="TEXT_12" label="Ask Name (H2)" value={getT('TEXT_12')} onChange={(v)=> setT('TEXT_12', v)} />
-            <SimpleTextInput code="TEXT_13" label="Your Name Placeholder" value={getT('TEXT_13')} onChange={(v)=> setT('TEXT_13', v)} />
-          </div>
+              {/* Name pair */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <SimpleTextInput code="TEXT_12" label="Ask Name (H2)" value={getT('TEXT_12')} onChange={(v)=> setT('TEXT_12', v)} />
+                <SimpleTextInput code="TEXT_13" label="Your Name Placeholder" value={getT('TEXT_13')} onChange={(v)=> setT('TEXT_13', v)} />
+              </div>
 
-          {/* Email pair */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <SimpleTextInput code="TEXT_14" label="Ask Email (H2)" value={getT('TEXT_14')} onChange={(v)=> setT('TEXT_14', v)} />
-            <SimpleTextInput code="TEXT_15" label="Your Email Placeholder" value={getT('TEXT_15')} onChange={(v)=> setT('TEXT_15', v)} />
-          </div>
+              {/* Email pair */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <SimpleTextInput code="TEXT_14" label="Ask Email (H2)" value={getT('TEXT_14')} onChange={(v)=> setT('TEXT_14', v)} />
+                <SimpleTextInput code="TEXT_15" label="Your Email Placeholder" value={getT('TEXT_15')} onChange={(v)=> setT('TEXT_15', v)} />
+              </div>
 
-          {/* Phone pair */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <SimpleTextInput code="TEXT_16" label="Ask Phone (H2)" value={getT('TEXT_16')} onChange={(v)=> setT('TEXT_16', v)} />
-            <SimpleTextInput code="TEXT_17" label="Your Phone Placeholder" value={getT('TEXT_17')} onChange={(v)=> setT('TEXT_17', v)} />
-          </div>
+              {/* Phone pair */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <SimpleTextInput code="TEXT_16" label="Ask Phone (H2)" value={getT('TEXT_16')} onChange={(v)=> setT('TEXT_16', v)} />
+                <SimpleTextInput code="TEXT_17" label="Your Phone Placeholder" value={getT('TEXT_17')} onChange={(v)=> setT('TEXT_17', v)} />
+              </div>
 
-          {/* Contact required (Markdown-capable) - single full-width, multiline */}
-          <SimpleTextInput code="TEXT_26" label="Contact Required (Markdown)" placeholder="Please provide either email or phone number" multiline value={getT('TEXT_26')} onChange={(v)=> setT('TEXT_26', v)} />
+              {/* Contact required (Markdown-capable) - single full-width, multiline */}
+              <SimpleTextInput code="TEXT_26" label="Contact Required (Markdown)" placeholder="Please provide either email or phone number" multiline value={getT('TEXT_26')} onChange={(v)=> setT('TEXT_26', v)} />
+
+              {/* Try without registration (Markdown-capable) - single full-width, multiline */}
+              <SimpleTextInput code="TEXT_27" label="Try Without Registration Text (Markdown)" placeholder="Want to try without registration?" multiline value={getT('TEXT_27')} onChange={(v)=> setT('TEXT_27', v)} />
+            </>
+          )}
 
           {/* Next With Login — standardized 3-line block (bordered, editor-only) */}
+          {showButtons && (
           <div className="border border-gray-300 rounded-lg p-4 space-y-2">
             <label className="block text-sm font-semibold text-gray-800">Next With Login Button</label>
             <SimpleTextInput code="NEXT_LOGIN_TEXT" label="CTA Action Text (Button)" value={getTNew('NEXT_LOGIN_TEXT')} onChange={(v)=> setTNew('NEXT_LOGIN_TEXT', v)} />
@@ -244,11 +278,10 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
             </div>
             <SimpleTextInput code="NEXT_LOGIN_BG" label="CTA Action BG (CSS)" multiline placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} value={getTNew('NEXT_LOGIN_BG')} onChange={(v)=> setTNew('NEXT_LOGIN_BG', v)} />
           </div>
-
-          {/* Try without registration (Markdown-capable) - single full-width, multiline */}
-          <SimpleTextInput code="TEXT_27" label="Try Without Registration Text (Markdown)" placeholder="Want to try without registration?" multiline value={getT('TEXT_27')} onChange={(v)=> setT('TEXT_27', v)} />
+          )}
 
           {/* Next Without Login — standardized 3-line block (bordered, editor-only) */}
+          {showButtons && (
           <div className="border border-gray-300 rounded-lg p-4 space-y-2">
             <label className="block text-sm font-semibold text-gray-800">Next Without Registration Button</label>
             <SimpleTextInput code="NEXT_GUEST_TEXT" label="CTA Action Text (Button)" value={getTNew('NEXT_GUEST_TEXT')} onChange={(v)=> setTNew('NEXT_GUEST_TEXT', v)} />
@@ -261,69 +294,87 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
             </div>
             <SimpleTextInput code="NEXT_GUEST_BG" label="CTA Action BG (CSS)" multiline placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} value={getTNew('NEXT_GUEST_BG')} onChange={(v)=> setTNew('NEXT_GUEST_BG', v)} />
           </div>
+          )}
         </div>
       </div>
+      )}
 
       {/* Inline Actions: Landing -> Welcome Main */}
-      <div className="flex items-center justify-between pt-4">
-        <Link href="/admin/games" className="text-gray-600 hover:text-gray-800 transition-colors">Cancel</Link>
-        <button type="submit" disabled={saving} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium">
-          {saving ? (mode === 'create' ? 'Creating...' : 'Saving...') : (mode === 'create' ? 'Create Game' : 'Update Game')}
-        </button>
-      </div>
+{!hideInlineActions && !section && (
+        <div className="flex items-center justify-between pt-4">
+          <Link href="/admin/games" className="text-gray-600 hover:text-gray-800 transition-colors">Cancel</Link>
+          <button type="submit" disabled={saving} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium">
+            {saving ? (mode === 'create' ? 'Creating...' : 'Saving...') : (mode === 'create' ? 'Create Game' : 'Update Game')}
+          </button>
+        </div>
+      )}
 
       {/* Rules Main */}
-      <div className="bg-purple-50 p-4 rounded-lg">
-        <h3 className="text-md font-medium text-gray-800 mb-2">Rules Main</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <SimpleTextInput code="TEXT_21" label="Rules Title (H2)" value={getT('TEXT_21')} onChange={(v)=> setT('TEXT_21', v)} />
-          <SimpleTextInput code="TEXT_22" label="Game Rules (multi-line)" multiline value={getT('TEXT_22')} onChange={(v)=> setT('TEXT_22', v)} />
-          <SimpleTextInput code="TEXT_23" label="Win Title (H2)" value={getT('TEXT_23')} onChange={(v)=> setT('TEXT_23', v)} />
-          <SimpleTextInput code="TEXT_24" label="Win Rules (multi-line)" multiline value={getT('TEXT_24')} onChange={(v)=> setT('TEXT_24', v)} />
+{(showText || showButtons) && (!section || section === 'rules') && (
+        <div className="bg-purple-50 p-4 rounded-lg">
+          {!hideSectionTitles && <h3 className="text-md font-medium text-gray-800 mb-2">Rules Main</h3>}
+          {showText && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <SimpleTextInput code="TEXT_21" label="Rules Title (H2)" value={getT('TEXT_21')} onChange={(v)=> setT('TEXT_21', v)} />
+              <SimpleTextInput code="TEXT_22" label="Game Rules (multi-line)" multiline value={getT('TEXT_22')} onChange={(v)=> setT('TEXT_22', v)} />
+              <SimpleTextInput code="TEXT_23" label="Win Title (H2)" value={getT('TEXT_23')} onChange={(v)=> setT('TEXT_23', v)} />
+              <SimpleTextInput code="TEXT_24" label="Win Rules (multi-line)" multiline value={getT('TEXT_24')} onChange={(v)=> setT('TEXT_24', v)} />
+            </div>
+          )}
+          {/* Next Play — standardized 3-line block (bordered, editor-only) */}
+          {showButtons && (
+            <div className="mt-4 border border-gray-300 rounded-lg p-4 space-y-2">
+              <label className="block text-sm font-semibold text-gray-800">Next Play Button</label>
+              <SimpleTextInput code="NEXT_PLAY_TEXT" label="CTA Action Text (Button)" value={getTNew('NEXT_PLAY_TEXT')} onChange={(v)=> setTNew('NEXT_PLAY_TEXT', v)} />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">CTA Action (Action)</label>
+                <select className="w-full px-3 py-2 border rounded-md" value={getTNew('NEXT_PLAY_ACTION')} onChange={(e)=> setTNew('NEXT_PLAY_ACTION', e.target.value)}>
+                  <option value="START_GAME">START_GAME</option>
+                  <option value="OPEN_RULES">OPEN_RULES</option>
+                </select>
+              </div>
+              <SimpleTextInput code="NEXT_PLAY_BG" label="CTA Action BG (CSS)" multiline placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} value={getTNew('NEXT_PLAY_BG')} onChange={(v)=> setTNew('NEXT_PLAY_BG', v)} />
+            </div>
+          )}
         </div>
-        {/* Next Play — standardized 3-line block (bordered, editor-only) */}
-        <div className="mt-4 border border-gray-300 rounded-lg p-4 space-y-2">
-          <label className="block text-sm font-semibold text-gray-800">Next Play Button</label>
-          <SimpleTextInput code="NEXT_PLAY_TEXT" label="CTA Action Text (Button)" value={getTNew('NEXT_PLAY_TEXT')} onChange={(v)=> setTNew('NEXT_PLAY_TEXT', v)} />
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">CTA Action (Action)</label>
-            <select className="w-full px-3 py-2 border rounded-md" value={getTNew('NEXT_PLAY_ACTION')} onChange={(e)=> setTNew('NEXT_PLAY_ACTION', e.target.value)}>
-              <option value="START_GAME">START_GAME</option>
-              <option value="OPEN_RULES">OPEN_RULES</option>
-            </select>
-          </div>
-          <SimpleTextInput code="NEXT_PLAY_BG" label="CTA Action BG (CSS)" multiline placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} value={getTNew('NEXT_PLAY_BG')} onChange={(v)=> setTNew('NEXT_PLAY_BG', v)} />
-        </div>
-      </div>
+      )}
 
       {/* Inline Actions: Rules Main -> Result Main */}
+{!hideInlineActions && !section && (
       <div className="flex items-center justify-between pt-4">
         <Link href="/admin/games" className="text-gray-600 hover:text-gray-800 transition-colors">Cancel</Link>
         <button type="submit" disabled={saving} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium">
           {saving ? (mode === 'create' ? 'Creating...' : 'Saving...') : (mode === 'create' ? 'Create Game' : 'Update Game')}
         </button>
       </div>
+      )}
 
       {/* Result Main */}
+{(showText || showButtons) && (!section || section === 'result') && (
       <div className="bg-yellow-50 p-4 rounded-lg">
-        <h3 className="text-md font-medium text-gray-800 mb-2">Result Main</h3>
+        {!hideSectionTitles && <h3 className="text-md font-medium text-gray-800 mb-2">Result Main</h3>}
         <div className="space-y-4">
           {/* Result headline texts (Markdown-capable) */}
-          <SimpleTextInput code="WON_TEXT" label="WON_TEXT (H1, Markdown)" multiline value={getT('WON_TEXT')} onChange={(v)=> setT('WON_TEXT', v)} />
-          <SimpleTextInput code="LOST_TEXT" label="LOST_TEXT (H1, Markdown)" multiline value={getT('LOST_TEXT')} onChange={(v)=> setT('LOST_TEXT', v)} />
-
-          {/* CTA Title */}
-          <SimpleTextInput code="CTA_TITLE" label="CTA Title (H1)" value={getT('CTA_TITLE')} onChange={(v)=> setT('CTA_TITLE', v)} />
+          {showText && (
+            <>
+              <SimpleTextInput code="WON_TEXT" label="WON_TEXT (H1, Markdown)" multiline value={getT('WON_TEXT')} onChange={(v)=> setT('WON_TEXT', v)} />
+              <SimpleTextInput code="LOST_TEXT" label="LOST_TEXT (H1, Markdown)" multiline value={getT('LOST_TEXT')} onChange={(v)=> setT('LOST_TEXT', v)} />
+              <SimpleTextInput code="CTA_TITLE" label="CTA Title (H1)" value={getT('CTA_TITLE')} onChange={(v)=> setT('CTA_TITLE', v)} />
+            </>
+          )}
 
           {/* Primary Result CTA — standardized 3-line block (bordered, editor-only) */}
+          {showButtons && (
           <div className="border border-gray-300 rounded-lg p-4 space-y-2">
             <label className="block text-sm font-semibold text-gray-800">Primary CTA (Result)</label>
             <SimpleTextInput code="CTA1_TEXT" label="CTA Action Text (Button)" value={getTNew('CTA1_TEXT')} onChange={(v)=> setTNew('CTA1_TEXT', v)} />
             <SimpleTextInput code="CTA1_URL" label="CTA Action URL (URL)" value={getTNew('CTA1_URL')} onChange={(v)=> setTNew('CTA1_URL', v)} />
             <SimpleTextInput code="CTA1_BG" label="CTA Action BG (CSS)" multiline placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} value={getTNew('CTA1_BG')} onChange={(v)=> setTNew('CTA1_BG', v)} />
           </div>
+          )}
 
           {/* Additional CTAs manager (bordered cards with editor-only CTA2_TEXT/CTA2_URL/CTA2_BG labels) */}
+          {showButtons && (
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-2">Additional CTAs</label>
             <div className="space-y-2">
@@ -387,8 +438,10 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
               }}>ADD CTA</button>
             </div>
           </div>
+          )}
 
           {/* Invite Friend — standardized 3-line block (bordered, editor-only) */}
+          {showButtons && (
           <div className="border border-gray-300 rounded-lg p-4 space-y-2">
             <label className="block text-sm font-semibold text-gray-800">Invite Friend Button</label>
             <SimpleTextInput code="INVITE_TEXT" label="CTA Action Text (Button)" value={getTNew('INVITE_TEXT')} onChange={(v)=> setTNew('INVITE_TEXT', v)} />
@@ -401,8 +454,10 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
             </div>
             <SimpleTextInput code="INVITE_BG" label="CTA Action BG (CSS)" multiline value={getTNew('INVITE_BG')} onChange={(v)=> setTNew('INVITE_BG', v)} />
           </div>
+          )}
 
           {/* Play Again — standardized 3-line block (bordered, editor-only) */}
+          {showButtons && (
           <div className="border border-gray-300 rounded-lg p-4 space-y-2">
             <label className="block text-sm font-semibold text-gray-800">Play Again Button</label>
             <SimpleTextInput code="PLAYAGAIN_TEXT" label="CTA Action Text (Button)" value={getTNew('PLAYAGAIN_TEXT')} onChange={(v)=> setTNew('PLAYAGAIN_TEXT', v)} />
@@ -415,20 +470,25 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
             </div>
             <SimpleTextInput code="PLAYAGAIN_BG" label="CTA Action BG (CSS)" multiline value={getTNew('PLAYAGAIN_BG')} onChange={(v)=> setTNew('PLAYAGAIN_BG', v)} />
           </div>
+          )}
         </div>
       </div>
+      )}
 
       {/* Inline Actions: Result Main -> Main Styles */}
+{!hideInlineActions && !section && (
       <div className="flex items-center justify-between pt-4">
         <Link href="/admin/games" className="text-gray-600 hover:text-gray-800 transition-colors">Cancel</Link>
         <button type="submit" disabled={saving} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium">
           {saving ? (mode === 'create' ? 'Creating...' : 'Saving...') : (mode === 'create' ? 'Create Game' : 'Update Game')}
         </button>
       </div>
+      )}
 
       {/* Main Styles */}
+{showText && (!section || section === 'main') && (
       <div className="bg-white p-4 rounded-lg">
-        <h3 className="text-md font-medium text-gray-800 mb-2">Main Styles</h3>
+        {!hideSectionTitles && <h3 className="text-md font-medium text-gray-800 mb-2">Main Styles</h3>}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Main Background (CSS)</label>
@@ -456,18 +516,22 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
           </div>
         </div>
       </div>
+      )}
 
       {/* Inline Actions: Main Styles -> Legal Documents */}
+{!hideInlineActions && !section && (
       <div className="flex items-center justify-between pt-4">
         <Link href="/admin/games" className="text-gray-600 hover:text-gray-800 transition-colors">Cancel</Link>
         <button type="submit" disabled={saving} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium">
           {saving ? (mode === 'create' ? 'Creating...' : 'Saving...') : (mode === 'create' ? 'Create Game' : 'Update Game')}
         </button>
       </div>
+      )}
 
       {/* Legal Documents */}
+{showText && (!section || section === 'legal') && (
       <div className="bg-white p-4 rounded-lg">
-        <h3 className="text-md font-medium text-gray-800 mb-2">Legal Documents</h3>
+        {!hideSectionTitles && <h3 className="text-md font-medium text-gray-800 mb-2">Legal Documents</h3>}
         <div className="space-y-4">
           <SimpleTextInput code="TERMS_TITLE" label="Terms & Conditions Title" value={getT('TERMS_TITLE')} onChange={(v)=> setT('TERMS_TITLE', v)} />
           <SimpleTextInput code="TERMS_BODY" label="Terms & Conditions Body (multiline)" multiline value={getT('TERMS_BODY')} onChange={(v)=> setT('TERMS_BODY', v)} />
@@ -477,6 +541,7 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
           <SimpleTextInput code="DELETION_BODY" label="Data Deletion Instructions (multiline)" multiline value={getT('DELETION_BODY')} onChange={(v)=> setT('DELETION_BODY', v)} />
         </div>
       </div>
+      )}
     </div>
   )
 }

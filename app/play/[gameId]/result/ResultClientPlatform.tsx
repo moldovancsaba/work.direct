@@ -113,7 +113,29 @@ export default function ResultClientPlatform({ gameId, texts, styles, won, refCo
           )}
           <h1 className={styles?.main?.h1Class || 'text-3xl font-bold'}>{texts?.CTA_TITLE || texts?.TEXT_42 || 'Share Your Result'}</h1>
 
-          {/* CTA Buttons Grid */}
+          {/* Primary CTA (always render first if provided) */}
+          {(function () {
+            const primaryText = (texts?.CTA1_TEXT || '').trim() || (texts?.TEXT_44 || '').trim()
+            const primaryUrl = (texts?.CTA1_URL || '').trim() || (texts?.TEXT_44_URL || '').trim()
+            if (primaryText && primaryUrl) {
+              return (
+                <div className="w-full pt-2 pb-1">
+                  <a
+                    href={primaryUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`${styles?.main?.buttonPrimaryClass || 'px-6 py-3 bg-blue-600 text-white rounded-lg'} text-2xl text-center block`}
+                    style={{ background: extractBackgroundValue(texts?.CTA1_BG), minHeight: '56px', minWidth: '260px', maxWidth: '520px', width: '100%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    {primaryText}
+                  </a>
+                </div>
+              )
+            }
+            return null
+          })()}
+
+          {/* Additional CTA Buttons Grid */}
           <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 pt-2">
             {Array.isArray(texts?.CTA_BUTTONS) && texts.CTA_BUTTONS.length > 0 ? (
               texts.CTA_BUTTONS
@@ -145,35 +167,7 @@ export default function ResultClientPlatform({ gameId, texts, styles, won, refCo
                     {btn.text}
                   </a>
                 ))
-            ) : (
-              // Back-compat single CTA
-              (texts?.TEXT_44_URL && texts.TEXT_44_URL.trim().length > 0 && (
-                <a
-                  href={texts.TEXT_44_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onMouseDown={(e) => {
-                    if (styles?.main?.buttonSecondaryClass) {
-                      (e.currentTarget as HTMLAnchorElement).className = styles.main.buttonSecondaryClass
-                    }
-                  }}
-                  onMouseUp={(e) => {
-                    if (styles?.main?.buttonPrimaryClass) {
-                      (e.currentTarget as HTMLAnchorElement).className = styles.main.buttonPrimaryClass
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (styles?.main?.buttonPrimaryClass) {
-                      (e.currentTarget as HTMLAnchorElement).className = styles.main.buttonPrimaryClass
-                    }
-                  }}
-                  className={`${styles?.main?.buttonPrimaryClass || 'px-6 py-3 bg-blue-600 text-white rounded-lg'} text-2xl text-center block`}
-                  style={{ background: extractBackgroundValue(texts?.CTA1_BG), minHeight: '48px', minWidth: '240px', maxWidth: '400px', width: '100%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                >
-                  {texts?.TEXT_44 || 'Open CTA'}
-                </a>
-              ))
-            )}
+            ) : null}
           </div>
 
           {/* Secondary Actions Grid: Invite + Play Again */}

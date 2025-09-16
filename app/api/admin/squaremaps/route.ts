@@ -1,10 +1,10 @@
-// app/api/admin/hexmaps/route.ts
-// WHAT: Admin endpoints to list and create hex maps.
-// WHY: Provide CRUD backend for the Hexa Creator UI.
+// app/api/admin/squaremaps/route.ts
+// WHAT: Admin endpoints to list and create square maps.
+// WHY: Provide CRUD backend for the Square Creator UI, mirroring hex admin endpoints for consistency.
 
 import { NextRequest, NextResponse } from 'next/server'
 import { connectDB } from '../../../lib/mongodb'
-import HexMapModel from '../../../lib/models/HexMap'
+import SquareMapModel from '../../../lib/models/SquareMap'
 import { getAdminUser } from '../../../lib/auth'
 import type { ApiResponse } from '../../../types'
 
@@ -35,8 +35,8 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
 
     const [items, total] = await Promise.all([
-      HexMapModel.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
-      HexMapModel.countDocuments(filter)
+      SquareMapModel.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      SquareMapModel.countDocuments(filter)
     ])
 
     const payload: ApiResponse = {
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(payload)
   } catch (error) {
-    console.error('HexMaps GET error:', error)
+    console.error('SquareMaps GET error:', error)
     return NextResponse.json({ success: false, error: { code: 'SERVER_ERROR', message: 'Failed to fetch maps' } }, { status: 500 })
   }
 }
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const name: string = (body.name || '').trim()
-    const coords: Array<{ q: number; r: number }> = Array.isArray(body.coords) ? body.coords : []
+    const coords: Array<{ x: number; y: number }> = Array.isArray(body.coords) ? body.coords : []
     const radius: number = Number.isFinite(body.radius) ? Math.max(1, Math.min(24, Number(body.radius))) : 4
     const rawTags: string[] = Array.isArray(body.tags) ? body.tags : []
     const tags = Array.from(new Set(rawTags.map((t) => String(t).trim().toLowerCase()).filter(Boolean)))
@@ -70,18 +70,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: { code: 'VALIDATION', message: 'Name is required' } }, { status: 400 })
     }
 
-    // Unique name check (friendly 409 first)
-    const existing = await HexMapModel.findOne({ name })
-    if (existing) {
-      return NextResponse.json({ success: false, error: { code: 'DUPLICATE', message: 'A map with this name already exists' } }, { status: 409 })
+    // WHAT: Validate integer coordinates before model validation
+    // WHY: Provide clear error messaging for non-integer coordinates
+    for (const c of coords) {
+      if (!Number.isInteger(c.x) || !Number.isInteger(c.y)) {
+        return NextResponse.json({ success: false, error: { code: 'VALIDATION', message: 'All coordinates must be integers' } }, { status: 400 })
+      }
     }
 
-    const doc = new HexMapModel({ name, coords, radius, tags, backgroundImageUrl, createdBy: user.id || 'admin' })
+    // Unique name check (friendly 409 first)
+    const existing = await SquareMapModel.findOne({ name })
+    if (existing) {
+      return NextResponse.json({ success: false, error: { code: 'DUPLICATE', message: 'A square map with this name already exists' } }, { status: 409 })
+    }
+
+    const doc = new SquareMapModel({ name, coords, radius, tags, backgroundImageUrl, createdBy: user.id || 'admin' })
     const saved = await doc.save()
 
     return NextResponse.json({ success: true, data: saved }, { status: 201 })
   } catch (error: any) {
-    console.error('HexMaps POST error:', error)
+    console.error('SquareMaps POST error:', error)
     const message = error?.message || 'Failed to create map'
     const isValidation = /duplicate|unique|required|valid/i.test(message)
     return NextResponse.json({ success: false, error: { code: 'VALIDATION', message } }, { status: isValidation ? 400 : 500 })

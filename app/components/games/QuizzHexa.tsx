@@ -1,32 +1,42 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { axialToPixel, rotatePoint, hexVertices, polygonPointsString, SQRT3 } from '../../lib/hex/geometry'
-import type { QuizzQuestion, HexCoord } from '../../types'
+import { axialToPixel, rotatePoint, hexVertices, polygonPointsString } from '../../lib/hex/geometry'
+import { cellToPixel, squareVertices } from '../../lib/square/geometry'
+import type { QuizzQuestion, HexCoord, SquareCoord, GridMapType } from '../../types'
 
 interface QuizzHexaProps {
+  mapType?: GridMapType
   mapName?: string
-  activeCoords?: HexCoord[]
+  activeCoords?: Array<HexCoord | SquareCoord>
+  mapTag?: string
+  selectedMaps?: { type: GridMapType; name: string }[]
   rounds: number
   targetCorrect: number
   questions: QuizzQuestion[]
   overlayBg?: string
+  cardCoverImages?: string[]
   onResult?: (result: { correct: number; rounds: number; won: boolean }) => void
 }
 
-export default function QuizzHexa({ mapName, activeCoords, rounds, targetCorrect, questions, overlayBg = 'rgba(0,0,0,0.6)', onResult }: QuizzHexaProps) {
+export default function QuizzHexa({ mapType = 'hex', mapName, activeCoords, mapTag, selectedMaps, rounds, targetCorrect, questions, overlayBg = 'rgba(0,0,0,0.6)', cardCoverImages, onResult }: QuizzHexaProps) {
   const stageRef = useRef<HTMLDivElement>(null)
-  const [coords, setCoords] = useState<HexCoord[]>([])
-  const [hexSize, setHexSize] = useState(80)
+  const [coords, setCoords] = useState<Array<HexCoord | SquareCoord>>([])
+  const [cellSize, setCellSize] = useState(80)
   const [currentRound, setCurrentRound] = useState(1)
   const [correct, setCorrect] = useState(0)
   const [revealedKey, setRevealedKey] = useState<string | null>(null)
-  const [questionMap, setQuestionMap] = useState<Record<string, QuizzQuestion>>({})
+  const [questionMap, setQuestionMap] = useState<{ [key: string]: QuizzQuestion }>({})
+  const [labelMap, setLabelMap] = useState<{ [key: string]: string }>({})
   const [overlay, setOverlay] = useState<{ key: string; q: QuizzQuestion } | null>(null)
   const [done, setDone] = useState(false)
+  // Effective type actually used for rendering (may differ if we found a map in another collection)
+  const [effectiveType, setEffectiveType] = useState<GridMapType>(mapType)
+  // Optional background image provided by the map document (public API includes it)
+  const [backgroundUrl, setBackgroundUrl] = useState<string | null>(null)
 
   // Default fallback 2-3-2 formation around origin
-  const defaultSeven: HexCoord[] = useMemo(() => ([
+  const defaultSevenHex: HexCoord[] = useMemo(() => ([
     { q: 0, r: -1 },
     { q: 1, r: -1 },
     { q: -1, r: 0 },
@@ -36,44 +46,165 @@ export default function QuizzHexa({ mapName, activeCoords, rounds, targetCorrect
     { q: 0, r: 1 }
   ]), [])
 
-  // Load coords from map API if mapName provided (or use fallback)
+  const defaultNineSquare: SquareCoord[] = useMemo(() => ([
+    { x: -1, y: -1 }, { x: 0, y: -1 }, { x: 1, y: -1 },
+    { x: -1, y: 0 }, { x: 0, y: 0 }, { x: 1, y: 0 },
+    { x: -1, y: 1 }, { x: 0, y: 1 }, { x: 1, y: 1 }
+  ]), [])
+
+  // Load coords strictly based on configured mapType (no cross-type fallback)
   useEffect(() => {
     let aborted = false
     const load = async () => {
       if (activeCoords && activeCoords.length) {
         setCoords(activeCoords)
+        setEffectiveType(mapType)
         return
       }
-      if (mapName) {
+
+      const baseFor = (t: GridMapType) => (t === 'hex' ? '/api/hexmaps' : '/api/squaremaps')
+
+      // If admin selected maps, try the first one
+      if (selectedMaps && selectedMaps.length) {
+        const first = selectedMaps[0]
         try {
-          const res = await fetch(`/api/maps/${encodeURIComponent(mapName)}`, { cache: 'no-store' })
-          const data = await res.json()
-          if (!aborted && res.ok && data?.success && Array.isArray(data?.data?.coords) && data.data.coords.length > 0) {
-            setCoords(data.data.coords)
-            return
+          const res = await fetch(`${baseFor(first.type)}/${encodeURIComponent(first.name)}`, { cache: 'no-store' })
+          if (res.ok) {
+            const data = await res.json()
+            const c = Array.isArray(data?.data?.coords) ? data.data.coords : []
+            const bg = data?.data?.backgroundImageUrl || null
+            if (!aborted && c.length > 0) {
+              const limit = first.type === 'hex' ? 7 : 9
+              const chosen = (c as any[]).slice(0, Math.min(limit, (c as any[]).length))
+              setCoords(chosen as any)
+              setEffectiveType(first.type)
+              setBackgroundUrl(bg || null)
+              return
+            }
           }
         } catch {}
       }
-      // Fallback to default seven if nothing loaded
-      if (!aborted) setCoords(defaultSeven)
+
+      const base = baseFor(mapType)
+
+      // Try by explicit name first (strict, single endpoint)
+      if (mapName && mapName.trim()) {
+        try {
+          const name = mapName.trim()
+          const res = await fetch(`${base}/${encodeURIComponent(name)}`, { cache: 'no-store' })
+          if (res.ok) {
+            const data = await res.json()
+            const c = Array.isArray(data?.data?.coords) ? data.data.coords : []
+            const bg = data?.data?.backgroundImageUrl || null
+            if (!aborted && c.length > 0) {
+              const limit = mapType === 'hex' ? 7 : 9
+              const chosen = (c as any[]).slice(0, Math.min(limit, (c as any[]).length))
+              setCoords(chosen as any)
+              setEffectiveType(mapType)
+              setBackgroundUrl(bg || null)
+              return
+            }
+          }
+        } catch {}
+      }
+
+      // Otherwise, try random by tag strictly for selected type
+      const tag = (mapTag && mapTag.trim()) ? mapTag.trim() : 'water'
+      try {
+        const res = await fetch(`${base}/random?tag=${encodeURIComponent(tag)}`, { cache: 'no-store' })
+        if (res.ok) {
+          const data = await res.json()
+          const c = Array.isArray(data?.data?.coords) ? data.data.coords : []
+          const bg = data?.data?.backgroundImageUrl || null
+          if (!aborted && c.length > 0) {
+            const limit = mapType === 'hex' ? 7 : 9
+            const chosen = (c as any[]).slice(0, Math.min(limit, (c as any[]).length))
+            setCoords(chosen as any)
+            setEffectiveType(mapType)
+            setBackgroundUrl(bg || null)
+            return
+          }
+        }
+      } catch {}
+
+      // If nothing was loaded, fallback to default shape for the configured type
+      if (!aborted) {
+        setCoords((mapType === 'hex' ? defaultSevenHex : defaultNineSquare) as any)
+        setEffectiveType(mapType)
+        setBackgroundUrl(null)
+      }
     }
     load()
     return () => { aborted = true }
-  }, [mapName, activeCoords, defaultSeven])
+  }, [mapType, mapName, activeCoords, mapTag, defaultSevenHex, defaultNineSquare])
+
+  // If explicit activeCoords are provided, infer effective type
+  useEffect(() => {
+    if (activeCoords && activeCoords.length) {
+      const f: any = activeCoords[0]
+      if (typeof f?.q === 'number' && typeof f?.r === 'number') {
+        setEffectiveType('hex')
+      } else if (typeof f?.x === 'number' && typeof f?.y === 'number') {
+        setEffectiveType('square')
+      }
+    }
+  }, [activeCoords])
 
   // Assign random questions to keys of coords; use only as many as available
   useEffect(() => {
     if (!coords.length || !questions?.length) return
+
+    // What: Generate short, user-friendly hex titles per assigned question
+    // Why: Replace technical coordinates with readable labels; prefer trimmed question prefix (<= 8 chars),
+    //      fallback to a stable pseudo-random water-themed short title for consistency across renders.
+    const SHORT_TITLES = [
+      'Wave','Tide','Aqua','Coral','Reef','Drip','Drop','Foam','Pearl','Lagoon',
+      'Spray','Ripple','Jet','Mist','Sail','Gulf','Bay','Surf','Flow','Breeze'
+    ]
+    const shuffle = <T,>(arr: T[]): T[] => {
+      const out = [...arr]
+      for (let i = out.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        ;[out[i], out[j]] = [out[j], out[i]]
+      }
+      return out
+    }
+    const randomTitles = shuffle(SHORT_TITLES)
+
+    const toShortLabel = (text: string | undefined, index: number): string => {
+      const base = (text || '').replace(/\s+/g, ' ').trim()
+      if (base.length > 0) {
+        // Take first 8 visible characters; maintain casing, trim trailing punctuation
+        const raw = base.slice(0, 8)
+        return raw.replace(/[\s\-_,.:;!]+$/g, '') || raw
+      }
+      // Randomized fallback: shuffled list mapped by index for this render
+      return randomTitles[index % randomTitles.length]
+    }
+
     const shuffled = [...questions].sort(() => Math.random() - 0.5)
-    const map: Record<string, QuizzQuestion> = {}
-    coords.forEach((c, i) => {
+    const map: { [key: string]: QuizzQuestion } = Object.create(null)
+    const labels: { [key: string]: string } = Object.create(null)
+    ;(coords as any[]).forEach((c, i) => {
       const q = shuffled[i % shuffled.length]
-      map[`${c.q},${c.r}`] = q
+      let key: string | null = null
+      if (effectiveType === 'hex') {
+        const hv = c as HexCoord
+        if (typeof hv?.q === 'number' && typeof hv?.r === 'number') key = `${hv.q},${hv.r}`
+      } else {
+        const sv = c as SquareCoord
+        if (typeof sv?.x === 'number' && typeof sv?.y === 'number') key = `${sv.x},${sv.y}`
+      }
+      if (key) {
+        map[key] = q
+        labels[key] = toShortLabel(q?.text, i)
+      }
     })
     setQuestionMap(map)
-  }, [coords, questions])
+    setLabelMap(labels)
+  }, [coords, questions, effectiveType])
 
-  // Layout - compute hex size to fit all coordinates
+  // Layout - compute cell size to fit all coordinates
   useEffect(() => {
     const computeFitAndResize = () => {
       const el = stageRef.current
@@ -86,27 +217,42 @@ export default function QuizzHexa({ mapName, activeCoords, rounds, targetCorrect
       const base = Math.max(16, Math.min(vw, vh) / 10)
       const box = (() => {
         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
-        for (const c of coords) {
-          const center = axialToPixel(c.q, c.r, base)
-          const verts = hexVertices(center.x, center.y, base).map(p => rotatePoint(p.x, p.y))
-          for (const v of verts) {
-            if (v.x < minX) minX = v.x
-            if (v.x > maxX) maxX = v.x
-            if (v.y < minY) minY = v.y
-            if (v.y > maxY) maxY = v.y
+        for (const c of coords as any[]) {
+          if (effectiveType === 'hex') {
+            const hv = c as HexCoord
+            if (typeof hv?.q !== 'number' || typeof hv?.r !== 'number') continue
+            const center = axialToPixel(hv.q, hv.r, base)
+            const verts = hexVertices(center.x, center.y, base).map(p => rotatePoint(p.x, p.y))
+            for (const v of verts) {
+              if (v.x < minX) minX = v.x
+              if (v.x > maxX) maxX = v.x
+              if (v.y < minY) minY = v.y
+              if (v.y > maxY) maxY = v.y
+            }
+          } else {
+            const sv = c as SquareCoord
+            if (typeof sv?.x !== 'number' || typeof sv?.y !== 'number') continue
+            const cp = cellToPixel(sv.x, sv.y, base)
+            const verts = squareVertices(cp.x, cp.y, base)
+            for (const v of verts) {
+              if (v.x < minX) minX = v.x
+              if (v.x > maxX) maxX = v.x
+              if (v.y < minY) minY = v.y
+              if (v.y > maxY) maxY = v.y
+            }
           }
         }
         return { w: maxX - minX, h: maxY - minY }
       })()
       if (box.w > 0 && box.h > 0) {
         const scale = Math.min((vw * margin) / box.w, (vh * margin) / box.h)
-        setHexSize(base * scale)
+        setCellSize(base * scale)
       }
     }
     computeFitAndResize()
     window.addEventListener('resize', computeFitAndResize)
     return () => window.removeEventListener('resize', computeFitAndResize)
-  }, [coords])
+  }, [coords, effectiveType])
 
   const handleFlip = (key: string) => {
     if (overlay || done) return
@@ -133,7 +279,17 @@ export default function QuizzHexa({ mapName, activeCoords, rounds, targetCorrect
       return
     }
 
-    // If this was the last round, finish without incrementing beyond total
+    // Compute next round and finalize if exceeded
+    const nextRound = currentRound + 1
+    if (nextRound > rounds) {
+      const won = newCorrect >= targetCorrect
+      setCorrect(newCorrect)
+      setDone(true)
+      onResult?.({ correct: newCorrect, rounds, won })
+      return
+    }
+
+    // If this was the last round exactly, also finalize
     if (currentRound >= rounds) {
       const won = newCorrect >= targetCorrect
       setCorrect(newCorrect)
@@ -143,7 +299,6 @@ export default function QuizzHexa({ mapName, activeCoords, rounds, targetCorrect
     }
 
     // Otherwise advance to the next round
-    const nextRound = currentRound + 1
     setCurrentRound(nextRound)
     setCorrect(newCorrect)
   }
@@ -153,77 +308,145 @@ export default function QuizzHexa({ mapName, activeCoords, rounds, targetCorrect
     const rect = stageRef.current.getBoundingClientRect()
     const vw = rect.width || 800
     const vh = rect.height || 600
-    const s = hexSize
+    const s = cellSize
     const offsetX = vw / 2
     const offsetY = vh / 2
 
     const groups: JSX.Element[] = []
-    for (const c of coords) {
-      const k = `${c.q},${c.r}`
-      const center = axialToPixel(c.q, c.r, s)
-      const verts = hexVertices(center.x, center.y, s).map(p => {
-        const rp = rotatePoint(p.x, p.y)
-        return { x: rp.x + offsetX, y: rp.y + offsetY }
-      })
-      const points = polygonPointsString(verts)
-      const cx = verts.reduce((a, p) => a + p.x, 0) / 6
-      const cy = verts.reduce((a, p) => a + p.y, 0) / 6
+    for (let idx = 0; idx < (coords as any[]).length; idx++) {
+      const c0 = (coords as any[])[idx]
+      let k: string | null = null
+      let points = ''
+      let cx = 0, cy = 0
+      let bbox = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity }
+      if (effectiveType === 'hex') {
+        const c = c0 as HexCoord
+        if (typeof c?.q !== 'number' || typeof c?.r !== 'number') continue
+        k = `${c.q},${c.r}`
+        const center = axialToPixel(c.q, c.r, s)
+        const verts = hexVertices(center.x, center.y, s).map(p => {
+          const rp = rotatePoint(p.x, p.y)
+          return { x: rp.x + offsetX, y: rp.y + offsetY }
+        })
+        points = polygonPointsString(verts)
+        cx = verts.reduce((a, p) => a + p.x, 0) / 6
+        cy = verts.reduce((a, p) => a + p.y, 0) / 6
+        for (const v of verts) { if (v.x < bbox.minX) bbox.minX = v.x; if (v.x > bbox.maxX) bbox.maxX = v.x; if (v.y < bbox.minY) bbox.minY = v.y; if (v.y > bbox.maxY) bbox.maxY = v.y }
+      } else {
+        const c = c0 as SquareCoord
+        if (typeof c?.x !== 'number' || typeof c?.y !== 'number') continue
+        k = `${c.x},${c.y}`
+        const cp = cellToPixel(c.x, c.y, s)
+        const verts = squareVertices(cp.x + offsetX, cp.y + offsetY, s)
+        points = polygonPointsString(verts)
+        cx = verts.reduce((a, p) => a + p.x, 0) / 4
+        cy = verts.reduce((a, p) => a + p.y, 0) / 4
+        for (const v of verts) { if (v.x < bbox.minX) bbox.minX = v.x; if (v.x > bbox.maxX) bbox.maxX = v.x; if (v.y < bbox.minY) bbox.minY = v.y; if (v.y > bbox.maxY) bbox.maxY = v.y }
+      }
+
+      if (!k) continue
+      // Determine cover for this card (if any)
+      const coverUrl = (Array.isArray(cardCoverImages) && cardCoverImages.length > 0)
+        ? cardCoverImages[idx % cardCoverImages.length]
+        : undefined
+      const hasCover = !!coverUrl
 
       groups.push(
-        <g key={k}>
+        <g
+          key={k}
+          role="button"
+          tabIndex={0}
+          onClick={() => handleFlip(k)}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleFlip(k) } }}
+          style={{ cursor: done ? 'not-allowed' : 'pointer' }}
+        >
+          {/* Base polygon (hit area); hide fill/stroke if cover image provided */}
           <polygon
             points={points}
-            fill={revealedKey === k ? '#60a5fa' : '#228be6'}
+            fill={hasCover ? 'transparent' : (revealedKey === k ? '#60a5fa' : '#228be6')}
             opacity={1}
-            stroke="#ffffff"
-            strokeWidth={Math.max(1, s * 0.06)}
-            style={{ cursor: done ? 'not-allowed' : 'pointer', transition: 'fill 120ms' }}
-            onClick={() => handleFlip(k)}
+            stroke={hasCover ? 'none' : '#ffffff'}
+            strokeWidth={hasCover ? 0 : Math.max(1, s * 0.06)}
+            style={{ transition: 'fill 120ms', pointerEvents: 'auto' }}
           />
-          <text x={cx} y={cy} fill="#ffffff" fontSize={Math.max(10, s * 0.35)} fontWeight={600} textAnchor="middle" dominantBaseline="middle" style={{ pointerEvents: 'none' }}>{k}</text>
+          {/* Optional cover image clipped to polygon */}
+          {hasCover && (
+            <>
+              <defs>
+                <clipPath id={`clip-${k}`}>
+                  <polygon points={points} />
+                </clipPath>
+              </defs>
+              <image
+                href={coverUrl}
+                x={bbox.minX}
+                y={bbox.minY}
+                width={bbox.maxX - bbox.minX}
+                height={bbox.maxY - bbox.minY}
+                preserveAspectRatio="xMidYMid slice"
+                clipPath={`url(#clip-${k})`}
+                style={{ pointerEvents: 'none' }}
+              />
+            </>
+          )}
+          {/* Label (hidden if a cover image is used for this card) */}
+          {!hasCover && (
+            <text x={cx} y={cy} fill="#ffffff" fontSize={Math.max(10, s * 0.35)} fontWeight={600} textAnchor="middle" dominantBaseline="middle" style={{ pointerEvents: 'none' }}>{labelMap[k] || ''}</text>
+          )}
         </g>
       )
     }
     return groups
-  }, [coords, hexSize, questionMap])
+  }, [coords, cellSize, questionMap, effectiveType, cardCoverImages])
 
   const overlayContent = overlay ? (
-    <div className="absolute inset-0 grid place-items-center" style={{ background: overlayBg }}>
-      <div className="relative" style={{ width: 0, height: 0 }}>
-        <div style={{ transform: 'rotate(30deg)' }}>
-          <div
-            className="relative"
-            style={{
-              width: `${hexSize * 3}px`,
-              height: `${hexSize * 3 * 0.8660254037844386}px`,
-              clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
-              background: '#111827',
-              border: '3px solid #60a5fa'
-            }}
-          >
-            <div style={{ transform: 'rotate(-30deg)' }} className="absolute inset-0 p-4 text-white flex flex-col gap-3">
-              <div className="font-bold">{overlay.q.text}</div>
-              <div className="grid gap-2">
-                {overlay.q.answers.map((a, idx) => (
-                  <button key={idx} className="px-3 py-2 bg-blue-600 rounded hover:bg-blue-700" onClick={() => handleAnswer(idx)}>
-                    {a.text}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
+    // What: Full-main-block overlay for quiz question & answers
+    // Why: Improve readability on all screens by occupying the entire game main area, anchored within the GameLayout main block
+    <div
+      className="absolute inset-0 z-40 overflow-auto"
+      style={{ background: overlayBg }}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div className="mx-auto w-full max-w-3xl px-4 md:px-8 py-6 md:py-10 text-white">
+        <h2 className="text-2xl md:text-3xl font-bold mb-4" style={{ lineHeight: 1.3 }}>{overlay.q.text}</h2>
+        <div className="grid gap-3 md:gap-4">
+          {overlay.q.answers.map((a, idx) => (
+            <button
+              key={idx}
+              className="px-4 py-3 md:py-4 bg-blue-600 rounded-lg hover:bg-blue-700 active:bg-blue-800 text-base md:text-lg font-semibold text-left"
+              onClick={() => handleAnswer(idx)}
+            >
+              {a.text}
+            </button>
+          ))}
         </div>
       </div>
     </div>
   ) : null
 
   return (
-    <div ref={stageRef} className="relative w-full h-full" style={{ minHeight: 480, background: 'radial-gradient(800px 500px at 50% 50%, #0b1220 0%, #0a0f1f 50%, #060914 100%)' }}>
-      <svg className="absolute inset-0 w-full h-full" style={{ display: 'block' }}>
+    <div
+      ref={stageRef}
+      className="relative w-full h-full"
+      style={{ minHeight: 480 }}
+    >
+      {backgroundUrl && (
+        <div
+          className="absolute inset-0 z-0"
+          style={{ backgroundImage: `url(${backgroundUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+        />
+      )}
+      <div
+        className="absolute inset-0 z-0 pointer-events-none"
+        style={{ background: 'radial-gradient(800px 500px at 50% 50%, rgba(11,18,32,0.40) 0%, rgba(10,15,31,0.60) 50%, rgba(6,9,20,0.75) 100%)' }}
+      />
+
+      <svg className="absolute inset-0 z-10 w-full h-full" style={{ display: 'block' }}>
         {svgContent}
       </svg>
       {overlayContent}
-      <div className="absolute top-4 right-4 bg-white/90 text-gray-900 px-4 py-2 rounded-lg text-sm font-bold">
+      <div className="absolute z-20 top-4 right-4 bg-white/90 text-gray-900 px-4 py-2 rounded-lg text-sm font-bold">
         {correct}/{targetCorrect} correct — Round {currentRound}/{rounds}
       </div>
     </div>
