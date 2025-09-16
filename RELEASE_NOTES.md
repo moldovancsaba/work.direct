@@ -1,9 +1,18 @@
 # 📝 RELEASE_NOTES.md - PlayMass
 
-**Current Version**: 1.28.0
-**Last Updated**: 2025-09-15T17:30:23.000Z
+**Current Version**: 2.0.0
+**Last Updated**: 2025-09-16T19:41:30.000Z
 
 ## 🔹 Version History
+
+### [v2.0.0] — 2025-09-16T19:41:30.000Z
+- Major: Unified Map Creator at /admin/mapcreator for HEXA and SQUARE; removed DIAMOND system-wide
+- Admin: QUIZZ map selector now predictive across types with selectedMaps chips and reordering (↑/↓)
+- Runtime: QUIZZ loads first selected map strictly by type; strict fetch removes cross-type 404 noise
+- Feature: QUIZZ card cover images (transparent PNGs) clipped to tile polygon; hides edges/card back and labels when cover present
+- Model/Types: Added configuration.quizz.selectedMaps and cardCoverImages; removed DIAMOND from enums; added SquareMap model and admin/public APIs
+- Docs: Updated README, ROADMAP, TASKLIST, ARCHITECTURE, LEARNINGS, WARP.md; timestamps synchronized (ISO 8601 UTC with ms)
+- Build: Verified production build
 
 ### [v1.28.0] — 2025-09-15T17:30:23.000Z
 - Fix: Allow QUIZZ game type in Game model enum so admin can create QUIZZ games without validation errors

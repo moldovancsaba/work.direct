@@ -2,8 +2,16 @@
 
 This document captures implementation insights, technical decisions, and solutions to issues encountered during PlayMass development.
 
-**Current Version**: 1.28.0
-**Last Updated**: 2025-09-15T17:30:23.000Z
+**Current Version**: 2.0.0
+**Last Updated**: 2025-09-16T19:41:30.000Z
+
+### QUIZZ: SelectedMaps, Strict Fetch, and Cover Images (v2.0.0)
+- What: Replaced legacy mapName/tag with predictive search + selectedMaps (chips), strict type fetch, and optional per-card cover images clipped to polygon.
+- Why: Single-source map management, reduce 404 noise, enable visually distinct cards via transparent PNGs.
+- How:
+  - Admin: Predictive search across hex/square; add chips; reorder via ↑/↓; migrate mapName→selectedMaps on load; persist selectedMaps and cardCoverImages.
+  - Runtime: If selectedMaps present, load first strictly; else fallback to legacy; cover images use SVG clipPath to mask to tile, remove edges/back/labels.
+- Notes: DIAMOND removed across types/schemas.
 
 ### QUIZZ: Fixed-length answers and map integration
 - What: QUIZZ requires exactly 3 answers per question (tuple) and supports multiple correct answers; questions map onto active hex coordinates.

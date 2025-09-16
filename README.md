@@ -1,7 +1,7 @@
 # PlayMass - Interactive Game Platform
 
-Current Version: 1.28.0
-Last Updated: 2025-09-15T17:30:23.000Z
+Current Version: 2.0.0
+Last Updated: 2025-09-16T19:41:30.000Z
 
 ## 🎮 Features
 
@@ -99,6 +99,7 @@ npm run dev
 
 ```
 app/
+├── admin/mapcreator        # Unified Map Creator (HEXA/SQUARE) with predictive search and CRUD
 ├── admin/                 # Admin interface for game creation
 ├── api/                   # API routes
 │   ├── games/            # Game management endpoints
@@ -125,6 +126,9 @@ app/
 - `POST /api/auth/session` - Create/refresh end-user session for 24h (POC)
 - `GET /api/health` - System health check
 - `GET /api/maps/[name]` - Get public HexMap by name (coords, radius, hexCount)
+- `GET /api/hexmaps/random?tag=` - Get random hex map by tag
+- `GET /api/squaremaps/[name]` - Get public SquareMap by name (coords, radius, cellCount)
+- `GET /api/squaremaps/random?tag=` - Get random square map by tag
 
 ## 🎲 Game Types
 
@@ -135,12 +139,13 @@ app/
 - Visual themes (default, colorful, minimal)
 - Limited attempts and flip mechanics
 
-### Quizz (Hexamap Quiz)
-- Hexamap-based quiz: click any active hex to flip and zoom into a question overlay
+### Quizz (Grid Map Quiz)
+- Grid-map-based quiz: click any active tile to flip and zoom into a question overlay
 - Exactly 3 answers per question; multiple correct answers allowed
 - Win condition: get X correct answers within Y rounds (configurable)
-- Questions are randomly assigned to active hex coordinates each play
-- Supports saved maps by name via Hexa Map Creator (optional mapName)
+- Questions are randomly assigned to active coordinates each play
+- Map selector: predictive search across HEXA and SQUARE maps with selectedMaps chips and reordering
+- Optional card cover images (transparent PNGs) clipped to tile shape; hides edges/labels to let the cover act as the card
 
 ### Penalty Shootout
 - Professional football penalty game simulation
