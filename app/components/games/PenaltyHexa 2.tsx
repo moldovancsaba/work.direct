@@ -367,7 +367,6 @@ export default function PenaltyHexa({
       }
     }
     selectSoccerMap()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Update parent component with score changes - FIXED: Remove onScoreUpdate from dependencies to prevent infinite loops

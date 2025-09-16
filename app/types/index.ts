@@ -9,9 +9,12 @@ export interface BaseDocument {
   updatedAt: Date
 }
 
-// Hex maps for reusable axial coordinate layouts
-// WHAT: Shareable named sets of axial hex coordinates that multiple hex-based games can use as levels/maps.
-// WHY: Centralize map creation and reuse (e.g., "FLOWER", "7cloud", "7river"), enabling randomization and filtering by size/tags.
+// Map coordinate systems for reusable grid-based game layouts
+// WHAT: Shareable named sets of coordinates that multiple grid-based games can use as levels/maps.
+// WHY: Centralize map creation and reuse across different coordinate systems (hex, square, diamond),
+//      enabling randomization and filtering by size/tags while maintaining type safety per grid type.
+
+// Hex maps for hexagonal grid layouts (axial coordinates)
 export interface HexCoord { q: number; r: number }
 
 export interface HexMap extends BaseDocument {
@@ -20,9 +23,30 @@ export interface HexMap extends BaseDocument {
   radius: number // Maximum hex distance from origin allowed in this map (e.g., 4)
   hexCount: number // Derived: coords.length
   tags?: string[] // Optional hashtags for search and grouping (stored lowercase)
+  backgroundImageUrl?: string // Optional background image URL for editor preview and public rendering
   isActive: boolean // Soft delete / archival toggle
   createdBy: string // Admin identifier
 }
+
+// Square maps for square grid layouts (Cartesian coordinates with Chebyshev distance)
+// WHAT: Grid-aligned squares with selection mask based on max(|x|,|y|) <= radius (square boundary)
+// WHY: Enables square-tiled games with intuitive rectangular selection areas
+export interface SquareCoord { x: number; y: number }
+
+export interface SquareMap extends BaseDocument {
+  name: string // Unique within SquareMap collection
+  coords: SquareCoord[] // Cartesian coordinates within Chebyshev radius
+  radius: number // Maximum Chebyshev distance from origin (1-24)
+  cellCount: number // Derived: coords.length after deduplication
+  tags?: string[] // Optional hashtags for search and grouping (stored lowercase)
+  backgroundImageUrl?: string // Optional background image URL for editor preview and public rendering
+  isActive: boolean // Soft delete / archival toggle
+  createdBy: string // Admin identifier
+}
+
+// Unified grid map typing for Quizz
+export type GridMapType = 'hex' | 'square'
+export type QuizzCoord = HexCoord | SquareCoord
 
 // Centralized Game System Types
 // These interfaces support the centralized game environment architecture
@@ -422,8 +446,11 @@ export interface QuizzQuestion {
 
 export interface QuizzConfiguration {
   // Map integration
-  mapName?: string // HexMap name reference (publicly resolvable)
-  activeCoords?: HexCoord[] // Optional embedded coords (fallback if no mapName)
+  mapType?: GridMapType // 'hex' | 'square' — determines coordinate system and rendering (legacy)
+  mapName?: string // Legacy single map name reference (kept for backward compatibility)
+  activeCoords?: QuizzCoord[] // Optional embedded coords (fallback if no mapName)
+  mapTag?: string // Legacy random tag when mapName is not provided
+  selectedMaps?: { type: GridMapType; name: string }[] // Preferred: explicit selected map list (order matters)
   // Gameplay
   rounds: number // Y rounds (questions asked)
   targetCorrect: number // X correct answers needed to win
@@ -436,6 +463,8 @@ export interface QuizzConfiguration {
     correctFeedback?: string
     wrongFeedback?: string
   }
+  // Presentation — per-cell cover images (transparent PNGs recommended)
+  cardCoverImages?: string[]
 }
 
 export interface GameConfiguration {
@@ -455,8 +484,14 @@ export interface GameConfiguration {
   // What: Configuration for the "Get Shorty" game where players try to pick red cards.
   // Why: Adds a simple, repeatable round-based card game with configurable difficulty and colors.
   findRed?: {
-    // Pack parameters per round
-    packSize: number // X — total cards per round
+    // Optional map integration (enables playing on hex/square/diamond maps)
+    mapType?: GridMapType // 'hex' | 'square' | 'diamond'
+    mapName?: string // Map name to fetch
+    mapTag?: string // Random tag if mapName is not provided
+    activeCoords?: QuizzCoord[] // Optional embedded coords
+
+    // Pack parameters per round (used as fallback or to limit visible cells)
+    packSize: number // X — total cards per round (used when no map or to limit cells)
     redsPerPack: number // Y — red cards per round (1 ≤ Y ≤ X)
     selectionsPerRound: number // number of picks allowed per round (1 ≤ selectionsPerRound ≤ X)
 

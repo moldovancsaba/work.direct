@@ -165,18 +165,40 @@ export default function GameClient({ game, cfg }: GameClientProps) {
     />
   ) : game.type === 'QUIZZ' ? (
     <QuizzHexa
+      mapType={game.configuration?.quizz?.mapType || 'hex'}
       mapName={game.configuration?.quizz?.mapName}
       activeCoords={game.configuration?.quizz?.activeCoords}
+      mapTag={game.configuration?.quizz?.mapTag || 'water'}
+      selectedMaps={game.configuration?.quizz?.selectedMaps || []}
       rounds={game.configuration?.quizz?.rounds || 5}
       targetCorrect={game.configuration?.quizz?.targetCorrect || 3}
       questions={game.configuration?.quizz?.questions || []}
       overlayBg={game.configuration?.quizz?.overlayBg || 'rgba(0,0,0,0.6)'}
+      cardCoverImages={game.configuration?.quizz?.cardCoverImages || []}
       onResult={(r)=>{
+        // What: Normalize quiz outcome and route to the unified Result page
+        // Why: Finish when last round is completed or when target correct answers is achieved
         const result: GameOutcome = {
-          type: r.won ? 'WIN' : 'LOSE', starsFound: r.correct, totalStarsInGame: r.rounds, foundAllStars: r.won, value: `${r.correct}/${r.rounds}`, rewardIds: [], message: r.won ? 'You won the quiz!' : 'Quiz over'
-        };
-        setHexaCurrentRound(r.rounds); setHexaTotalRounds(game.configuration?.quizz?.targetCorrect || 0);
-        // we could call backend if needed
+          type: r.won ? 'WIN' : 'LOSE',
+          starsFound: r.correct,
+          totalStarsInGame: r.rounds,
+          foundAllStars: r.won,
+          value: `${r.correct}/${r.rounds}`,
+          rewardIds: [],
+          message: r.won ? 'You won the quiz!' : 'Quiz over'
+        }
+        setHexaCurrentRound(r.rounds)
+        setHexaTotalRounds(game.configuration?.quizz?.targetCorrect || 0)
+        try {
+          const params = new URLSearchParams({ won: r.won ? 'true' : 'false' })
+          if (isTrial) params.set('trial', 'true')
+          if (ref) params.set('ref', ref)
+          params.set('starsFound', String(r.correct))
+          params.set('totalStars', String(r.rounds))
+          window.location.href = `/play/${cfg.meta.gameId}/result?${params.toString()}`
+        } catch {
+          // ignore navigation errors in MVP flow
+        }
       }}
     />
   ) : (

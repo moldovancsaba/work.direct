@@ -580,11 +580,28 @@ const gameSchema = new Schema<Game>({
 
     // Quizz (hexamap-based quiz) configuration
     quizz: {
+      // WHAT: Allow multiple grid systems for Quizz maps — hex (axial), square (Cartesian/Chebyshev), diamond (Cartesian/Manhattan)
+      // WHY: Product requirement to support different board shapes without duplicating quiz logic.
+      mapType: { type: String, enum: ['hex', 'square'], default: 'hex' },
       mapName: { type: String, default: '' },
-      activeCoords: {
-        type: [new Schema({ q: { type: Number, required: true }, r: { type: Number, required: true } }, { _id: false })],
+      selectedMaps: {
+        type: [new Schema({
+          type: { type: String, enum: ['hex', 'square'], required: true },
+          name: { type: String, required: true, trim: true }
+        }, { _id: false })],
         default: []
       },
+      // Active coordinates union — store as flexible objects and validate by mapType at the app level.
+      activeCoords: {
+        type: [new Schema({
+          q: { type: Number },
+          r: { type: Number },
+          x: { type: Number },
+          y: { type: Number }
+        }, { _id: false })],
+        default: []
+      },
+      mapTag: { type: String, default: 'water' }, // What: Random map tag for auto-selected maps. Why: Admin can change anytime to switch themes.
       rounds: { type: Number, min: [1, 'rounds must be at least 1'], default: 5 },
       targetCorrect: { type: Number, min: [1, 'targetCorrect must be at least 1'], default: 3 },
       theme: { type: String, enum: ['default', 'minimal'], default: 'default' },
@@ -595,6 +612,7 @@ const gameSchema = new Schema<Game>({
         correctFeedback: { type: String, default: 'Correct!' },
         wrongFeedback: { type: String, default: 'Try again' }
       },
+      cardCoverImages: { type: [String], default: [] },
       questions: {
         type: [new Schema({
           id: { type: String, required: [true, 'Question id is required'] },

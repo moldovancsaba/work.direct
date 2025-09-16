@@ -65,6 +65,12 @@ const hexMapSchema = new Schema<HexMap>({
     type: Boolean,
     default: true
   },
+  backgroundImageUrl: {
+    type: String,
+    trim: true,
+    maxlength: 2048,
+    default: undefined
+  },
   createdBy: {
     type: String,
     required: [true, 'createdBy is required'],

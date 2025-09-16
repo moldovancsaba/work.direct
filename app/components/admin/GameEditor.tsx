@@ -8,7 +8,7 @@ import StarsHexaCustomizationForm from './StarsHexaCustomizationForm 2'
 import GeneralCustomizationForm from './GeneralCustomizationForm'
 import PlatformSettingsForm from './PlatformSettingsForm'
 import QuizzCustomizationForm from './QuizzCustomizationForm'
-import { GameType } from '../../types'
+import { GameType, QuizzConfiguration } from '../../types'
 
 interface HexagonCard {
   id: string
@@ -59,6 +59,21 @@ const [gameType, setGameType] = useState<GameType>(initialGameType || 'STARS_HEX
 
   // Common configuration
   const [maxRounds, setMaxRounds] = useState(3)
+
+  // QUIZZ configuration (ensures questions are present in edit mode)
+  const [quizzConfig, setQuizzConfig] = useState<Partial<QuizzConfiguration>>({
+    mapType: 'hex',
+    mapName: '',
+    selectedMaps: [],
+    activeCoords: [],
+    mapTag: 'water',
+    rounds: 5,
+    targetCorrect: 3,
+    questions: [],
+    theme: 'default',
+    overlayBg: 'rgba(0,0,0,0.6)',
+    texts: { submitAnswer: 'Submit', correctFeedback: 'Correct!', wrongFeedback: 'Try again' }
+  })
 
 // Platform Settings
 const [platformTexts, setPlatformTexts] = useState<Record<string, string>>({})
@@ -214,6 +229,26 @@ const [platformStyles, setPlatformStyles] = useState<Record<string, any>>({})
                 cardBorder: cfg.colors?.cardBorder || '#374151'
               },
               defaultRewardId: cfg.defaultRewardId || ''
+            })
+          }
+
+          if (game.type === 'QUIZZ' && game.configuration?.quizz) {
+            const q = game.configuration.quizz
+            setQuizzConfig({
+              mapType: q.mapType || 'hex',
+              mapName: q.mapName || '',
+              selectedMaps: Array.isArray(q.selectedMaps) && q.selectedMaps.length > 0
+                ? q.selectedMaps
+                : (q.mapName ? [{ type: (q.mapType || 'hex'), name: q.mapName }] : []),
+              activeCoords: Array.isArray(q.activeCoords) ? q.activeCoords : [],
+              mapTag: q.mapTag || 'water',
+              rounds: Number(q.rounds || 5),
+              targetCorrect: Number(q.targetCorrect || 3),
+              questions: Array.isArray(q.questions) ? q.questions : [],
+              theme: q.theme || 'default',
+              overlayBg: q.overlayBg || 'rgba(0,0,0,0.6)',
+              texts: q.texts || { submitAnswer: 'Submit', correctFeedback: 'Correct!', wrongFeedback: 'Try again' },
+              cardCoverImages: Array.isArray(q.cardCoverImages) ? q.cardCoverImages : []
             })
           }
 
@@ -387,16 +422,27 @@ const [platformStyles, setPlatformStyles] = useState<Record<string, any>>({})
           gameSettings: penaltyGameSettings
         }
       } else if (gameType === 'QUIZZ') {
-        const q = (payloadRef.current || {}).quizz || {}
+        const q = quizzConfig || {}
         const qs = Array.isArray(q.questions) ? q.questions : []
-        payload.configuration.quizz = {
-          mapName: q.mapName || '',
-          activeCoords: Array.isArray(q.activeCoords) ? q.activeCoords : [],
-          rounds: Number(q.rounds || 5),
-          targetCorrect: Number(q.targetCorrect || 3),
-          questions: qs,
-          theme: q.theme || 'default',
-          texts: q.texts || { submitAnswer: 'Submit', correctFeedback: 'Correct!', wrongFeedback: 'Try again' }
+        {
+          const out: any = {
+            mapType: (q as any).mapType || 'hex',
+            selectedMaps: Array.isArray((q as any).selectedMaps) ? (q as any).selectedMaps : [],
+            activeCoords: Array.isArray(q.activeCoords || []) ? (q.activeCoords as any) : [],
+            rounds: Number(q.rounds || 5),
+            targetCorrect: Number(q.targetCorrect || 3),
+            questions: qs,
+            theme: (q as any).theme || 'default',
+            overlayBg: (q as any).overlayBg || 'rgba(0,0,0,0.6)',
+            texts: q.texts || { submitAnswer: 'Submit', correctFeedback: 'Correct!', wrongFeedback: 'Try again' },
+            cardCoverImages: Array.isArray((q as any).cardCoverImages) ? (q as any).cardCoverImages : []
+          }
+          // Legacy fallback: if no selected maps provided, keep existing mapName/mapTag (for backward compatibility)
+          if (!Array.isArray((q as any).selectedMaps) || (q as any).selectedMaps.length === 0) {
+            if (q.mapName) out.mapName = q.mapName
+            if ((q as any).mapTag) out.mapTag = (q as any).mapTag
+          }
+          payload.configuration.quizz = out
         }
       }
 
@@ -447,9 +493,19 @@ const [platformStyles, setPlatformStyles] = useState<Record<string, any>>({})
     )
   }
 
+  const ActionBar = () => (
+    <div className="w-full flex items-center justify-center gap-4 py-3">
+      <Link href="/admin/games" className="px-6 py-2 rounded-lg border border-gray-300 bg-white text-gray-800 hover:bg-gray-50">Cancel</Link>
+      <button type="submit" disabled={saving || !title.trim() || (gameType === 'STARS_HEXA' && starsCount === 0)}
+        className="px-8 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+        {saving ? (mode === 'create' ? 'Creating...' : 'Saving...') : (mode === 'create' ? 'Create Game' : 'Update Game')}
+      </button>
+    </div>
+  )
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+      <div className="w-full mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -473,237 +529,425 @@ const [platformStyles, setPlatformStyles] = useState<Record<string, any>>({})
           </div>
         )}
 
-        <form onSubmit={handleCreateOrUpdate} className="space-y-8">
-          {/* Basic Information */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Basic Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Game Title *</label>
-                <input type="text" value={title} onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-4 py-3 bg-white text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500 caret-black" style={{ backgroundColor: '#ffffff', color: '#000000', caretColor: '#000000' }} placeholder={`My Awesome ${gameTypeName} Game`} required />
-              </div>
+        <form onSubmit={handleCreateOrUpdate}>
+          {/* Top actions */}
+          <ActionBar />
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                <select value={isActive ? 'active' : 'inactive'} onChange={(e) => setIsActive(e.target.value === 'active')}
-                  className="w-full px-4 py-3 bg-white text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" style={{ backgroundColor: '#ffffff', color: '#000000' }}>
-                  <option value="active" className="bg-white text-black">Active</option>
-                  <option value="inactive" className="bg-white text-black">Inactive</option>
-                </select>
-              </div>
+          {/* Three columns layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-4">
+            {/* LEFT column: 2/3 width with segments (each segment has 2 columns) */}
+            <div className="lg:col-span-2">
+              <div className="space-y-8">
 
-              {/* Game Type (create mode only) */}
-{mode === 'create' && !hideTypeSelect && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Game Type</label>
+                {/* Segment 1 — GENERAL */}
+                <div className="relative">
+                  <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-gray-200 px-3 py-2 rounded-t-lg">
+                    <h3 className="text-xs font-semibold tracking-wide text-gray-700">GENERAL</h3>
+                  </div>
+                  <div className="grid grid-cols-1 gap-4">
+                    {/* Left: Basic Information */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 h-full">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Game Title *</label>
+                          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)}
+                            className="w-full px-4 py-3 bg-white text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500 caret-black" style={{ backgroundColor: '#ffffff', color: '#000000', caretColor: '#000000' }} placeholder={`My Awesome ${gameTypeName} Game`} required />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                          <select value={isActive ? 'active' : 'inactive'} onChange={(e) => setIsActive(e.target.value === 'active')}
+                            className="w-full px-4 py-3 bg-white text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" style={{ backgroundColor: '#ffffff', color: '#000000' }}>
+                            <option value="active" className="bg-white text-black">Active</option>
+                            <option value="inactive" className="bg-white text-black">Inactive</option>
+                          </select>
+                        </div>
+                        {mode === 'create' && !hideTypeSelect && (
+                          <div className="lg:col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Game Type</label>
+                            <select value={gameType} onChange={(e) => setGameType(e.target.value as GameType)}
+                              className="w-full px-4 py-3 bg-white text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" style={{ backgroundColor: '#ffffff', color: '#000000' }}>
+                              <option value="STARS_HEXA" className="bg-white text-black">Hexa</option>
+                              <option value="PENALTY_SHOOTOUT" className="bg-white text-black">Penalty Shootout</option>
+                              <option value="FIND_RED" className="bg-white text-black">Get Shorty (Find Red)</option>
+                              <option value="WHEEL_OF_FORTUNE" className="bg-white text-black">Wheel of Fortune</option>
+                              <option value="QUIZZ" className="bg-white text-black">Quizz</option>
+                            </select>
+                          </div>
+                        )}
+                        <div className="lg:col-span-2">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3}
+                            className="w-full px-4 py-3 bg-white text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500 caret-black" style={{ backgroundColor: '#ffffff', color: '#000000', caretColor: '#000000' }} placeholder="Describe your game..." />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Segment 2 — HERO BLOCK */}
+                <div className="relative">
+                  <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-gray-200 px-3 py-2 rounded-t-lg">
+                    <h3 className="text-xs font-semibold tracking-wide text-gray-700">HERO BLOCK</h3>
+                  </div>
+                  <div className="grid grid-cols-1 gap-4">
+                    {/* Left: Hero Block Settings */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-0 h-full">
+                      <PlatformSettingsForm
+                        texts={platformTexts}
+                        styles={platformStyles}
+                        onTextsChange={setPlatformTexts}
+                        onStylesChange={setPlatformStyles}
+                        mode={mode}
+                        saving={saving}
+                        modeSections="text"
+                        section="hero"
+                        hideInlineActions={true}
+                        hideSectionTitles={true}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Segment 3 — MAIN BLOCK */}
+                <div className="relative">
+                  <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-gray-200 px-3 py-2 rounded-t-lg">
+                    <h3 className="text-xs font-semibold tracking-wide text-gray-700">MAIN BLOCK</h3>
+                  </div>
+                  <div className="grid grid-cols-1 gap-4">
+                    {/* Left: Main Block Settings */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-0 h-full">
+                      <PlatformSettingsForm
+                        texts={platformTexts}
+                        styles={platformStyles}
+                        onTextsChange={setPlatformTexts}
+                        onStylesChange={setPlatformStyles}
+                        mode={mode}
+                        saving={saving}
+                        modeSections="text"
+                        section="main"
+                        hideInlineActions={true}
+                        hideSectionTitles={true}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Segment 4 — LANDING */}
+                <div className="relative">
+                  <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-gray-200 px-3 py-2 rounded-t-lg">
+                    <h3 className="text-xs font-semibold tracking-wide text-gray-700">LANDING</h3>
+                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {/* Left: Landing Page settings */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-0 h-full">
+                      <PlatformSettingsForm
+                        texts={platformTexts}
+                        styles={platformStyles}
+                        onTextsChange={setPlatformTexts}
+                        onStylesChange={setPlatformStyles}
+                        mode={mode}
+                        saving={saving}
+                        modeSections="text"
+                        section="landing"
+                        hideInlineActions={true}
+                        hideSectionTitles={true}
+                      />
+                    </div>
+                    {/* Right: Landing Page Buttons */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-0 h-full">
+                      <PlatformSettingsForm
+                        texts={platformTexts}
+                        styles={platformStyles}
+                        onTextsChange={setPlatformTexts}
+                        onStylesChange={setPlatformStyles}
+                        mode={mode}
+                        saving={saving}
+                        modeSections="buttons"
+                        section="landing"
+                        hideInlineActions={true}
+                        hideSectionTitles={true}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Segment 5 — WELCOME */}
+                <div className="relative">
+                  <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-gray-200 px-3 py-2 rounded-t-lg">
+                    <h3 className="text-xs font-semibold tracking-wide text-gray-700">WELCOME</h3>
+                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {/* Left: Welcome Page settings */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-0 h-full">
+                      <PlatformSettingsForm
+                        texts={platformTexts}
+                        styles={platformStyles}
+                        onTextsChange={setPlatformTexts}
+                        onStylesChange={setPlatformStyles}
+                        mode={mode}
+                        saving={saving}
+                        modeSections="text"
+                        section="welcome"
+                        hideInlineActions={true}
+                        hideSectionTitles={true}
+                      />
+                    </div>
+                    {/* Right: Welcome Page Buttons */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-0 h-full">
+                      <PlatformSettingsForm
+                        texts={platformTexts}
+                        styles={platformStyles}
+                        onTextsChange={setPlatformTexts}
+                        onStylesChange={setPlatformStyles}
+                        mode={mode}
+                        saving={saving}
+                        modeSections="buttons"
+                        section="welcome"
+                        hideInlineActions={true}
+                        hideSectionTitles={true}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Segment 6 — RULES */}
+                <div className="relative">
+                  <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-gray-200 px-3 py-2 rounded-t-lg">
+                    <h3 className="text-xs font-semibold tracking-wide text-gray-700">RULES</h3>
+                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {/* Left: Rules Page settings */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-0 h-full">
+                      <PlatformSettingsForm
+                        texts={platformTexts}
+                        styles={platformStyles}
+                        onTextsChange={setPlatformTexts}
+                        onStylesChange={setPlatformStyles}
+                        mode={mode}
+                        saving={saving}
+                        modeSections="text"
+                        section="rules"
+                        hideInlineActions={true}
+                        hideSectionTitles={true}
+                      />
+                    </div>
+                    {/* Right: Rules Page Buttons */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-0 h-full">
+                      <PlatformSettingsForm
+                        texts={platformTexts}
+                        styles={platformStyles}
+                        onTextsChange={setPlatformTexts}
+                        onStylesChange={setPlatformStyles}
+                        mode={mode}
+                        saving={saving}
+                        modeSections="buttons"
+                        section="rules"
+                        hideInlineActions={true}
+                        hideSectionTitles={true}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Segment 7 — RESULT */}
+                <div className="relative">
+                  <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-gray-200 px-3 py-2 rounded-t-lg">
+                    <h3 className="text-xs font-semibold tracking-wide text-gray-700">RESULT</h3>
+                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {/* Left: Result Page settings */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-0 h-full">
+                      <PlatformSettingsForm
+                        texts={platformTexts}
+                        styles={platformStyles}
+                        onTextsChange={setPlatformTexts}
+                        onStylesChange={setPlatformStyles}
+                        mode={mode}
+                        saving={saving}
+                        modeSections="text"
+                        section="result"
+                        hideInlineActions={true}
+                        hideSectionTitles={true}
+                      />
+                    </div>
+                    {/* Right: Result Page Buttons */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-0 h-full">
+                      <PlatformSettingsForm
+                        texts={platformTexts}
+                        styles={platformStyles}
+                        onTextsChange={setPlatformTexts}
+                        onStylesChange={setPlatformStyles}
+                        mode={mode}
+                        saving={saving}
+                        modeSections="buttons"
+                        section="result"
+                        hideInlineActions={true}
+                        hideSectionTitles={true}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Segment 8 — LEGAL */}
+                <div className="relative">
+                  <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-gray-200 px-3 py-2 rounded-t-lg">
+                    <h3 className="text-xs font-semibold tracking-wide text-gray-700">LEGAL</h3>
+                  </div>
+                  <div className="grid grid-cols-1 gap-4">
+                    {/* Left: Legal Documents settings */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-0 h-full">
+                      <PlatformSettingsForm
+                        texts={platformTexts}
+                        styles={platformStyles}
+                        onTextsChange={setPlatformTexts}
+                        onStylesChange={setPlatformStyles}
+                        mode={mode}
+                        saving={saving}
+                        modeSections="text"
+                        section="legal"
+                        hideInlineActions={true}
+                        hideSectionTitles={true}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* RIGHT COLUMN */}
+            <div className="space-y-6">
+              {/* Segment1 - Game Type */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Game Type</h2>
+                {mode === 'create' && !hideTypeSelect ? (
                   <select value={gameType} onChange={(e) => setGameType(e.target.value as GameType)}
-                    className="w-full px-4 py-3 bg-white text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" style={{ backgroundColor: '#ffffff', color: '#000000' }}>
-                    <option value="STARS_HEXA" className="bg-white text-black">Hexa</option>
-                    <option value="PENALTY_SHOOTOUT" className="bg-white text-black">Penalty Shootout</option>
-                    <option value="FIND_RED" className="bg-white text-black">Get Shorty (Find Red)</option>
-                    <option value="WHEEL_OF_FORTUNE" className="bg-white text-black">Wheel of Fortune</option>
-                    <option value="QUIZZ" className="bg-white text-black">Quizz</option>
+                    className="w-full px-4 py-3 bg-white text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="STARS_HEXA">Hexa</option>
+                    <option value="PENALTY_SHOOTOUT">Penalty Shootout</option>
+                    <option value="FIND_RED">Get Shorty (Find Red)</option>
+                    <option value="WHEEL_OF_FORTUNE">Wheel of Fortune</option>
+                    <option value="QUIZZ">Quizz</option>
                   </select>
-                </div>
-              )}
-
-{/* Removed global Total Rounds */}
-            </div>
-
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-              <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3}
-                className="w-full px-4 py-3 bg-white text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500 caret-black" style={{ backgroundColor: '#ffffff', color: '#000000', caretColor: '#000000' }} placeholder="Describe your game..." />
-            </div>
-          </div>
-
-          {/* Inline Actions between sections: Basic Information -> Hero Settings */}
-          <div className="flex items-center justify-between pt-6">
-            <Link href="/admin/games" className="text-gray-600 hover:text-gray-800 transition-colors">Cancel</Link>
-            <button type="submit" disabled={saving || !title.trim() || (gameType === 'STARS_HEXA' && starsCount === 0)}
-              className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium">
-              {saving ? (mode === 'create' ? 'Creating...' : 'Saving...') : (mode === 'create' ? 'Create Game' : 'Update Game')}
-            </button>
-          </div>
-
-          {/* Hero Settings (applies to all pages and games) */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Hero Settings</h2>
-            <p className="text-sm text-gray-600 mb-4">Configure hero header and scoreboard styling, and manage texts/buttons for Landing, Welcome, Rules, Result, and Main styles.</p>
-            <PlatformSettingsForm
-              texts={platformTexts}
-              styles={platformStyles}
-              onTextsChange={setPlatformTexts}
-              onStylesChange={setPlatformStyles}
-              mode={mode}
-              saving={saving}
-            />
-          </div>
-
-          {/* Stars Hexa Configuration */}
-          {gameType === 'STARS_HEXA' && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Hexa Customization</h2>
-              <StarsHexaCustomizationForm
-                texts={starsHexaTexts}
-                colors={starsHexaColors}
-                settings={{ maxFlipsPerAttempt: maxFlipsPerRound, theme, winEmoji, loseEmoji }}
-                hexagons={hexagons}
-                onHexagonsChange={(hx) => setHexagons(hx)}
-                onChange={(texts, colors, settings) => {
-                  setStarsHexaTexts(texts)
-                  setStarsHexaColors(colors)
-                  setMaxFlipsPerRound(settings.maxFlipsPerAttempt)
-                  setTheme(settings.theme as any)
-                  setWinEmoji(settings.winEmoji)
-                  setLoseEmoji(settings.loseEmoji)
-                }}
-                hideTextAndColors={true}
-              />
-          </div>
-          )}
-
-          {/* Inline Actions between sections */}
-          <div className="flex items-center justify-between pt-6">
-            <Link href="/admin/games" className="text-gray-600 hover:text-gray-800 transition-colors">Cancel</Link>
-            <button type="submit" disabled={saving || !title.trim() || (gameType === 'STARS_HEXA' && starsCount === 0)}
-              className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium">
-              {mode === 'create' ? 'Create Game' : 'Update Game'}
-            </button>
-          </div>
-
-          {/* Quizz Configuration */}
-          {gameType === 'QUIZZ' && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Quizz Settings</h2>
-              <QuizzCustomizationForm
-                config={undefined}
-                onChange={(q)=>{
-                  // store temp in local state by piggybacking platform texts/styles; final save uses payload below
-                  (payloadRef as any).current = { ...(payloadRef?.current || {}), quizz: q }
-                }}
-              />
-            </div>
-          )}
-
-          {/* Find Red (Get Shorty) Configuration */}
-          {gameType === 'FIND_RED' && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Get Shorty Settings</h2>
-              {/* Consistent subheading across all editors */}
-              {/* What: Add "Game Settings & Configuration" for parity with other game forms. */}
-              {/* Why: Enforce consistent admin UX per request. */}
-              <h3 className="text-lg font-semibold text-gray-800 mt-6">Game Settings &amp; Configuration</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Cards per Round (X)</label>
-                  <input type="number" className="w-full px-3 py-2 border rounded"
-                    min={3} max={32} value={findRedConfig.packSize}
-                    onChange={(e) => setFindRedConfig((s: any) => ({ ...s, packSize: Number(e.target.value) }))} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Reds per Pack (Y)</label>
-                  <input type="number" className="w-full px-3 py-2 border rounded"
-                    min={1} max={findRedConfig.packSize} value={findRedConfig.redsPerPack}
-                    onChange={(e) => setFindRedConfig((s: any) => ({ ...s, redsPerPack: Number(e.target.value) }))} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Selections per Round</label>
-                  <input type="number" className="w-full px-3 py-2 border rounded"
-                    min={1} max={findRedConfig.packSize} value={findRedConfig.selectionsPerRound}
-                    onChange={(e) => setFindRedConfig((s: any) => ({ ...s, selectionsPerRound: Number(e.target.value) }))} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Target Reds (Z)</label>
-                  <input type="number" className="w-full px-3 py-2 border rounded"
-                    min={1} max={findRedConfig.totalRounds} value={findRedConfig.targetReds}
-                    onChange={(e) => setFindRedConfig((s: any) => ({ ...s, targetReds: Number(e.target.value) }))} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Total Rounds (W)</label>
-                  <input type="number" className="w-full px-3 py-2 border rounded"
-                    min={1} max={10} value={findRedConfig.totalRounds}
-                    onChange={(e) => setFindRedConfig((s: any) => ({ ...s, totalRounds: Number(e.target.value) }))} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Shorty Label</label>
-                  <input type="text" className="w-full px-3 py-2 border rounded" value={findRedConfig.texts.shortyLabel}
-                    onChange={(e) => setFindRedConfig((s: any) => ({ ...s, texts: { ...s.texts, shortyLabel: e.target.value } }))} />
-                </div>
+                ) : (
+                  <div className="text-gray-800">{gameType}</div>
+                )}
               </div>
 
-              <h3 className="text-lg font-semibold text-gray-900 mt-6 mb-2">Colors</h3>
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Background</label>
-                  <input type="color" className="w-full h-10 border rounded" value={findRedConfig.colors.background}
-                    onChange={(e) => setFindRedConfig((s: any) => ({ ...s, colors: { ...s.colors, background: e.target.value } }))} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Win Foreground</label>
-                  <input type="color" className="w-full h-10 border rounded" value={findRedConfig.colors.winForeground}
-                    onChange={(e) => setFindRedConfig((s: any) => ({ ...s, colors: { ...s.colors, winForeground: e.target.value } }))} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Neutral Foreground</label>
-                  <input type="color" className="w-full h-10 border rounded" value={findRedConfig.colors.neutralForeground}
-                    onChange={(e) => setFindRedConfig((s: any) => ({ ...s, colors: { ...s.colors, neutralForeground: e.target.value } }))} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Card Back</label>
-                  <input type="color" className="w-full h-10 border rounded" value={findRedConfig.colors.cardBack}
-                    onChange={(e) => setFindRedConfig((s: any) => ({ ...s, colors: { ...s.colors, cardBack: e.target.value } }))} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Card Border</label>
-                  <input type="color" className="w-full h-10 border rounded" value={findRedConfig.colors.cardBorder}
-                    onChange={(e) => setFindRedConfig((s: any) => ({ ...s, colors: { ...s.colors, cardBorder: e.target.value } }))} />
-                </div>
+              {/* Segment2 - Game General Settings (Map, Background, ETC) */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Game General Settings</h2>
+                {gameType === 'QUIZZ' ? (
+                  <p className="text-sm text-gray-600">Map settings are configured in the Game Type specific Settings section below.</p>
+                ) : (
+                  <p className="text-sm text-gray-600">No general settings available for this game type.</p>
+                )}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Default Reward ID (optional)</label>
-                  <input type="text" className="w-full px-3 py-2 border rounded" value={findRedConfig.defaultRewardId}
-                    onChange={(e) => setFindRedConfig((s: any) => ({ ...s, defaultRewardId: e.target.value }))} />
-                </div>
+              {/* Segment3 - Game Type specific Settings */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Game Type specific Settings</h2>
+                {gameType === 'QUIZZ' && (
+                  <QuizzCustomizationForm
+                    config={quizzConfig as any}
+                    onChange={(q)=> setQuizzConfig(q)}
+                  />
+                )}
+                {gameType === 'STARS_HEXA' && (
+                  <StarsHexaCustomizationForm
+                    texts={starsHexaTexts}
+                    colors={starsHexaColors}
+                    settings={{ maxFlipsPerAttempt: maxFlipsPerRound, theme, winEmoji, loseEmoji }}
+                    hexagons={hexagons}
+                    onHexagonsChange={(hx) => setHexagons(hx)}
+                    onChange={(texts, colors, settings) => {
+                      setStarsHexaTexts(texts)
+                      setStarsHexaColors(colors)
+                      setMaxFlipsPerRound(settings.maxFlipsPerAttempt)
+                      setTheme(settings.theme as any)
+                      setWinEmoji(settings.winEmoji)
+                      setLoseEmoji(settings.loseEmoji)
+                    }}
+                    hideTextAndColors={true}
+                  />
+                )}
+                {gameType === 'FIND_RED' && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Get Shorty Settings</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Cards per Round (X)</label>
+                        <input type="number" className="w-full px-3 py-2 border rounded"
+                          min={3} max={32} value={findRedConfig.packSize}
+                          onChange={(e) => setFindRedConfig((s: any) => ({ ...s, packSize: Number(e.target.value) }))} />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Reds per Pack (Y)</label>
+                        <input type="number" className="w-full px-3 py-2 border rounded"
+                          min={1} max={findRedConfig.packSize} value={findRedConfig.redsPerPack}
+                          onChange={(e) => setFindRedConfig((s: any) => ({ ...s, redsPerPack: Number(e.target.value) }))} />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Selections per Round</label>
+                        <input type="number" className="w-full px-3 py-2 border rounded"
+                          min={1} max={findRedConfig.packSize} value={findRedConfig.selectionsPerRound}
+                          onChange={(e) => setFindRedConfig((s: any) => ({ ...s, selectionsPerRound: Number(e.target.value) }))} />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Target Reds (Z)</label>
+                        <input type="number" className="w-full px-3 py-2 border rounded"
+                          min={1} max={findRedConfig.totalRounds} value={findRedConfig.targetReds}
+                          onChange={(e) => setFindRedConfig((s: any) => ({ ...s, targetReds: Number(e.target.value) }))} />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Total Rounds (W)</label>
+                        <input type="number" className="w-full px-3 py-2 border rounded"
+                          min={1} max={10} value={findRedConfig.totalRounds}
+                          onChange={(e) => setFindRedConfig((s: any) => ({ ...s, totalRounds: Number(e.target.value) }))} />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Shorty Label</label>
+                        <input type="text" className="w-full px-3 py-2 border rounded" value={findRedConfig.texts.shortyLabel}
+                          onChange={(e) => setFindRedConfig((s: any) => ({ ...s, texts: { ...s.texts, shortyLabel: e.target.value } }))} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {gameType === 'PENALTY_SHOOTOUT' && (
+                  <PenaltyCustomizationForm
+                    texts={penaltyTexts}
+                    colors={penaltyColors}
+                    gameSettings={penaltyGameSettings}
+                    gameData={{ title, description }}
+                    onChange={(texts, colors, gameSettings) => {
+                      setPenaltyTexts(texts)
+                      setPenaltyColors(colors)
+                      setPenaltyGameSettings(gameSettings)
+                    }}
+                    onGameDataChange={(gameData) => {
+                      setTitle(gameData.title)
+                      setDescription(gameData.description)
+                    }}
+                    hideTextAndColors={true}
+                  />
+                )}
               </div>
 
+              {/* Middle center actions (full width below columns) */}
+              <ActionBar />
             </div>
-          )}
-
-          {/* Penalty Shootout Configuration */}
-          {gameType === 'PENALTY_SHOOTOUT' && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Penalty Game Customization</h2>
-              <PenaltyCustomizationForm
-                texts={penaltyTexts}
-                colors={penaltyColors}
-                gameSettings={penaltyGameSettings}
-                gameData={{ title, description }}
-                onChange={(texts, colors, gameSettings) => {
-                  setPenaltyTexts(texts)
-                  setPenaltyColors(colors)
-                  setPenaltyGameSettings(gameSettings)
-                }}
-                onGameDataChange={(gameData) => {
-                  setTitle(gameData.title)
-                  setDescription(gameData.description)
-                }}
-                hideTextAndColors={true}
-              />
-            </div>
-          )}
-
-          {/* Inline Actions between sections */}
-          <div className="flex items-center justify-between pt-6">
-            <Link href="/admin/games" className="text-gray-600 hover:text-gray-800 transition-colors">Cancel</Link>
-            <button type="submit" disabled={saving || !title.trim() || (gameType === 'STARS_HEXA' && starsCount === 0)}
-              className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium">
-              {saving ? (mode === 'create' ? 'Creating...' : 'Saving...') : (mode === 'create' ? 'Create Game' : 'Update Game')}
-            </button>
           </div>
+
+          {/* Bottom actions */}
+          <div className="mt-6">
+            <ActionBar />
+          </div>
+
+
+
+
+
+
         </form>
       </div>
     </div>
