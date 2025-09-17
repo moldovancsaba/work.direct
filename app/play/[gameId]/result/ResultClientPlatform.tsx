@@ -101,6 +101,7 @@ export default function ResultClientPlatform({ gameId, texts, styles, won, refCo
         logoHeight={Number(texts?.HERO_LOGO_HEIGHT) || 64}
         fontUrl={styles?.hero?.fontUrl}
         fontStyle={styles?.hero?.fontStyle}
+        titleClass={styles?.hero?.titleClass}
         scoreboard={{
           home: 0,
           visitor: 0,

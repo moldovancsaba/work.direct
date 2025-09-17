@@ -59,7 +59,7 @@ export default function LandingClientPlatform({ gameId, texts, styles, refCode }
 
   return (
     <div className="fixed inset-0 w-screen h-screen overflow-hidden" style={{ backgroundColor: '#000000FF', color: '#FFFFFFFF', fontFamily: '"Noto Sans", sans-serif' }}>
-      <HeroBlock backgroundCss={heroBg} title={title} useScoreboard={styles?.hero?.useScoreboard !== false} logoUrl={texts?.HERO_LOGO_URL} logoWidth={Number(texts?.HERO_LOGO_WIDTH) || 64} logoHeight={Number(texts?.HERO_LOGO_HEIGHT) || 64} fontUrl={styles?.hero?.fontUrl} fontStyle={styles?.hero?.fontStyle} scoreboard={{ home: 0, visitor: 0, homeBg: styles?.scoreboard?.homeBg || '#C00000FF', digitColor: styles?.scoreboard?.digitColor || '#FFFFFFFF' }} isLanding={true} />
+      <HeroBlock backgroundCss={heroBg} title={title} titleClass={styles?.hero?.titleClass} useScoreboard={styles?.hero?.useScoreboard !== false} logoUrl={texts?.HERO_LOGO_URL} logoWidth={Number(texts?.HERO_LOGO_WIDTH) || 64} logoHeight={Number(texts?.HERO_LOGO_HEIGHT) || 64} fontUrl={styles?.hero?.fontUrl} fontStyle={styles?.hero?.fontStyle} scoreboard={{ home: 0, visitor: 0, homeBg: styles?.scoreboard?.homeBg || '#C00000FF', digitColor: styles?.scoreboard?.digitColor || '#FFFFFFFF' }} isLanding={true} />
       <MainBlock backgroundCss={mainBg} isLanding={true} fontUrl={styles?.main?.fontUrl} fontStyle={styles?.main?.fontStyle}>
         <div className="relative w-full h-full">
           {/* Background cover image */}

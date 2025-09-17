@@ -54,6 +54,7 @@ export default function RulesClientPlatform({ gameId, texts, styles, refCode }: 
         logoHeight={Number(texts?.HERO_LOGO_HEIGHT) || 64}
         fontUrl={styles?.hero?.fontUrl}
         fontStyle={styles?.hero?.fontStyle}
+        titleClass={styles?.hero?.titleClass}
         scoreboard={{
           home: 0,
           visitor: 0,
