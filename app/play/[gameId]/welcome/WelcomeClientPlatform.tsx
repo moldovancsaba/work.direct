@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { HeroBlock, MainBlock } from '../../../components/play/Blocks'
 import UnifiedRegistration from '../../../components/game/UnifiedRegistration'
 import FooterLinks from '../../../components/play/FooterLinks'
+import TypedText from '../../../components/play/TypedText'
 
 interface WelcomeClientPlatformProps {
   gameId: string
@@ -230,12 +231,9 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
       />
       <MainBlock backgroundCss={mainBg} fontUrl={styles?.main?.fontUrl} fontStyle={styles?.main?.fontStyle}>
         {description && (
-          <p
-            className={(styles?.main?.pClass || 'text-base mb-4') + ' text-center'}
-            style={{ color: '#FFFFFFFF', whiteSpace: 'pre-wrap' }}
-          >
-            {description}
-          </p>
+          <div className="text-center">
+            <TypedText code="TEXT_11" texts={texts} styles={styles} defaultType="P" />
+          </div>
         )}
         <div className="w-full h-full flex justify-center">
           <div className="h-full w-[80vw] min-w-[80vw] max-w-none space-y-3">

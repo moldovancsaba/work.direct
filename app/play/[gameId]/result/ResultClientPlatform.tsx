@@ -3,6 +3,7 @@
 import React, { useEffect } from 'react'
 import { HeroBlock, MainBlock } from '../../../components/play/Blocks'
 import FooterLinks from '../../../components/play/FooterLinks'
+import TypedText from '../../../components/play/TypedText'
 
 interface ResultClientPlatformProps {
   gameId: string
@@ -114,11 +115,11 @@ export default function ResultClientPlatform({ gameId, texts, styles, won, refCo
           <div className="h-full w-[80vw] min-w-[80vw] max-w-none space-y-6 text-center flex flex-col items-center justify-center">
           {/* Result headline based on win/lose */}
           {typeof won !== 'undefined' && (
-            <h1 className={styles?.main?.h1Class || 'text-3xl font-bold'} style={{ whiteSpace: 'pre-wrap' }}>
-              {won ? (texts?.WON_TEXT || 'Congratulations!') : (texts?.LOST_TEXT || 'Game Over')}
-            </h1>
+            <div>
+              <TypedText code={won ? 'WON_TEXT' : 'LOST_TEXT'} texts={texts} styles={styles} defaultType="H1" />
+            </div>
           )}
-          <h1 className={styles?.main?.h1Class || 'text-3xl font-bold'}>{texts?.CTA_TITLE || texts?.TEXT_42 || 'Share Your Result'}</h1>
+          <TypedText code="CTA_TITLE" texts={texts} styles={styles} defaultType="H1" />
 
           {/* Primary CTA (always render first if provided) */}
           {(function () {
