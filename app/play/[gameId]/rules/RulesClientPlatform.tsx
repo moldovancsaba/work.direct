@@ -3,6 +3,7 @@
 import React, { useEffect } from 'react'
 import { HeroBlock, MainBlock } from '../../../components/play/Blocks'
 import FooterLinks from '../../../components/play/FooterLinks'
+import TypedText from '../../../components/play/TypedText'
 
 interface RulesClientPlatformProps {
   gameId: string
@@ -65,12 +66,12 @@ export default function RulesClientPlatform({ gameId, texts, styles, refCode }: 
       <MainBlock backgroundCss={mainBg} fontUrl={styles?.main?.fontUrl} fontStyle={styles?.main?.fontStyle}>
         <div className="w-full h-full flex justify-center">
           <div className="h-full w-[80vw] min-w-[80vw] max-w-none space-y-4">
-          <h2 className={styles?.main?.h2Class || 'text-xl font-semibold'}>{texts?.TEXT_21 || 'Rules'}</h2>
+          <TypedText code="TEXT_21" texts={texts} styles={styles} defaultType="H2" />
           <div className={styles?.main?.pClass || 'text-base'}>
             {rulesLines.length ? rulesLines.map((l: string, idx: number) => (<p key={idx} className="mb-1">{l}</p>)) : <p>No rules provided.</p>}
           </div>
 
-          <h2 className={styles?.main?.h2Class || 'text-xl font-semibold'}>{texts?.TEXT_23 || 'Win Conditions'}</h2>
+          <TypedText code="TEXT_23" texts={texts} styles={styles} defaultType="H2" />
           <div className={styles?.main?.pClass || 'text-base'}>
             {winLines.length ? winLines.map((l: string, idx: number) => (<p key={idx} className="mb-1">{l}</p>)) : <p>No win conditions provided.</p>}
           </div>
