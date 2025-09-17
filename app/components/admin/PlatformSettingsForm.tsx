@@ -177,10 +177,6 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
             <label className="block text-sm font-medium text-gray-700 mb-1">Hero Background (CSS)</label>
             <textarea className="w-full px-3 py-2 border rounded-md min-h-20" value={getS('hero.background')} onChange={e => setS('hero.background', e.target.value)} placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} />
           </div>
-          <div className="flex items-center gap-2 mt-2">
-            <input id="hero-use-scoreboard" type="checkbox" checked={Boolean(getS('hero.useScoreboard', true))} onChange={e => setS('hero.useScoreboard', e.target.checked)} />
-            <label htmlFor="hero-use-scoreboard" className="text-sm font-medium text-gray-700">Use SCOREBOARD in HERO (Split-Flap)</label>
-          </div>
           <div className="md:col-span-2 border rounded-md p-3">
             <h4 className="text-sm font-semibold text-gray-800 mb-2">Hero Fonts & Typography</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -218,6 +214,10 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 items-center">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Use SCOREBOARD in HERO (Split-Flap)</label>
+              <input type="checkbox" checked={Boolean(getS('hero.useScoreboard', true))} onChange={e => setS('hero.useScoreboard', e.target.checked)} />
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Show Labels</label>
               <input type="checkbox" checked={Boolean(getS('scoreboard.showLabels', ''))} onChange={e => setS('scoreboard.showLabels', e.target.checked)} />
