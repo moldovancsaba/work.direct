@@ -160,6 +160,14 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
             <input id="hero-use-scoreboard" type="checkbox" checked={Boolean(getS('hero.useScoreboard', true))} onChange={e => setS('hero.useScoreboard', e.target.checked)} />
             <label htmlFor="hero-use-scoreboard" className="text-sm font-medium text-gray-700">Use SCOREBOARD in HERO (Split-Flap)</label>
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Hero Google Font URL</label>
+            <input className="w-full px-3 py-2 border rounded-md" value={getS('hero.fontUrl')} onChange={e => setS('hero.fontUrl', e.target.value)} placeholder="https://fonts.google.com/specimen/Montserrat" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Hero Font Style</label>
+            <input className="w-full px-3 py-2 border rounded-md" value={getS('hero.fontStyle')} onChange={e => setS('hero.fontStyle', e.target.value)} placeholder="SemiBold 600" />
+          </div>
         </div>
 
         {/* Scoreboard Styles (moved under Hero Settings, before Landing) */}
@@ -520,6 +528,14 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Secondary Button Class</label>
             <input className="w-full px-3 py-2 border rounded-md" value={getS('main.buttonSecondaryClass')} onChange={e => setS('main.buttonSecondaryClass', e.target.value)} placeholder="btn btn-secondary" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Main Google Font URL</label>
+            <input className="w-full px-3 py-2 border rounded-md" value={getS('main.fontUrl')} onChange={e => setS('main.fontUrl', e.target.value)} placeholder="https://fonts.google.com/specimen/Montserrat" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Main Font Style</label>
+            <input className="w-full px-3 py-2 border rounded-md" value={getS('main.fontStyle')} onChange={e => setS('main.fontStyle', e.target.value)} placeholder="Regular 400" />
           </div>
         </div>
       </div>
