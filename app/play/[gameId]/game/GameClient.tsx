@@ -235,6 +235,7 @@ return (
       heroUseScoreboard={platformStyles?.hero?.useScoreboard !== false}
       heroFontUrl={platformStyles?.hero?.fontUrl}
       heroFontStyle={platformStyles?.hero?.fontStyle}
+      heroTitleClass={platformStyles?.hero?.titleClass}
       mainFontUrl={platformStyles?.main?.fontUrl}
       mainFontStyle={platformStyles?.main?.fontStyle}
       gameContent={content}

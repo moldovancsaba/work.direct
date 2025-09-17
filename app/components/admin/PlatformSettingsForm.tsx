@@ -152,21 +152,26 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
             <label className="block text-sm font-medium text-gray-700 mb-1">Hero Background (CSS)</label>
             <textarea className="w-full px-3 py-2 border rounded-md min-h-20" value={getS('hero.background')} onChange={e => setS('hero.background', e.target.value)} placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Hero Title Class</label>
-            <input className="w-full px-3 py-2 border rounded-md" value={getS('hero.titleClass')} onChange={e => setS('hero.titleClass', e.target.value)} placeholder="text-2xl md:text-3xl font-bold text-white" />
-          </div>
           <div className="flex items-center gap-2 mt-2">
             <input id="hero-use-scoreboard" type="checkbox" checked={Boolean(getS('hero.useScoreboard', true))} onChange={e => setS('hero.useScoreboard', e.target.checked)} />
             <label htmlFor="hero-use-scoreboard" className="text-sm font-medium text-gray-700">Use SCOREBOARD in HERO (Split-Flap)</label>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Hero Google Font URL</label>
-            <input className="w-full px-3 py-2 border rounded-md" value={getS('hero.fontUrl')} onChange={e => setS('hero.fontUrl', e.target.value)} placeholder="https://fonts.google.com/specimen/Montserrat" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Hero Font Style</label>
-            <input className="w-full px-3 py-2 border rounded-md" value={getS('hero.fontStyle')} onChange={e => setS('hero.fontStyle', e.target.value)} placeholder="SemiBold 600" />
+          <div className="md:col-span-2 border rounded-md p-3">
+            <h4 className="text-sm font-semibold text-gray-800 mb-2">Hero Fonts & Typography</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Hero Google Font URL</label>
+                <input className="w-full px-3 py-2 border rounded-md" value={getS('hero.fontUrl')} onChange={e => setS('hero.fontUrl', e.target.value)} placeholder="https://fonts.google.com/specimen/Montserrat" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Hero Font Style</label>
+                <input className="w-full px-3 py-2 border rounded-md" value={getS('hero.fontStyle')} onChange={e => setS('hero.fontStyle', e.target.value)} placeholder="SemiBold 600" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Hero Title Class</label>
+                <input className="w-full px-3 py-2 border rounded-md" value={getS('hero.titleClass')} onChange={e => setS('hero.titleClass', e.target.value)} placeholder="text-2xl md:text-3xl font-bold text-white" />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -509,17 +514,30 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
             <label className="block text-sm font-medium text-gray-700 mb-1">Main Background (CSS)</label>
             <textarea className="w-full px-3 py-2 border rounded-md min-h-20" value={getS('main.background')} onChange={e => setS('main.background', e.target.value)} placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">H1 Class</label>
-            <input className="w-full px-3 py-2 border rounded-md" value={getS('main.h1Class')} onChange={e => setS('main.h1Class', e.target.value)} placeholder="text-3xl font-bold" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">H2 Class</label>
-            <input className="w-full px-3 py-2 border rounded-md" value={getS('main.h2Class')} onChange={e => setS('main.h2Class', e.target.value)} placeholder="text-xl font-semibold" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">P Class</label>
-            <input className="w-full px-3 py-2 border rounded-md" value={getS('main.pClass')} onChange={e => setS('main.pClass', e.target.value)} placeholder="text-base" />
+          <div className="md:col-span-2 border rounded-md p-3">
+            <h4 className="text-sm font-semibold text-gray-800 mb-2">Main Fonts & Typography</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Main Google Font URL</label>
+                <input className="w-full px-3 py-2 border rounded-md" value={getS('main.fontUrl')} onChange={e => setS('main.fontUrl', e.target.value)} placeholder="https://fonts.google.com/specimen/Montserrat" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Main Font Style</label>
+                <input className="w-full px-3 py-2 border rounded-md" value={getS('main.fontStyle')} onChange={e => setS('main.fontStyle', e.target.value)} placeholder="Regular 400" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">H1 Class</label>
+                <input className="w-full px-3 py-2 border rounded-md" value={getS('main.h1Class')} onChange={e => setS('main.h1Class', e.target.value)} placeholder="text-3xl font-bold" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">H2 Class</label>
+                <input className="w-full px-3 py-2 border rounded-md" value={getS('main.h2Class')} onChange={e => setS('main.h2Class', e.target.value)} placeholder="text-xl font-semibold" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">P Class</label>
+                <input className="w-full px-3 py-2 border rounded-md" value={getS('main.pClass')} onChange={e => setS('main.pClass', e.target.value)} placeholder="text-base" />
+              </div>
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Primary Button Class</label>
@@ -528,14 +546,6 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Secondary Button Class</label>
             <input className="w-full px-3 py-2 border rounded-md" value={getS('main.buttonSecondaryClass')} onChange={e => setS('main.buttonSecondaryClass', e.target.value)} placeholder="btn btn-secondary" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Main Google Font URL</label>
-            <input className="w-full px-3 py-2 border rounded-md" value={getS('main.fontUrl')} onChange={e => setS('main.fontUrl', e.target.value)} placeholder="https://fonts.google.com/specimen/Montserrat" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Main Font Style</label>
-            <input className="w-full px-3 py-2 border rounded-md" value={getS('main.fontStyle')} onChange={e => setS('main.fontStyle', e.target.value)} placeholder="Regular 400" />
           </div>
         </div>
       </div>

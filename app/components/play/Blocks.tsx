@@ -48,7 +48,7 @@ function extractWeight(style?: string): number | null {
   const match = String(style).match(/(100|200|300|400|500|600|700|800|900)/)
   return match ? Number(match[1]) : null
 }
-function HeroBlockInner({ backgroundClass, backgroundCss, title, scoreboard, isLanding = false, logoUrl, logoWidth = 64, logoHeight = 64, useScoreboard = true, fontUrl, fontStyle }: { backgroundClass?: string; backgroundCss?: string; title?: string; scoreboard?: { home: number; visitor: number; showLabels?: boolean; homeLabel?: string; visitorLabel?: string; homeBg?: string; visitorBg?: string; digitColor?: string }; isLanding?: boolean; logoUrl?: string; logoWidth?: number; logoHeight?: number; useScoreboard?: boolean; fontUrl?: string; fontStyle?: string }) {
+function HeroBlockInner({ backgroundClass, backgroundCss, title, titleClass, scoreboard, isLanding = false, logoUrl, logoWidth = 64, logoHeight = 64, useScoreboard = true, fontUrl, fontStyle }: { backgroundClass?: string; backgroundCss?: string; title?: string; titleClass?: string; scoreboard?: { home: number; visitor: number; showLabels?: boolean; homeLabel?: string; visitorLabel?: string; homeBg?: string; visitorBg?: string; digitColor?: string }; isLanding?: boolean; logoUrl?: string; logoWidth?: number; logoHeight?: number; useScoreboard?: boolean; fontUrl?: string; fontStyle?: string }) {
   const bg = extractBackgroundValue(backgroundCss)
   const family = useMemo(() => parseGoogleFont(fontUrl || ''), [fontUrl])
   const weight = useMemo(() => extractWeight(fontStyle || '') || 400, [fontStyle])
@@ -96,7 +96,7 @@ function HeroBlockInner({ backgroundClass, backgroundCss, title, scoreboard, isL
             <SplitFlapScoreboard
               mode="title"
               titleText={title}
-              className="scale-75 md:scale-90"
+              className={titleClass || 'scale-75 md:scale-90'}
               homeCardBg={scoreboard?.homeBg || '#C00000FF'}
               digitColor={scoreboard?.digitColor || '#FFFFFFFF'}
             />
@@ -110,11 +110,11 @@ function HeroBlockInner({ backgroundClass, backgroundCss, title, scoreboard, isL
               homeCardBg={scoreboard?.homeBg || '#C00000FF'}
               visitorCardBg={scoreboard?.visitorBg || '#C00000FF'}
               digitColor={scoreboard?.digitColor || '#FFFFFFFF'}
-              className="scale-75 md:scale-90"
+              className={titleClass || 'scale-75 md:scale-90'}
             />
           )
         ) : (
-          <div className="text-xl md:text-2xl font-semibold">
+          <div className={titleClass || 'text-xl md:text-2xl font-semibold'}>
             {title && title.trim().length > 0
               ? title
               : `${(scoreboard?.homeLabel || 'HOME')}: ${scoreboard?.home ?? 0}  -  ${(scoreboard?.visitorLabel || 'VISITOR')}: ${scoreboard?.visitor ?? 0}`}

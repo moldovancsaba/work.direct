@@ -17,7 +17,8 @@ export interface GameLayoutProps {
   heroLogoUrl?: string
   heroLogoWidth?: number
   heroLogoHeight?: number,
-  heroUseScoreboard?: boolean
+  heroUseScoreboard?: boolean,
+  heroTitleClass?: string
   
   // Game content (2nd position) 
   gameContent: ReactNode
@@ -77,6 +78,7 @@ export default function GameLayout({
   heroLogoWidth,
   heroLogoHeight,
   heroUseScoreboard,
+  heroTitleClass,
   gameContent,
   statusContent,
   descriptionContent,
@@ -140,6 +142,7 @@ export default function GameLayout({
         useScoreboard={heroUseScoreboard ?? true}
         fontUrl={heroFontUrl}
         fontStyle={heroFontStyle}
+        titleClass={heroTitleClass}
         {...(penaltyScore ? { scoreboard: {
           home: penaltyScore.home,
           visitor: penaltyScore.visitor,
