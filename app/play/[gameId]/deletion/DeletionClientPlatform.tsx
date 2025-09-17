@@ -11,8 +11,8 @@ export default function DeletionClientPlatform({ gameId, texts, styles }: { game
   const body = texts?.DELETION_BODY || ''
   return (
     <div className="min-h-screen w-full" style={{ backgroundColor: '#000000FF', color: '#FFFFFFFF', fontFamily: '"Noto Sans", sans-serif' }}>
-      <HeroBlock backgroundCss={heroBg} title={title} useScoreboard={styles?.hero?.useScoreboard !== false} logoUrl={texts?.HERO_LOGO_URL} logoWidth={Number(texts?.HERO_LOGO_WIDTH) || 64} logoHeight={Number(texts?.HERO_LOGO_HEIGHT) || 64} />
-      <MainBlock backgroundCss={mainBg}>
+      <HeroBlock backgroundCss={heroBg} title={title} useScoreboard={styles?.hero?.useScoreboard !== false} logoUrl={texts?.HERO_LOGO_URL} logoWidth={Number(texts?.HERO_LOGO_WIDTH) || 64} logoHeight={Number(texts?.HERO_LOGO_HEIGHT) || 64} fontUrl={styles?.hero?.fontUrl} fontStyle={styles?.hero?.fontStyle} />
+      <MainBlock backgroundCss={mainBg} fontUrl={styles?.main?.fontUrl} fontStyle={styles?.main?.fontStyle}>
         <div className={styles?.main?.pClass || 'text-base'} style={{ whiteSpace: 'pre-wrap' }}>
           {body}
         </div>

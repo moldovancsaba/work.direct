@@ -233,6 +233,10 @@ return (
       heroBackgroundCss={platformStyles?.hero?.background}
       mainBackgroundCss={platformStyles?.main?.background}
       heroUseScoreboard={platformStyles?.hero?.useScoreboard !== false}
+      heroFontUrl={platformStyles?.hero?.fontUrl}
+      heroFontStyle={platformStyles?.hero?.fontStyle}
+      mainFontUrl={platformStyles?.main?.fontUrl}
+      mainFontStyle={platformStyles?.main?.fontStyle}
       gameContent={content}
       penaltyScore={game.type === 'PENALTY_SHOOTOUT' ? {
         home: homeScore,

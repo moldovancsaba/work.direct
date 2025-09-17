@@ -292,7 +292,12 @@ const gameSchema = new Schema<Game>({
           titleClass: { type: String, default: '' },
           // Use scoreboard allows switching between SplitFlap and standard text in the HERO block.
           // Default true to preserve existing visual design unless the admin opts out in editor.
-          useScoreboard: { type: Boolean, default: true }
+          useScoreboard: { type: Boolean, default: true },
+          // Google Font configuration for HERO
+          // What: Allow admins to set a Google Fonts family using a specimen URL and style (e.g., "SemiBold 600").
+          // Why: Brand-specific typography for the header.
+          fontUrl: { type: String, default: '' },
+          fontStyle: { type: String, default: '' }
         },
         main: {
           background: { type: String, default: '' },
@@ -300,7 +305,12 @@ const gameSchema = new Schema<Game>({
           h2Class: { type: String, default: '' },
           pClass: { type: String, default: '' },
           buttonPrimaryClass: { type: String, default: '' },
-          buttonSecondaryClass: { type: String, default: '' }
+          buttonSecondaryClass: { type: String, default: '' },
+          // Google Font configuration for MAIN
+          // What: Separate font for the main content area.
+          // Why: Allow different weight/feel for content vs header visuals.
+          fontUrl: { type: String, default: '' },
+          fontStyle: { type: String, default: '' }
         },
         scoreboard: {
           homeBg: { type: String, default: '' },

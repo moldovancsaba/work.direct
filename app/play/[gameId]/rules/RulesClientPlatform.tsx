@@ -52,6 +52,8 @@ export default function RulesClientPlatform({ gameId, texts, styles, refCode }: 
         logoUrl={texts?.HERO_LOGO_URL}
         logoWidth={Number(texts?.HERO_LOGO_WIDTH) || 64}
         logoHeight={Number(texts?.HERO_LOGO_HEIGHT) || 64}
+        fontUrl={styles?.hero?.fontUrl}
+        fontStyle={styles?.hero?.fontStyle}
         scoreboard={{
           home: 0,
           visitor: 0,
@@ -59,7 +61,7 @@ export default function RulesClientPlatform({ gameId, texts, styles, refCode }: 
           digitColor: styles?.scoreboard?.digitColor || '#FFFFFFFF'
         }}
       />
-      <MainBlock backgroundCss={mainBg}>
+      <MainBlock backgroundCss={mainBg} fontUrl={styles?.main?.fontUrl} fontStyle={styles?.main?.fontStyle}>
         <div className="w-full h-full flex justify-center">
           <div className="h-full w-[80vw] min-w-[80vw] max-w-none space-y-4">
           <h2 className={styles?.main?.h2Class || 'text-xl font-semibold'}>{texts?.TEXT_21 || 'Rules'}</h2>

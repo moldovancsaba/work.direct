@@ -1,6 +1,6 @@
 "use client"
 
-import React from 'react'
+import React, { useEffect, useMemo } from 'react'
 import SplitFlapScoreboard from '../game/SplitFlapScoreboard'
 
 // HeroBlock — unified hero section used across play flow pages
@@ -19,8 +19,52 @@ function extractBackgroundValue(css?: string): string | undefined {
 // What: Renders the exact same SplitFlapScoreboard module used on the Game page and applies configurable background CSS.
 // Why: Product requirement — identical layout/module and ensure "Hero Background (CSS)" is actually used.
 import Image from 'next/image'
-function HeroBlockInner({ backgroundClass, backgroundCss, title, scoreboard, isLanding = false, logoUrl, logoWidth = 64, logoHeight = 64, useScoreboard = true }: { backgroundClass?: string; backgroundCss?: string; title?: string; scoreboard?: { home: number; visitor: number; showLabels?: boolean; homeLabel?: string; visitorLabel?: string; homeBg?: string; visitorBg?: string; digitColor?: string }; isLanding?: boolean; logoUrl?: string; logoWidth?: number; logoHeight?: number; useScoreboard?: boolean }) {
+
+function parseGoogleFont(url?: string): string | null {
+  if (!url) return null
+  try {
+    const u = new URL(url)
+    // Expecting fonts.google.com/specimen/<Family>
+    if (!u.hostname.includes('fonts.google.com')) return null
+    const parts = u.pathname.split('/').filter(Boolean)
+    const idx = parts.findIndex(p => p.toLowerCase() === 'specimen')
+    if (idx >= 0 && parts[idx + 1]) {
+      return decodeURIComponent(parts[idx + 1]).replace(/\+/g, ' ')
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
+function buildGoogleCssHref(family: string, weight: number): string {
+  const fam = family.replace(/ /g, '+')
+  const w = Math.min(900, Math.max(100, Math.round(weight / 100) * 100))
+  return `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fam)}:wght@${w}&display=swap`
+}
+
+function extractWeight(style?: string): number | null {
+  if (!style) return null
+  const match = String(style).match(/(100|200|300|400|500|600|700|800|900)/)
+  return match ? Number(match[1]) : null
+}
+function HeroBlockInner({ backgroundClass, backgroundCss, title, scoreboard, isLanding = false, logoUrl, logoWidth = 64, logoHeight = 64, useScoreboard = true, fontUrl, fontStyle }: { backgroundClass?: string; backgroundCss?: string; title?: string; scoreboard?: { home: number; visitor: number; showLabels?: boolean; homeLabel?: string; visitorLabel?: string; homeBg?: string; visitorBg?: string; digitColor?: string }; isLanding?: boolean; logoUrl?: string; logoWidth?: number; logoHeight?: number; useScoreboard?: boolean; fontUrl?: string; fontStyle?: string }) {
   const bg = extractBackgroundValue(backgroundCss)
+  const family = useMemo(() => parseGoogleFont(fontUrl || ''), [fontUrl])
+  const weight = useMemo(() => extractWeight(fontStyle || '') || 400, [fontStyle])
+
+  useEffect(() => {
+    if (!family) return
+    const id = `pm-font-hero-${family}-${weight}`
+    if (document.getElementById(id)) return
+    const href = buildGoogleCssHref(family, weight)
+    const link = document.createElement('link')
+    link.id = id
+    link.rel = 'stylesheet'
+    link.href = href
+    document.head.appendChild(link)
+  }, [family, weight])
+
   return (
     <div
       className={`w-full ${backgroundClass || ''} ${isLanding ? '' : 'px-4'} text-center`}
@@ -32,7 +76,8 @@ function HeroBlockInner({ backgroundClass, backgroundCss, title, scoreboard, isL
         background: bg || undefined,
         backgroundColor: bg ? undefined : '#000000FF',
         color: '#FFFFFFFF',
-        fontFamily: '"Noto Sans", sans-serif',
+        fontFamily: family ? `"${family}", "Noto Sans", sans-serif` : '"Noto Sans", sans-serif',
+        fontWeight: family ? (weight as any) : undefined,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -83,8 +128,23 @@ function HeroBlockInner({ backgroundClass, backgroundCss, title, scoreboard, isL
 export const HeroBlock = React.memo(HeroBlockInner)
 HeroBlock.displayName = 'HeroBlock'
 
-function MainBlockInner({ backgroundCss, children, isLanding = false, isGame = false }: { backgroundCss?: string; children: React.ReactNode; isLanding?: boolean; isGame?: boolean }) {
+function MainBlockInner({ backgroundCss, children, isLanding = false, isGame = false, fontUrl, fontStyle }: { backgroundCss?: string; children: React.ReactNode; isLanding?: boolean; isGame?: boolean; fontUrl?: string; fontStyle?: string }) {
   const bg = extractBackgroundValue(backgroundCss)
+  const family = useMemo(() => parseGoogleFont(fontUrl || ''), [fontUrl])
+  const weight = useMemo(() => extractWeight(fontStyle || '') || 400, [fontStyle])
+
+  useEffect(() => {
+    if (!family) return
+    const id = `pm-font-main-${family}-${weight}`
+    if (document.getElementById(id)) return
+    const href = buildGoogleCssHref(family, weight)
+    const link = document.createElement('link')
+    link.id = id
+    link.rel = 'stylesheet'
+    link.href = href
+    document.head.appendChild(link)
+  }, [family, weight])
+
   return (
     <div
       className={`w-full`}
@@ -95,7 +155,8 @@ function MainBlockInner({ backgroundCss, children, isLanding = false, isGame = f
         background: bg || undefined,
         backgroundColor: bg ? undefined : '#444444FF',
         color: '#FFFFFFFF',
-        fontFamily: '"Noto Sans", sans-serif',
+        fontFamily: family ? `"${family}", "Noto Sans", sans-serif` : '"Noto Sans", sans-serif',
+        fontWeight: family ? (weight as any) : undefined,
         padding: (isLanding || isGame) ? '0' : '24px',
         paddingBottom: (isLanding || isGame) ? '0' : '96px',
         overflow: (isLanding || isGame) ? 'hidden' : 'auto',

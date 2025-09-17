@@ -34,6 +34,10 @@ export interface GameLayoutProps {
   containerClassName?: string
   heroBackgroundCss?: string
   mainBackgroundCss?: string
+  heroFontUrl?: string
+  heroFontStyle?: string
+  mainFontUrl?: string
+  mainFontStyle?: string
   
   // Penalty scoreboard (optional)
   penaltyScore?: { home: number; visitor: number; homeBg?: string; visitorBg?: string; digitColor?: string; showLabels?: boolean; homeLabel?: string; visitorLabel?: string }
@@ -81,6 +85,10 @@ export default function GameLayout({
   containerClassName,
   heroBackgroundCss,
   mainBackgroundCss,
+  heroFontUrl,
+  heroFontStyle,
+  mainFontUrl,
+  mainFontStyle,
   penaltyScore,
   isLoading = false,
   isGameComplete = false,
@@ -130,6 +138,8 @@ export default function GameLayout({
         logoWidth={heroLogoWidth}
         logoHeight={heroLogoHeight}
         useScoreboard={heroUseScoreboard ?? true}
+        fontUrl={heroFontUrl}
+        fontStyle={heroFontStyle}
         {...(penaltyScore ? { scoreboard: {
           home: penaltyScore.home,
           visitor: penaltyScore.visitor,
@@ -143,7 +153,7 @@ export default function GameLayout({
       />
 
       {/* MAIN (76%) */}
-      <MainBlock backgroundCss={mainBackgroundCss} isGame={true}>
+      <MainBlock backgroundCss={mainBackgroundCss} isGame={true} fontUrl={mainFontUrl} fontStyle={mainFontStyle}>
         {/* Game content only - fills the entire main block */}
         <div className="w-full h-full">
           <div className="w-full h-full">
