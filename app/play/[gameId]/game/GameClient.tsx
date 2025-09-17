@@ -170,6 +170,7 @@ export default function GameClient({ game, cfg }: GameClientProps) {
       activeCoords={game.configuration?.quizz?.activeCoords}
       mapTag={game.configuration?.quizz?.mapTag || 'water'}
       selectedMaps={game.configuration?.quizz?.selectedMaps || []}
+      randomizeSelectedMaps={!!game.configuration?.quizz?.randomizeSelectedMaps}
       rounds={game.configuration?.quizz?.rounds || 5}
       targetCorrect={game.configuration?.quizz?.targetCorrect || 3}
       questions={game.configuration?.quizz?.questions || []}
@@ -226,8 +227,12 @@ return (
       gameType={game.type}
       title={(cfg as any)?.platform?.texts?.TEXT_30 || game.title}
       subtitle={headerSubtitle}
+      heroLogoUrl={(cfg as any)?.platform?.texts?.HERO_LOGO_URL}
+      heroLogoWidth={Number((cfg as any)?.platform?.texts?.HERO_LOGO_WIDTH) || 64}
+      heroLogoHeight={Number((cfg as any)?.platform?.texts?.HERO_LOGO_HEIGHT) || 64}
       heroBackgroundCss={platformStyles?.hero?.background}
       mainBackgroundCss={platformStyles?.main?.background}
+      heroUseScoreboard={platformStyles?.hero?.useScoreboard !== false}
       gameContent={content}
       penaltyScore={game.type === 'PENALTY_SHOOTOUT' ? {
         home: homeScore,

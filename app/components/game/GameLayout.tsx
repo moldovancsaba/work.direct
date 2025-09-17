@@ -14,6 +14,10 @@ export interface GameLayoutProps {
   title: string
   subtitle: string
   titleIcon?: string
+  heroLogoUrl?: string
+  heroLogoWidth?: number
+  heroLogoHeight?: number,
+  heroUseScoreboard?: boolean
   
   // Game content (2nd position) 
   gameContent: ReactNode
@@ -65,6 +69,10 @@ export default function GameLayout({
   title,
   subtitle,
   titleIcon,
+  heroLogoUrl,
+  heroLogoWidth,
+  heroLogoHeight,
+  heroUseScoreboard,
   gameContent,
   statusContent,
   descriptionContent,
@@ -118,6 +126,10 @@ export default function GameLayout({
 <HeroBlock
         backgroundCss={heroBackgroundCss}
         title={penaltyScore ? undefined : `${titleIcon ? `${titleIcon} ` : ''}${title}`}
+        logoUrl={heroLogoUrl}
+        logoWidth={heroLogoWidth}
+        logoHeight={heroLogoHeight}
+        useScoreboard={heroUseScoreboard ?? true}
         {...(penaltyScore ? { scoreboard: {
           home: penaltyScore.home,
           visitor: penaltyScore.visitor,

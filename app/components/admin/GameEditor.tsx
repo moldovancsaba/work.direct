@@ -240,6 +240,7 @@ const [platformStyles, setPlatformStyles] = useState<Record<string, any>>({})
               selectedMaps: Array.isArray(q.selectedMaps) && q.selectedMaps.length > 0
                 ? q.selectedMaps
                 : (q.mapName ? [{ type: (q.mapType || 'hex'), name: q.mapName }] : []),
+              randomizeSelectedMaps: !!q.randomizeSelectedMaps,
               activeCoords: Array.isArray(q.activeCoords) ? q.activeCoords : [],
               mapTag: q.mapTag || 'water',
               rounds: Number(q.rounds || 5),
@@ -428,6 +429,7 @@ const [platformStyles, setPlatformStyles] = useState<Record<string, any>>({})
           const out: any = {
             mapType: (q as any).mapType || 'hex',
             selectedMaps: Array.isArray((q as any).selectedMaps) ? (q as any).selectedMaps : [],
+            randomizeSelectedMaps: !!(q as any).randomizeSelectedMaps,
             activeCoords: Array.isArray(q.activeCoords || []) ? (q.activeCoords as any) : [],
             rounds: Number(q.rounds || 5),
             targetCorrect: Number(q.targetCorrect || 3),

@@ -35,7 +35,14 @@
 2025-09-13T12:44:07.090Z — Plan: Housekeeping — bump to v1.18.0; add whitespace to README; synchronize documentation timestamps; add release note; commit and push to main. No code changes. ISO 8601 timestamps with ms enforced.
 2025-09-13T16:27:18.176Z — Plan: Landing page UI tweak — disable scroll and remove margins on Hero/Main for full-screen experience; patch bump and docs sync per protocol; commit and push.
 2025-09-13T18:47:30.559Z — Plan: Admin editor polish — rename Platform Settings → Hero Settings; move Scoreboard Styles under Hero; add inline Cancel/Update action bars between all specified sections; minor version bump and docs sync; commit and push.
-2025-09-13T19:48:48.015Z — Plan: Enforce no-scroll across all play pages; add document-level overflow lock to the Game layout; minor version bump and docs sync; commit and push.
+2025-09-15T19:48:48.015Z — Plan: Enforce no-scroll across all play pages; add document-level overflow lock to the Game layout; minor version bump and docs sync; commit and push.
+
+2025-09-17T11:56:16.000Z — Delivery: Hero logo across all pages + optional SCOREBOARD toggle + half-height HERO (v2.1.0)
+- Model: configuration.platform.styles.hero.useScoreboard (default true)
+- Editor: Checkbox in Hero Settings to toggle SCOREBOARD
+- UI: HeroBlock now always shows logo when provided; can render plain text when SCOREBOARD disabled; HERO height 10vh, MAIN adjusted
+- Docs: Version bumped and timestamps synchronized (ISO 8601 ms, UTC)
+- Build: Production build OK
 
 Timestamp: 2025-09-06T16:58:38.000Z
 Author: Agent Mode (AI)

@@ -61,7 +61,7 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
   const getT = (k: string, fb = '') => texts?.[k] ?? fb
   const setT = (k: string, v: string) => onTextsChange({ ...texts, [k]: v })
 
-  const getS = (path: string, fb = '') => {
+  const getS = (path: string, fb?: any) => {
     try {
       return path.split('.').reduce((acc: any, key: string) => (acc && acc[key] !== undefined ? acc[key] : undefined), styles) ?? fb
     } catch { return fb }
@@ -143,6 +143,9 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
           <SimpleTextInput code="TEXT_20" label="Rules Title" placeholder="Game Rules" value={getT('TEXT_20')} onChange={(v)=> setT('TEXT_20', v)} />
           <SimpleTextInput code="TEXT_30" label="Game Title" placeholder="Game" value={getT('TEXT_30')} onChange={(v)=> setT('TEXT_30', v)} />
           <SimpleTextInput code="TEXT_40" label="Result Title" placeholder="Results" value={getT('TEXT_40')} onChange={(v)=> setT('TEXT_40', v)} />
+          <SimpleTextInput code="HERO_LOGO_URL" label="Hero Logo URL (PNG)" placeholder="https://.../logo.png" value={getT('HERO_LOGO_URL')} onChange={(v)=> setT('HERO_LOGO_URL', v)} />
+          <SimpleTextInput code="HERO_LOGO_WIDTH" label="Hero Logo Width (px)" placeholder="64" value={getT('HERO_LOGO_WIDTH')} onChange={(v)=> setT('HERO_LOGO_WIDTH', v)} />
+          <SimpleTextInput code="HERO_LOGO_HEIGHT" label="Hero Logo Height (px)" placeholder="64" value={getT('HERO_LOGO_HEIGHT')} onChange={(v)=> setT('HERO_LOGO_HEIGHT', v)} />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div>
@@ -152,6 +155,10 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Hero Title Class</label>
             <input className="w-full px-3 py-2 border rounded-md" value={getS('hero.titleClass')} onChange={e => setS('hero.titleClass', e.target.value)} placeholder="text-2xl md:text-3xl font-bold text-white" />
+          </div>
+          <div className="flex items-center gap-2 mt-2">
+            <input id="hero-use-scoreboard" type="checkbox" checked={Boolean(getS('hero.useScoreboard', true))} onChange={e => setS('hero.useScoreboard', e.target.checked)} />
+            <label htmlFor="hero-use-scoreboard" className="text-sm font-medium text-gray-700">Use SCOREBOARD in HERO (Split-Flap)</label>
           </div>
         </div>
 
