@@ -1,9 +1,19 @@
 # 📝 RELEASE_NOTES.md - PlayMass
 
-**Current Version**: 2.0.0
-**Last Updated**: 2025-09-16T19:41:30.000Z
+**Current Version**: 2.1.0
+**Last Updated**: 2025-09-17T11:56:16.000Z
 
 ## 🔹 Version History
+
+### [v2.1.0] — 2025-09-17T11:56:16.000Z
+- Hero: Logo visible on all HERO blocks across Landing/Welcome/Rules/Game/Result/Legal pages
+- Hero: Reduced HERO height by 50% (from ~20vh to 10vh); MAIN adjusted to fill remaining viewport
+- Admin: Added “Use SCOREBOARD in HERO (Split-Flap)” checkbox in Hero Settings; when unchecked, HERO renders normal text instead of split-flap
+- Model: configuration.platform.styles.hero.useScoreboard persisted (Boolean, default true)
+- Resolver: HERO_LOGO_* passthrough; styles.hero.useScoreboard exposed to clients
+- UI: HeroBlock respects useScoreboard and always renders logo when provided
+- Build: Verified production build; no type or lint errors
+- Docs: Updated version and timestamps (ISO 8601 UTC with ms)
 
 ### [v2.0.0] — 2025-09-16T19:41:30.000Z
 - Major: Unified Map Creator at /admin/mapcreator for HEXA and SQUARE; removed DIAMOND system-wide

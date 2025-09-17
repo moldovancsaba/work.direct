@@ -11,6 +11,7 @@ interface QuizzHexaProps {
   activeCoords?: Array<HexCoord | SquareCoord>
   mapTag?: string
   selectedMaps?: { type: GridMapType; name: string }[]
+  randomizeSelectedMaps?: boolean
   rounds: number
   targetCorrect: number
   questions: QuizzQuestion[]
@@ -19,7 +20,7 @@ interface QuizzHexaProps {
   onResult?: (result: { correct: number; rounds: number; won: boolean }) => void
 }
 
-export default function QuizzHexa({ mapType = 'hex', mapName, activeCoords, mapTag, selectedMaps, rounds, targetCorrect, questions, overlayBg = 'rgba(0,0,0,0.6)', cardCoverImages, onResult }: QuizzHexaProps) {
+export default function QuizzHexa({ mapType = 'hex', mapName, activeCoords, mapTag, selectedMaps, randomizeSelectedMaps, rounds, targetCorrect, questions, overlayBg = 'rgba(0,0,0,0.6)', cardCoverImages, onResult }: QuizzHexaProps) {
   const stageRef = useRef<HTMLDivElement>(null)
   const [coords, setCoords] = useState<Array<HexCoord | SquareCoord>>([])
   const [cellSize, setCellSize] = useState(80)
@@ -66,7 +67,8 @@ export default function QuizzHexa({ mapType = 'hex', mapName, activeCoords, mapT
 
       // If admin selected maps, try the first one
       if (selectedMaps && selectedMaps.length) {
-        const first = selectedMaps[0]
+        const pickIndex = randomizeSelectedMaps ? Math.floor(Math.random() * selectedMaps.length) : 0
+        const first = selectedMaps[pickIndex]
         try {
           const res = await fetch(`${baseFor(first.type)}/${encodeURIComponent(first.name)}`, { cache: 'no-store' })
           if (res.ok) {
@@ -150,6 +152,27 @@ export default function QuizzHexa({ mapType = 'hex', mapName, activeCoords, mapT
     }
   }, [activeCoords])
 
+  // Precompute question assignment bag per game start (no repeat until all used)
+  const questionBag = useMemo(() => {
+    const n = (coords as any[])?.length || 0
+    const qs = Array.isArray(questions) ? (questions as QuizzQuestion[]).filter(Boolean) : []
+    if (n === 0 || qs.length === 0) return [] as QuizzQuestion[]
+    const shuffle = <T,>(arr: T[]): T[] => {
+      const out = [...arr]
+      for (let i = out.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        ;[out[i], out[j]] = [out[j], out[i]]
+      }
+      return out
+    }
+    const bag: QuizzQuestion[] = []
+    const cycles = Math.ceil(n / qs.length)
+    for (let c = 0; c < cycles; c++) {
+      bag.push(...shuffle(qs))
+    }
+    return bag.slice(0, n)
+  }, [coords, questions])
+
   // Assign random questions to keys of coords; use only as many as available
   useEffect(() => {
     if (!coords.length || !questions?.length) return
@@ -182,11 +205,12 @@ export default function QuizzHexa({ mapType = 'hex', mapName, activeCoords, mapT
       return randomTitles[index % randomTitles.length]
     }
 
-    const shuffled = [...questions].sort(() => Math.random() - 0.5)
+    // Build mapping using precomputed question bag
     const map: { [key: string]: QuizzQuestion } = Object.create(null)
     const labels: { [key: string]: string } = Object.create(null)
     ;(coords as any[]).forEach((c, i) => {
-      const q = shuffled[i % shuffled.length]
+      const q = questionBag[i]
+      if (!q) return
       let key: string | null = null
       if (effectiveType === 'hex') {
         const hv = c as HexCoord
@@ -202,7 +226,7 @@ export default function QuizzHexa({ mapType = 'hex', mapName, activeCoords, mapT
     })
     setQuestionMap(map)
     setLabelMap(labels)
-  }, [coords, questions, effectiveType])
+  }, [coords, questionBag, effectiveType])
 
   // Layout - compute cell size to fit all coordinates
   useEffect(() => {
@@ -303,6 +327,27 @@ export default function QuizzHexa({ mapType = 'hex', mapName, activeCoords, mapT
     setCorrect(newCorrect)
   }
 
+  // Precompute random cover mapping per game start (coords or images change)
+  const coverForIndex = useMemo(() => {
+    const covers: (string | undefined)[] = []
+    const n = (coords as any[])?.length || 0
+    const imgs = Array.isArray(cardCoverImages) ? cardCoverImages.filter(Boolean) : []
+    if (imgs.length === 0 || n === 0) return covers
+    const shuffle = <T,>(arr: T[]): T[] => {
+      const out = [...arr]
+      for (let i = out.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        ;[out[i], out[j]] = [out[j], out[i]]
+      }
+      return out
+    }
+    const cycles = Math.ceil(n / imgs.length)
+    for (let c = 0; c < cycles; c++) {
+      covers.push(...shuffle(imgs))
+    }
+    return covers.slice(0, n)
+  }, [coords, cardCoverImages])
+
   const svgContent = useMemo(() => {
     if (!stageRef.current) return null
     const rect = stageRef.current.getBoundingClientRect()
@@ -346,9 +391,7 @@ export default function QuizzHexa({ mapType = 'hex', mapName, activeCoords, mapT
 
       if (!k) continue
       // Determine cover for this card (if any)
-      const coverUrl = (Array.isArray(cardCoverImages) && cardCoverImages.length > 0)
-        ? cardCoverImages[idx % cardCoverImages.length]
-        : undefined
+      const coverUrl = coverForIndex[idx]
       const hasCover = !!coverUrl
 
       groups.push(
@@ -397,7 +440,7 @@ export default function QuizzHexa({ mapType = 'hex', mapName, activeCoords, mapT
       )
     }
     return groups
-  }, [coords, cellSize, questionMap, effectiveType, cardCoverImages])
+  }, [coords, cellSize, questionMap, effectiveType, coverForIndex])
 
   const overlayContent = overlay ? (
     // What: Full-main-block overlay for quiz question & answers

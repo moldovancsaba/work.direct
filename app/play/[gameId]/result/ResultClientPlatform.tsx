@@ -95,6 +95,10 @@ export default function ResultClientPlatform({ gameId, texts, styles, won, refCo
       <HeroBlock
         backgroundCss={heroBg}
         title={title}
+        useScoreboard={styles?.hero?.useScoreboard !== false}
+        logoUrl={texts?.HERO_LOGO_URL}
+        logoWidth={Number(texts?.HERO_LOGO_WIDTH) || 64}
+        logoHeight={Number(texts?.HERO_LOGO_HEIGHT) || 64}
         scoreboard={{
           home: 0,
           visitor: 0,

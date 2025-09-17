@@ -17,6 +17,7 @@ export default function QuizzCustomizationForm({ config, onChange }: QuizzCustom
   const [mapName] = useState<string>(config?.mapName || '')
   const [mapTag] = useState<string>(config?.mapTag || 'water')
   const [selectedMaps, setSelectedMaps] = useState<Array<{ type: GridMapType; name: string }>>(config?.selectedMaps || [])
+  const [randomizeMaps, setRandomizeMaps] = useState<boolean>(!!config?.randomizeSelectedMaps)
   const [questions, setQuestions] = useState<QuizzQuestion[]>(config?.questions || [])
   const [newImageUrl, setNewImageUrl] = useState('')
   const [coverImages, setCoverImages] = useState<string[]>(config?.cardCoverImages || [])
@@ -77,6 +78,7 @@ export default function QuizzCustomizationForm({ config, onChange }: QuizzCustom
       mapType: override?.mapType ?? mapType,
       mapName: override?.mapName ?? mapName,
       selectedMaps: override?.selectedMaps ?? selectedMaps,
+      randomizeSelectedMaps: override?.randomizeSelectedMaps ?? randomizeMaps,
       activeCoords: config?.activeCoords || [],
       mapTag: override?.mapTag ?? mapTag,
       rounds: override?.rounds ?? rounds,
@@ -159,6 +161,11 @@ export default function QuizzCustomizationForm({ config, onChange }: QuizzCustom
               <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded bg-gray-100 text-gray-700">{r.type}</span>
             </button>
           ))}
+        </div>
+        {/* Randomize option */}
+        <div className="mt-3 flex items-center gap-2">
+          <input id="shuffleMaps" type="checkbox" checked={randomizeMaps} onChange={(e)=> { setRandomizeMaps(e.target.checked); emit(questions, { randomizeSelectedMaps: e.target.checked }) }} />
+          <label htmlFor="shuffleMaps" className="text-sm text-gray-800">Shuffle selected maps at game start</label>
         </div>
         {/* Selected Maps as chips */}
         {selectedMaps.length > 0 && (

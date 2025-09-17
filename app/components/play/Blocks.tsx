@@ -18,7 +18,8 @@ function extractBackgroundValue(css?: string): string | undefined {
 // HeroBlock — unified hero section used across play flow pages
 // What: Renders the exact same SplitFlapScoreboard module used on the Game page and applies configurable background CSS.
 // Why: Product requirement — identical layout/module and ensure "Hero Background (CSS)" is actually used.
-function HeroBlockInner({ backgroundClass, backgroundCss, title, scoreboard, isLanding = false }: { backgroundClass?: string; backgroundCss?: string; title?: string; scoreboard?: { home: number; visitor: number; showLabels?: boolean; homeLabel?: string; visitorLabel?: string; homeBg?: string; visitorBg?: string; digitColor?: string }; isLanding?: boolean }) {
+import Image from 'next/image'
+function HeroBlockInner({ backgroundClass, backgroundCss, title, scoreboard, isLanding = false, logoUrl, logoWidth = 64, logoHeight = 64, useScoreboard = true }: { backgroundClass?: string; backgroundCss?: string; title?: string; scoreboard?: { home: number; visitor: number; showLabels?: boolean; homeLabel?: string; visitorLabel?: string; homeBg?: string; visitorBg?: string; digitColor?: string }; isLanding?: boolean; logoUrl?: string; logoWidth?: number; logoHeight?: number; useScoreboard?: boolean }) {
   const bg = extractBackgroundValue(backgroundCss)
   return (
     <div
@@ -26,7 +27,7 @@ function HeroBlockInner({ backgroundClass, backgroundCss, title, scoreboard, isL
       style={{
         marginTop: '0',
         marginBottom: '0',
-        height: '20vh',
+        height: '10vh',
         // Apply configured CSS background when provided; fallback to default color
         background: bg || undefined,
         backgroundColor: bg ? undefined : '#000000FF',
@@ -34,30 +35,45 @@ function HeroBlockInner({ backgroundClass, backgroundCss, title, scoreboard, isL
         fontFamily: '"Noto Sans", sans-serif',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        position: 'relative'
       }}
     >
+      {/* Left logo (optional) */}
+      {logoUrl && (
+        <div className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2">
+          <Image src={logoUrl} alt="logo" width={logoWidth} height={logoHeight} className="object-contain" unoptimized />
+        </div>
+      )}
       <div className="flex justify-center w-full">
-        {title && title.trim().length > 0 ? (
-          <SplitFlapScoreboard
-            mode="title"
-            titleText={title}
-            className="scale-75 md:scale-90"
-            homeCardBg={scoreboard?.homeBg || '#C00000FF'}
-            digitColor={scoreboard?.digitColor || '#FFFFFFFF'}
-          />
+        {useScoreboard ? (
+          title && title.trim().length > 0 ? (
+            <SplitFlapScoreboard
+              mode="title"
+              titleText={title}
+              className="scale-75 md:scale-90"
+              homeCardBg={scoreboard?.homeBg || '#C00000FF'}
+              digitColor={scoreboard?.digitColor || '#FFFFFFFF'}
+            />
+          ) : (
+            <SplitFlapScoreboard
+              homeScore={scoreboard?.home ?? 0}
+              visitorScore={scoreboard?.visitor ?? 0}
+              showLabels={scoreboard?.showLabels ?? false}
+              homeLabel={scoreboard?.homeLabel}
+              visitorLabel={scoreboard?.visitorLabel}
+              homeCardBg={scoreboard?.homeBg || '#C00000FF'}
+              visitorCardBg={scoreboard?.visitorBg || '#C00000FF'}
+              digitColor={scoreboard?.digitColor || '#FFFFFFFF'}
+              className="scale-75 md:scale-90"
+            />
+          )
         ) : (
-          <SplitFlapScoreboard
-            homeScore={scoreboard?.home ?? 0}
-            visitorScore={scoreboard?.visitor ?? 0}
-            showLabels={scoreboard?.showLabels ?? false}
-            homeLabel={scoreboard?.homeLabel}
-            visitorLabel={scoreboard?.visitorLabel}
-            homeCardBg={scoreboard?.homeBg || '#C00000FF'}
-            visitorCardBg={scoreboard?.visitorBg || '#C00000FF'}
-            digitColor={scoreboard?.digitColor || '#FFFFFFFF'}
-            className="scale-75 md:scale-90"
-          />
+          <div className="text-xl md:text-2xl font-semibold">
+            {title && title.trim().length > 0
+              ? title
+              : `${(scoreboard?.homeLabel || 'HOME')}: ${scoreboard?.home ?? 0}  -  ${(scoreboard?.visitorLabel || 'VISITOR')}: ${scoreboard?.visitor ?? 0}`}
+          </div>
         )}
       </div>
     </div>
@@ -74,7 +90,7 @@ function MainBlockInner({ backgroundCss, children, isLanding = false, isGame = f
       className={`w-full`}
       style={{
         width: '100vw',
-        height: isLanding ? '80vh' : '76vh',
+        height: isLanding ? '90vh' : '86vh',
         marginBottom: '0',
         background: bg || undefined,
         backgroundColor: bg ? undefined : '#444444FF',

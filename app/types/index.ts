@@ -451,6 +451,7 @@ export interface QuizzConfiguration {
   activeCoords?: QuizzCoord[] // Optional embedded coords (fallback if no mapName)
   mapTag?: string // Legacy random tag when mapName is not provided
   selectedMaps?: { type: GridMapType; name: string }[] // Preferred: explicit selected map list (order matters)
+  randomizeSelectedMaps?: boolean // If true, pick a random map from selectedMaps at game start
   // Gameplay
   rounds: number // Y rounds (questions asked)
   targetCorrect: number // X correct answers needed to win

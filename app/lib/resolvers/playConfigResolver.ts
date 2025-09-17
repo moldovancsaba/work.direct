@@ -43,6 +43,10 @@ function derivePlatform(game: any) {
     TEXT_20: platTexts.TEXT_20 || (stars.texts?.rulesTitle || penalty.texts?.gameRulesTitle) || 'Game Rules',
     TEXT_30: platTexts.TEXT_30 || game.title || 'Game',
     TEXT_40: platTexts.TEXT_40 || 'Results',
+    // Pass-through Hero Logo fields used by the header
+    HERO_LOGO_URL: platTexts.HERO_LOGO_URL || '',
+    HERO_LOGO_WIDTH: platTexts.HERO_LOGO_WIDTH || '',
+    HERO_LOGO_HEIGHT: platTexts.HERO_LOGO_HEIGHT || '',
     TEXT_11: platTexts.TEXT_11 || game.description || '',
     TEXT_12: platTexts.TEXT_12 || 'Your Name',
     TEXT_13: platTexts.TEXT_13 || 'Enter your name',

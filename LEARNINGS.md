@@ -2,8 +2,17 @@
 
 This document captures implementation insights, technical decisions, and solutions to issues encountered during PlayMass development.
 
-**Current Version**: 2.0.0
-**Last Updated**: 2025-09-16T19:41:30.000Z
+**Current Version**: 2.1.0
+**Last Updated**: 2025-09-17T11:56:16.000Z
+
+### HERO: Logo visibility across pages, optional scoreboard, half-height (v2.1.0)
+- What: Ensure HERO logo is displayed on all pages; allow toggling SCOREBOARD vs normal text; reduce hero height to optimize screen usage.
+- Why: Consistent branding in header across the entire flow and admin control over stylistic intensity.
+- How:
+  - Model: Added styles.hero.useScoreboard (Boolean, default true)
+  - Editor: “Use SCOREBOARD in HERO (Split-Flap)” checkbox under Hero Settings
+  - UI: HeroBlock accepts useScoreboard; when false, shows plain text title/scores
+  - Layout: HERO 10vh; MAIN 90/86vh; logo anchored with position relative container
 
 ### QUIZZ: SelectedMaps, Strict Fetch, and Cover Images (v2.0.0)
 - What: Replaced legacy mapName/tag with predictive search + selectedMaps (chips), strict type fetch, and optional per-card cover images clipped to polygon.

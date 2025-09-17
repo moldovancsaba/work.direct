@@ -182,6 +182,12 @@ const gameSchema = new Schema<Game>({
         TEXT_20: { type: String, default: '' },
         TEXT_30: { type: String, default: '' },
         TEXT_40: { type: String, default: '' },
+        // Hero Logo fields (persisted under platform texts)
+        // What: Allow admins to set a logo image in the HERO block with specific dimensions.
+        // Why: Product requirement to brand the header area consistently across all play pages.
+        HERO_LOGO_URL: { type: String, default: '' },
+        HERO_LOGO_WIDTH: { type: String, default: '' },
+        HERO_LOGO_HEIGHT: { type: String, default: '' },
         TEXT_11: { type: String, default: '' },
         TEXT_12: { type: String, default: '' },
         TEXT_13: { type: String, default: '' },
@@ -283,7 +289,10 @@ const gameSchema = new Schema<Game>({
       styles: {
         hero: {
           background: { type: String, default: '' },
-          titleClass: { type: String, default: '' }
+          titleClass: { type: String, default: '' },
+          // Use scoreboard allows switching between SplitFlap and standard text in the HERO block.
+          // Default true to preserve existing visual design unless the admin opts out in editor.
+          useScoreboard: { type: Boolean, default: true }
         },
         main: {
           background: { type: String, default: '' },
@@ -591,6 +600,7 @@ const gameSchema = new Schema<Game>({
         }, { _id: false })],
         default: []
       },
+      randomizeSelectedMaps: { type: Boolean, default: false },
       // Active coordinates union — store as flexible objects and validate by mapType at the app level.
       activeCoords: {
         type: [new Schema({
