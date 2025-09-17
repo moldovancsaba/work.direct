@@ -319,7 +319,11 @@ const gameSchema = new Schema<Game>({
           showLabels: { type: Boolean, default: false },
           homeLabel: { type: String, default: '' },
           visitorLabel: { type: String, default: '' }
-        }
+        },
+        // Per-text display type mapping (H1/H2/P) used by the editor and optionally runtime rendering
+        // What: Allow admins to select a semantic type for each platform text.
+        // Why: Fine-tune visuals by mapping texts to H1/H2/P classes.
+        textTypes: { type: Schema.Types.Mixed, default: {} }
       }
     },
 

@@ -131,6 +131,31 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
   const showText = !modeSections || modeSections === 'text'
   const showButtons = !modeSections || modeSections === 'buttons'
 
+  // Helpers for per-text type selection
+  const getTextType = (code: string): 'H1' | 'H2' | 'P' => {
+    const v = getS(`textTypes.${code}`, '')
+    return (v === 'H1' || v === 'H2' || v === 'P') ? v : 'P'
+  }
+  const setTextType = (code: string, val: 'H1' | 'H2' | 'P') => setS(`textTypes.${code}`, val)
+
+  const TypedInput = ({ code, label, placeholder = '', multiline = false }: { code: string; label: string; placeholder?: string; multiline?: boolean }) => (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <label className="block text-sm font-medium text-gray-700">{label} ({code})</label>
+        <select className="px-2 py-1 border rounded-md text-sm" value={getTextType(code)} onChange={e => setTextType(code, e.target.value as any)}>
+          <option value="H1">H1</option>
+          <option value="H2">H2</option>
+          <option value="P">P</option>
+        </select>
+      </div>
+      {multiline ? (
+        <textarea className="w-full px-3 py-2 border rounded-md min-h-20" value={getT(code)} onChange={e => setT(code, e.target.value)} placeholder={placeholder} />
+      ) : (
+        <input className="w-full px-3 py-2 border rounded-md" value={getT(code)} onChange={e => setT(code, e.target.value)} placeholder={placeholder} />
+      )}
+    </div>
+  )
+
   return (
     <div className="space-y-8">
       {/* Hero Settings */}
@@ -138,11 +163,11 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
       <div className="bg-slate-50 p-4 rounded-lg">
         {!hideSectionTitles && <h3 className="text-md font-medium text-gray-800 mb-2">Hero Settings</h3>}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <SimpleTextInput code="LANDING_TITLE" label="Landing Title" placeholder="" value={getT('LANDING_TITLE')} onChange={(v)=> setT('LANDING_TITLE', v)} />
-          <SimpleTextInput code="TEXT_10" label="Welcome Title" placeholder="Welcome" value={getT('TEXT_10')} onChange={(v)=> setT('TEXT_10', v)} />
-          <SimpleTextInput code="TEXT_20" label="Rules Title" placeholder="Game Rules" value={getT('TEXT_20')} onChange={(v)=> setT('TEXT_20', v)} />
-          <SimpleTextInput code="TEXT_30" label="Game Title" placeholder="Game" value={getT('TEXT_30')} onChange={(v)=> setT('TEXT_30', v)} />
-          <SimpleTextInput code="TEXT_40" label="Result Title" placeholder="Results" value={getT('TEXT_40')} onChange={(v)=> setT('TEXT_40', v)} />
+          <TypedInput code="LANDING_TITLE" label="Landing Title" placeholder="" />
+          <TypedInput code="TEXT_10" label="Welcome Title" placeholder="Welcome" />
+          <TypedInput code="TEXT_20" label="Rules Title" placeholder="Game Rules" />
+          <TypedInput code="TEXT_30" label="Game Title" placeholder="Game" />
+          <TypedInput code="TEXT_40" label="Result Title" placeholder="Results" />
           <SimpleTextInput code="HERO_LOGO_URL" label="Hero Logo URL (PNG)" placeholder="https://.../logo.png" value={getT('HERO_LOGO_URL')} onChange={(v)=> setT('HERO_LOGO_URL', v)} />
           <SimpleTextInput code="HERO_LOGO_WIDTH" label="Hero Logo Width (px)" placeholder="64" value={getT('HERO_LOGO_WIDTH')} onChange={(v)=> setT('HERO_LOGO_WIDTH', v)} />
           <SimpleTextInput code="HERO_LOGO_HEIGHT" label="Hero Logo Height (px)" placeholder="64" value={getT('HERO_LOGO_HEIGHT')} onChange={(v)=> setT('HERO_LOGO_HEIGHT', v)} />
@@ -256,31 +281,31 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
           {showText && (
             <>
               {/* Description (Markdown-capable) - single full-width, multiline */}
-              <SimpleTextInput code="TEXT_11" label="Description (Markdown)" placeholder="Supports Markdown. Use line breaks and **bold** as needed." multiline value={getT('TEXT_11')} onChange={(v)=> setT('TEXT_11', v)} />
+              <TypedInput code="TEXT_11" label="Description (Markdown)" placeholder="Supports Markdown. Use line breaks and **bold** as needed." multiline />
 
               {/* Name pair */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <SimpleTextInput code="TEXT_12" label="Ask Name (H2)" value={getT('TEXT_12')} onChange={(v)=> setT('TEXT_12', v)} />
-                <SimpleTextInput code="TEXT_13" label="Your Name Placeholder" value={getT('TEXT_13')} onChange={(v)=> setT('TEXT_13', v)} />
+                <TypedInput code="TEXT_12" label="Ask Name" />
+                <TypedInput code="TEXT_13" label="Your Name Placeholder" />
               </div>
 
               {/* Email pair */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <SimpleTextInput code="TEXT_14" label="Ask Email (H2)" value={getT('TEXT_14')} onChange={(v)=> setT('TEXT_14', v)} />
-                <SimpleTextInput code="TEXT_15" label="Your Email Placeholder" value={getT('TEXT_15')} onChange={(v)=> setT('TEXT_15', v)} />
+                <TypedInput code="TEXT_14" label="Ask Email" />
+                <TypedInput code="TEXT_15" label="Your Email Placeholder" />
               </div>
 
               {/* Phone pair */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <SimpleTextInput code="TEXT_16" label="Ask Phone (H2)" value={getT('TEXT_16')} onChange={(v)=> setT('TEXT_16', v)} />
-                <SimpleTextInput code="TEXT_17" label="Your Phone Placeholder" value={getT('TEXT_17')} onChange={(v)=> setT('TEXT_17', v)} />
+                <TypedInput code="TEXT_16" label="Ask Phone" />
+                <TypedInput code="TEXT_17" label="Your Phone Placeholder" />
               </div>
 
               {/* Contact required (Markdown-capable) - single full-width, multiline */}
-              <SimpleTextInput code="TEXT_26" label="Contact Required (Markdown)" placeholder="Please provide either email or phone number" multiline value={getT('TEXT_26')} onChange={(v)=> setT('TEXT_26', v)} />
+              <TypedInput code="TEXT_26" label="Contact Required (Markdown)" placeholder="Please provide either email or phone number" multiline />
 
               {/* Try without registration (Markdown-capable) - single full-width, multiline */}
-              <SimpleTextInput code="TEXT_27" label="Try Without Registration Text (Markdown)" placeholder="Want to try without registration?" multiline value={getT('TEXT_27')} onChange={(v)=> setT('TEXT_27', v)} />
+              <TypedInput code="TEXT_27" label="Try Without Registration Text (Markdown)" placeholder="Want to try without registration?" multiline />
             </>
           )}
 
@@ -335,10 +360,10 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
           {!hideSectionTitles && <h3 className="text-md font-medium text-gray-800 mb-2">Rules Main</h3>}
           {showText && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <SimpleTextInput code="TEXT_21" label="Rules Title (H2)" value={getT('TEXT_21')} onChange={(v)=> setT('TEXT_21', v)} />
-              <SimpleTextInput code="TEXT_22" label="Game Rules (multi-line)" multiline value={getT('TEXT_22')} onChange={(v)=> setT('TEXT_22', v)} />
-              <SimpleTextInput code="TEXT_23" label="Win Title (H2)" value={getT('TEXT_23')} onChange={(v)=> setT('TEXT_23', v)} />
-              <SimpleTextInput code="TEXT_24" label="Win Rules (multi-line)" multiline value={getT('TEXT_24')} onChange={(v)=> setT('TEXT_24', v)} />
+              <TypedInput code="TEXT_21" label="Rules Title" />
+              <TypedInput code="TEXT_22" label="Game Rules (multi-line)" multiline />
+              <TypedInput code="TEXT_23" label="Win Title" />
+              <TypedInput code="TEXT_24" label="Win Rules (multi-line)" multiline />
             </div>
           )}
           {/* Next Play — standardized 3-line block (bordered, editor-only) */}
@@ -377,9 +402,9 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
           {/* Result headline texts (Markdown-capable) */}
           {showText && (
             <>
-              <SimpleTextInput code="WON_TEXT" label="WON_TEXT (H1, Markdown)" multiline value={getT('WON_TEXT')} onChange={(v)=> setT('WON_TEXT', v)} />
-              <SimpleTextInput code="LOST_TEXT" label="LOST_TEXT (H1, Markdown)" multiline value={getT('LOST_TEXT')} onChange={(v)=> setT('LOST_TEXT', v)} />
-              <SimpleTextInput code="CTA_TITLE" label="CTA Title (H1)" value={getT('CTA_TITLE')} onChange={(v)=> setT('CTA_TITLE', v)} />
+              <TypedInput code="WON_TEXT" label="WON_TEXT (Markdown)" multiline />
+              <TypedInput code="LOST_TEXT" label="LOST_TEXT (Markdown)" multiline />
+              <TypedInput code="CTA_TITLE" label="CTA Title" />
             </>
           )}
 
