@@ -1,6 +1,6 @@
 # ROADMAP.md — PlayMass
 
-Last Updated: 2025-09-20T13:30:02.000Z
+Last Updated: 2025-09-20T15:00:22.000Z
 - Forward-looking plan for PlayMass after QUIZZ release.
 - Priorities and dependencies are explicitly stated to enable safe parallelization.
 
@@ -15,6 +15,18 @@ Milestone: QUIZZZ Editor Standardization (Default for New Games)
   - Declare QUIZZZ editor pattern as the canonical standard in docs (README, ARCHITECTURE)
   - Ensure all future game editors follow QUIZZZ patterns: one-input-per-line, usage toggles, DB-driven defaults, centered unified CTA grid, black text for readability
   - Remove/disable scoreboard titles in HERO by default (done)
+
+Milestone: Developer Tooling — Secure GitHub CLI Authentication & Git Integration
+- Priority: HIGH
+- Target: 2025-09-20T15:00:00.000Z
+- Dependencies: Homebrew and GitHub CLI installed
+- Deliverables:
+  - Configure gh to use HTTPS protocol for Git operations
+  - Authenticate gh using a Personal Access Token via stdin (no plaintext exposure)
+  - Ensure credentials are stored in macOS Keychain and gh integrates with Git (gh auth setup-git)
+  - Verify authentication (gh auth status), identity (gh api user), and basic repo access (gh repo list)
+  - Security hygiene documented; logout/revoke procedure prepared
+- Logged: 2025-09-20 16:35 CET
 
 Milestone: QUIZZ Enhancements & Analytics
 - Priority: HIGH

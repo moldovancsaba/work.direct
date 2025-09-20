@@ -5,6 +5,19 @@
 - Dependencies: Build verification OK.
 - Next: Optionally deploy (vercel --prod) after validation.
 
+2025-09-20T14:35:37.000Z — Plan: Secure GitHub CLI authentication & Git integration (macOS Keychain)
+- Steps:
+  1) Configure gh to use HTTPS as default for Git operations
+  2) Authenticate gh using PAT via stdin (non-interactive; no plaintext exposure)
+  3) Store credentials in macOS Keychain; set up Git integration (gh auth setup-git)
+  4) Verify auth status, identity, and repo access (gh auth status, gh api user, gh repo list)
+  5) Security hygiene: do not store token in files/env; provide logout and revoke procedure
+- Compliance: No tests, documentation-first, timestamps in ISO 8601 with milliseconds (UTC) for this log; ROADMAP entry logged with CET timestamp as per policy
+
+2025-09-20T15:00:22.000Z — Delivery: Version bump and documentation sync to v4.1.0; push to origin/main
+- Files: package.json, README.md, ROADMAP.md, TASKLIST.md, RELEASE_NOTES.md, LEARNINGS.md updated
+- Notes: Non-functional change; aligns versions and timestamps across documents; prepares for push.
+
 2025-09-15T15:54:13.000Z — Plan: Hexa Creator (Admin) initial implementation
 
 2025-09-15T16:28:12.000Z — Delivery: Hexa Creator, hexmaps API/model, geometry refactor, warnings removed

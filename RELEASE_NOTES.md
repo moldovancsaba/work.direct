@@ -1,9 +1,13 @@
 # 📝 RELEASE_NOTES.md - PlayMass
 
-**Current Version**: 4.0.0
-**Last Updated**: 2025-09-20T13:30:02.000Z
+**Current Version**: 4.1.0
+**Last Updated**: 2025-09-20T15:00:22.000Z
 
 ## 🔹 Version History
+
+### [v4.1.0] — 2025-09-20T15:00:22.000Z
+- Chore: Version bump to v4.1.0 and documentation synchronization (ISO 8601 UTC with milliseconds).
+- Note: Non-functional updates related to GitHub CLI authentication plan and documentation consistency.
 
 ### [v4.0.0] — 2025-09-20T13:30:02.000Z
 - Major: Enforce DB-driven font colors everywhere; remove baked-in text color/size overrides across play UI.
