@@ -1,14 +1,18 @@
 {
   "name": "playmass",
-  "version": "4.1.0",
+  "version": "4.2.0",
   "private": true,
   "description": "Interactive game platform for creating and distributing Hexa games to target groups with rewards management",
   "author": "Narimato",
   "scripts": {
+    "predev": "node scripts/versioning/bump-version.mjs --type patch --reason \"Automatic predev patch bump\"",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "release:patch": "node scripts/versioning/bump-version.mjs --type patch --reason \"Patch release\" && git add -A && git commit -m \"release: v$(node scripts/versioning/get-version.mjs) — Patch release\"",
+    "release:minor": "node scripts/versioning/bump-version.mjs --type minor --reason \"Minor release\" && git add -A && git commit -m \"release: v$(node scripts/versioning/get-version.mjs) — Minor release\"",
+    "release:major": "node scripts/versioning/bump-version.mjs --type major --reason \"Major release\" && git add -A && git commit -m \"release: v$(node scripts/versioning/get-version.mjs) — Major release\""
   },
   "dependencies": {
     "@types/node": "^20",

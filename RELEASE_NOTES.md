@@ -1,9 +1,13 @@
 # 📝 RELEASE_NOTES.md - PlayMass
 
-**Current Version**: 4.1.0
-**Last Updated**: 2025-09-20T15:00:22.000Z
+**Current Version**: 4.2.0
+**Last Updated**: 2025-09-20T15:45:16.787Z
 
 ## 🔹 Version History
+
+### [v4.2.0] — 2025-09-20T15:45:16.787Z
+- Minor release
+
 
 ### [v4.1.0] — 2025-09-20T15:00:22.000Z
 - Chore: Version bump to v4.1.0 and documentation synchronization (ISO 8601 UTC with milliseconds).
