@@ -220,3 +220,6 @@ Notes:
 - Secured secrets by updating .gitignore to ignore .env and .env.local
 - No version bump in this session; docs updated where necessary; runtime verification and deployment deferred
 - Next: If desired, adopt a single-source version in health endpoint (read from package.json) and consider lightweight sync scripts (timestamps/version)
+
+2025-09-20T15:45:16.787Z — Delivery: Version bump and doc sync to v4.2.0
+- Notes: Automated via scripts/versioning/bump-version.mjs (UTC timestamps with ms)
