@@ -47,14 +47,28 @@ export interface UnifiedRegistrationProps {
   // Styling
   theme?: 'default' | 'light' | 'dark'
   className?: string
-  // H2 headings style (platform main.h2Class)
+  // Heading style (platform main.h2Class) — can be overridden per-field
   headingClass?: string
+  nameHeadingClass?: string
+  emailHeadingClass?: string
+  phoneHeadingClass?: string
+  // Optional per-heading font colors (resolved by parent based on H1/H2/P mapping)
+  nameHeadingColor?: string
+  emailHeadingColor?: string
+  phoneHeadingColor?: string
+  // Optional per-paragraph classes/colors for helper texts (TEXT_26, TEXT_27)
+  contactRequiredTextClass?: string
+  contactRequiredTextColor?: string
+  tryWithoutRegTextClass?: string
+  tryWithoutRegTextColor?: string
   
   // Custom button background CSS (multiline strings with full CSS supported)
   // What: apply admin-provided CSS backgrounds for Start and Trial buttons
   // Why: enable full control (e.g., gradients) beyond class utilities
   primaryButtonBgCss?: string
   trialButtonBgCss?: string
+  primaryButtonFg?: string
+  trialButtonFg?: string
   
   // Layout control
   hideHeader?: boolean
@@ -67,6 +81,17 @@ export interface UnifiedRegistrationProps {
   // Optional extra primary node (e.g., Facebook plugin) rendered next to the primary button
   // What: Place <div class="fb-login-button">...</div> in the same row
   extraPrimaryNode?: React.ReactNode
+
+  // Optional helper nodes rendered under each input
+  // What: Allows rendering TEXT_13/15/17 as visible helper lines using H1/H2/P mapping from parent.
+  nameHelperNode?: React.ReactNode
+  emailHelperNode?: React.ReactNode
+  phoneHelperNode?: React.ReactNode
+
+  // Optional input class overrides to apply H1/H2/P-styled classes to inputs (affects typed text and placeholders)
+  nameInputClassOverride?: string
+  emailInputClassOverride?: string
+  phoneInputClassOverride?: string
 }
 
 /**
@@ -103,12 +128,30 @@ export default function UnifiedRegistration({
   theme = 'default',
   className,
   headingClass,
+  nameHeadingClass,
+  emailHeadingClass,
+  phoneHeadingClass,
+  nameHeadingColor,
+  emailHeadingColor,
+  phoneHeadingColor,
+  contactRequiredTextClass,
+  contactRequiredTextColor,
+  tryWithoutRegTextClass,
+  tryWithoutRegTextColor,
   hideHeader = false,
   containerMode = 'fullscreen',
   primaryButtonBgCss,
   trialButtonBgCss,
+  primaryButtonFg,
+  trialButtonFg,
   extraPrimaryAction,
-  extraPrimaryNode
+  extraPrimaryNode,
+  nameHelperNode,
+  emailHelperNode,
+  phoneHelperNode,
+  nameInputClassOverride,
+  emailInputClassOverride,
+  phoneInputClassOverride
 }: UnifiedRegistrationProps) {
   
   // Form state management
@@ -180,7 +223,7 @@ export default function UnifiedRegistration({
     onTrialMode()
   }
   
-  // Theme-based styling
+  // Deprecated theme styling — prefer game-configured classes
   const getThemeClasses = () => {
     switch (theme) {
       case 'light':
@@ -207,6 +250,12 @@ export default function UnifiedRegistration({
     }
   }
   
+  // Use editor-configured classes; fallback to minimal defaults
+  const inputClass = (className?: string) => (className && className.trim()) ? className : 'w-full px-4 py-3 rounded-lg bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+  const buttonPrimaryClass = (className?: string) => (className && className.trim()) ? className : 'w-full px-6 py-3 rounded-lg text-white'
+  const buttonSecondaryClass = (className?: string) => (className && className.trim()) ? className : 'w-full px-6 py-3 rounded-lg text-white'
+
+  // Optional legacy theme (kept for backward compatibility with older configs)
   const themeClasses = getThemeClasses()
   const displayError = error || validationError
   
@@ -220,13 +269,28 @@ export default function UnifiedRegistration({
     ? `w-full ${className || ''}`
     : `h-screen w-screen flex items-center justify-center p-4 overflow-hidden bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 ${className || ''}`
 
-  // Extract value from multiline CSS (supports 'background: ...; background: linear-gradient(...)')
+  // Extract value from multiline CSS (supports 'background: ...; background: linear-gradient(...)' with nested rgba(...))
   const extractBackgroundValue = (css?: string): string | undefined => {
     if (!css) return undefined
-    const grad = css.match(/linear-gradient\([^\)]+\)/i)
-    if (grad) return grad[0]
-    const bg = css.match(/background:\s*([^;]+);?/i)
-    if (bg && bg[1]) return bg[1].trim()
+    // Prefer the LAST background: declaration
+    let last: string | undefined
+    const re = /background\s*:\s*([^;]+);?/ig
+    let m: RegExpExecArray | null
+    while ((m = re.exec(css)) !== null) {
+      last = (m[1] || '').trim()
+    }
+    if (last) return last
+    // Fallback: extract full linear-gradient(...) with balanced parentheses
+    const low = css.toLowerCase()
+    const idx = low.lastIndexOf('linear-gradient(')
+    if (idx >= 0) {
+      let depth = 0
+      for (let i = idx; i < css.length; i++) {
+        const ch = css[i]
+        if (ch === '(') depth++
+        else if (ch === ')') { depth--; if (depth === 0) return css.slice(idx, i + 1) }
+      }
+    }
     return undefined
   }
 
@@ -241,10 +305,10 @@ export default function UnifiedRegistration({
           {/* Registration header */}
           {!hideHeader && (
             <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              <h2 className="text-2xl font-bold mb-2">
                 {`Join ${gameTitle || 'the Game'}`}
               </h2>
-              <p className="text-gray-600">
+              <p>
                 {`Enter your details to play ${gameName}`}
               </p>
             </div>
@@ -254,63 +318,76 @@ export default function UnifiedRegistration({
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Two-column rows: Question (H2) at left, Answer (Input) at right */}
             <div className="grid grid-cols-2 gap-4 items-center">
-              <h2 className={`${headingClass ? headingClass + ' ' : ''}text-xl font-semibold text-black text-right`}>
+              <div className={`${nameHeadingClass || headingClass || ''} text-right`} style={{ color: (nameHeadingColor || '').trim() || undefined }}>
                 {customTexts?.nameHeading || 'Your Name'}
-              </h2>
+              </div>
               <div>
                 <input
                   type="text"
                   value={participant.name}
                   onChange={(e) => setParticipant({ ...participant, name: e.target.value })}
-                  className={`w-full px-4 py-3 rounded-lg transition-colors ${themeClasses.input}`}
-                  style={{ color: '#000000', backgroundColor: '#ffffff', caretColor: '#000000' }}
+                  className={`${inputClass(undefined)} ${nameInputClassOverride || ''} transition-colors`}
+                  style={{}}
                   placeholder={customTexts?.namePlaceholder || "Enter your name"}
                   required
                   disabled={isLoading || isSubmitting}
                 />
+                {/* Helper line under Name input */}
+                {typeof (nameHelperNode as any) !== 'undefined' && nameHelperNode ? (
+                  <div className="mt-1">{nameHelperNode}</div>
+                ) : null}
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4 items-center">
-              <h2 className={`${headingClass ? headingClass + ' ' : ''}text-xl font-semibold text-black text-right`}>
+              <div className={`${emailHeadingClass || headingClass || ''} text-right`} style={{ color: (emailHeadingColor || '').trim() || undefined }}>
                 {customTexts?.emailHeading || 'Your Email'}
-              </h2>
+              </div>
               <div>
                 <input
                   type="email"
                   value={participant.email || ''}
                   onChange={(e) => setParticipant({ ...participant, email: e.target.value })}
-                  className={`w-full px-4 py-3 rounded-lg transition-colors ${themeClasses.input}`}
-                  style={{ color: '#000000', backgroundColor: '#ffffff', caretColor: '#000000' }}
+                  className={`${inputClass(undefined)} ${emailInputClassOverride || ''} transition-colors`}
+                  style={{}}
                   placeholder={customTexts?.emailPlaceholder || (requireEmail ? "your@email.com (required)" : "your@email.com")}
                   required={requireEmail}
                   disabled={isLoading || isSubmitting}
                 />
+                {/* Helper line under Email input */}
+                {typeof (emailHelperNode as any) !== 'undefined' && emailHelperNode ? (
+                  <div className="mt-1">{emailHelperNode}</div>
+                ) : null}
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4 items-center">
-              <h2 className={`${headingClass ? headingClass + ' ' : ''}text-xl font-semibold text-black text-right`}>
+              <div className={`${phoneHeadingClass || headingClass || ''} text-right`} style={{ color: (phoneHeadingColor || '').trim() || undefined }}>
                 {customTexts?.phoneHeading || 'Your Phone'}
-              </h2>
+              </div>
               <div>
                 <input
                   type="tel"
                   value={participant.phone || ''}
                   onChange={(e) => setParticipant({ ...participant, phone: e.target.value })}
-                  className={`w-full px-4 py-3 rounded-lg transition-colors ${themeClasses.input}`}
-                  style={{ color: '#000000', backgroundColor: '#ffffff', caretColor: '#000000' }}
+                  className={`${inputClass(undefined)} ${phoneInputClassOverride || ''} transition-colors`}
+                  style={{}}
                   placeholder={customTexts?.phonePlaceholder || (requirePhone ? "+1 (555) 123-4567 (required)" : "+1 (555) 123-4567")}
                   required={requirePhone}
                   disabled={isLoading || isSubmitting}
                 />
+                {/* Helper line under Phone input */}
+                {typeof (phoneHelperNode as any) !== 'undefined' && phoneHelperNode ? (
+                  <div className="mt-1">{phoneHelperNode}</div>
+                ) : null}
               </div>
             </div>
 
             {/* Field requirements info */}
             {!requireEmail && !requirePhone && (
               <div className="text-center">
-                <p className="text-sm text-gray-500">
+                <p className={`${contactRequiredTextClass || ''}`}
+                   style={{ color: (contactRequiredTextColor || '').trim() || undefined }}>
                   {customTexts?.contactRequiredError || "Please provide either email or phone number"}
                 </p>
               </div>
@@ -319,7 +396,7 @@ export default function UnifiedRegistration({
             {/* Error display */}
             {displayError && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                <p className="text-sm text-red-600">{displayError}</p>
+                <p className="text-sm">{displayError}</p>
               </div>
             )}
 
@@ -329,9 +406,10 @@ export default function UnifiedRegistration({
                 <button
                   type="submit"
                   disabled={isLoading || isSubmitting}
-                  className={`w-full text-white text-xl rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${themeClasses.button}`}
+                  className={`${buttonPrimaryClass(undefined)} text-xl font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed`}
                   style={{
-                    ...(primaryBg ? { background: primaryBg } : {}),
+                    background: primaryBg || '#000000FF',
+                    color: (primaryButtonFg || '').trim() || undefined,
                     minHeight: '48px',
                     minWidth: '240px',
                     maxWidth: '400px',
@@ -364,7 +442,7 @@ export default function UnifiedRegistration({
                       type="button"
                       onClick={extraPrimaryAction.onClick}
                       disabled={isLoading || isSubmitting}
-                      className={`w-full text-white py-5 px-6 text-xl rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${themeClasses.button}`}
+                      className={`${buttonPrimaryClass(undefined)} text-xl font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed`}
                       style={extraBg ? { background: extraBg } : undefined}
                     >
                       {extraPrimaryAction.label}
@@ -379,15 +457,16 @@ export default function UnifiedRegistration({
           {/* Trial mode option */}
           {showTrialOption && (
             <div className="mt-6 pt-6 border-t border-gray-200">
-              <p className="text-center text-sm text-gray-600 mb-4">
+              <p className={`${tryWithoutRegTextClass || ''} text-center mb-4`} style={{ color: (tryWithoutRegTextColor || '').trim() || undefined }}>
                 {customTexts?.tryWithoutRegText || "Want to try without registration?"}
               </p>
               <button
                 onClick={handleTrialMode}
                 disabled={isLoading}
-className={`w-full text-white text-xl rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${themeClasses.trialButton}`}
+className={`${buttonSecondaryClass(undefined)} text-xl font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed`}
                 style={{
-                  ...(trialBg ? { background: trialBg } : {}),
+                  background: trialBg || '#000000FF',
+                  color: (trialButtonFg || '').trim() || undefined,
                   minHeight: '48px',
                   minWidth: '240px',
                   maxWidth: '400px',

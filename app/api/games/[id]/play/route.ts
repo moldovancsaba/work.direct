@@ -115,13 +115,11 @@ export async function POST(
       }, { status: 403 })
     }
     
-    const gtype = (game as any)?.type as string
-
-    // Validate game type - support Stars Hexa, Penalty Shootout, and Find Red (client-authoritative)
-    if (gtype !== 'STARS_HEXA' && gtype !== 'PENALTY_SHOOTOUT' && gtype !== 'FIND_RED' && gtype !== 'WHEEL_OF_FORTUNE') {
+    // Validate game type - support both STARS_HEXA and PENALTY_SHOOTOUT
+    if (game.type !== 'STARS_HEXA' && game.type !== 'PENALTY_SHOOTOUT') {
       return NextResponse.json({
         success: false,
-        message: 'This endpoint only supports Stars Hexa, Penalty Shootout and Find Red games',
+        message: 'This endpoint only supports Stars Hexa and Penalty Shootout games',
         error: {
           code: 'UNSUPPORTED_GAME_TYPE',
           message: `Unsupported game type: ${game.type}`
@@ -130,7 +128,7 @@ export async function POST(
     }
     
     // Validate game configuration based on type
-    if (gtype === 'STARS_HEXA') {
+    if (game.type === 'STARS_HEXA') {
       if (!game.configuration.starsHexa?.hexagons || game.configuration.starsHexa.hexagons.length !== 7) {
         return NextResponse.json({
           success: false,
@@ -141,7 +139,7 @@ export async function POST(
           }
         }, { status: 500 })
       }
-    } else if (gtype === 'PENALTY_SHOOTOUT') {
+    } else if (game.type === 'PENALTY_SHOOTOUT') {
       if (!game.configuration.penaltyShootout?.players || game.configuration.penaltyShootout.players.length !== 11) {
         return NextResponse.json({
           success: false,
@@ -154,8 +152,8 @@ export async function POST(
       }
     }
     
-    // Validate player/hexagon ID is provided when required by type
-    if ((gtype === 'STARS_HEXA' || gtype === 'PENALTY_SHOOTOUT') && !playRequest.hexagonId) {
+    // Validate player/hexagon ID is provided
+    if (!playRequest.hexagonId) {
       return NextResponse.json({
         success: false,
         message: 'Player/hexagon ID is required',
@@ -268,11 +266,7 @@ export async function POST(
     // Find the hexagon/player being flipped based on game type
     let flippedItem: any = null
     
-    if (gtype === 'FIND_RED') {
-      // Client-authoritative MVP: we trust the client-provided selection and do not validate against server deck
-      // We still construct a minimal flippedItem for consistent logging and outcome structure.
-      flippedItem = { id: playRequest.hexagonId, text: 'FindRedPick', hasHiddenStar: (playRequest as any).wasRed === true }
-    } else if (gtype === 'STARS_HEXA') {
+    if (game.type === 'STARS_HEXA') {
       if (!game.configuration.starsHexa?.hexagons) {
         return NextResponse.json({
           success: false,
@@ -295,7 +289,7 @@ export async function POST(
           }
         }, { status: 404 })
       }
-    } else if (gtype === 'PENALTY_SHOOTOUT') {
+    } else if (game.type === 'PENALTY_SHOOTOUT') {
       if (!game.configuration.penaltyShootout?.players) {
         return NextResponse.json({
           success: false,
@@ -343,56 +337,7 @@ export async function POST(
     // Calculate game result based on type
     let gameOutcome: GameOutcome
     
-    if (gtype === 'FIND_RED') {
-      const wasRed = (playRequest as any).wasRed === true
-      gameOutcome = {
-        type: wasRed ? 'WIN' : 'NO_REWARD',
-        hexagonId: flippedItem.id,
-        starsFound: wasRed ? 1 : 0,
-        totalStarsInGame: (game.configuration as any)?.findRed?.targetReds || 0,
-        foundAllStars: false,
-        value: wasRed ? 'RED' : 'NEUTRAL',
-        // Attach default reward if configured and this pick signalled final win
-        rewardIds: (wasRed && (playRequest as any).finalWin && (game.configuration as any)?.findRed?.defaultRewardId)
-          ? [ (game.configuration as any).findRed.defaultRewardId ]
-          : [],
-        message: wasRed ? 'Found red card' : 'Neutral card'
-      }
-    } else if (gtype === 'WHEEL_OF_FORTUNE') {
-      const cfg = (game.configuration as any)?.wheelOfFortune
-      if (!cfg || !Array.isArray(cfg.segments) || cfg.segments.length === 0) {
-        return NextResponse.json({
-          success: false,
-          message: 'Game configuration is invalid',
-          error: { code: 'INVALID_CONFIGURATION', message: 'Wheel segments missing or invalid' }
-        }, { status: 500 })
-      }
-      // Weighted random selection
-      const activeSegs = cfg.segments.filter((s: any) => s.isActive !== false)
-      const probs = activeSegs.map((s: any) => Number(s.probability || 0))
-      const total = probs.reduce((a: number, b: number) => a + b, 0)
-      const r = Math.random() * (total > 0 ? total : activeSegs.length)
-      let acc = 0
-      let chosen = activeSegs[0]
-      if (total > 0) {
-        for (let i = 0; i < activeSegs.length; i++) {
-          acc += probs[i]
-          if (r <= acc) { chosen = activeSegs[i]; break }
-        }
-      } else {
-        chosen = activeSegs[Math.floor(Math.random() * activeSegs.length)]
-      }
-      gameOutcome = {
-        type: chosen?.isWinning ? 'WIN' : 'NO_REWARD',
-        segmentId: chosen?.id,
-        starsFound: 0,
-        totalStarsInGame: 0,
-        foundAllStars: false,
-        value: chosen?.label,
-        rewardIds: [],
-        message: chosen?.label ? `Landed on: ${chosen.label}` : 'Wheel result'
-      }
-    } else if (gtype === 'STARS_HEXA') {
+    if (game.type === 'STARS_HEXA') {
       if (!game.configuration.starsHexa?.hexagons) {
         throw new Error('Stars Hexa configuration missing')
       }

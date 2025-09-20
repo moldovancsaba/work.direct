@@ -2,8 +2,8 @@
 
 This document captures implementation insights, technical decisions, and solutions to issues encountered during PlayMass development.
 
-**Current Version**: 2.1.0
-**Last Updated**: 2025-09-17T11:56:16.000Z
+**Current Version**: 4.0.0
+**Last Updated**: 2025-09-20T13:30:02.000Z
 
 ### HERO: Logo visibility across pages, optional scoreboard, half-height (v2.1.0)
 - What: Ensure HERO logo is displayed on all pages; allow toggling SCOREBOARD vs normal text; reduce hero height to optimize screen usage.
@@ -13,6 +13,67 @@ This document captures implementation insights, technical decisions, and solutio
   - Editor: “Use SCOREBOARD in HERO (Split-Flap)” checkbox under Hero Settings
   - UI: HeroBlock accepts useScoreboard; when false, shows plain text title/scores
   - Layout: HERO 10vh; MAIN 90/86vh; logo anchored with position relative container
+
+### QUIZZZ: Editor as the Default Standard (2025-09-19)
+
+### TypedText + Placeholder Helper Lines (v2.3.0 — 2025-09-19T18:35:15.000Z)
+- What: Placeholders TEXT_13/15/17 are inputs’ placeholders and not headings; to support H1/H2/P mapping visually, render them as helper lines under inputs using TypedText with styles.textTypes.
+- Why: Maintain semantic inputs while honoring the editor’s dropdown typography control for associated helper texts.
+- How: Introduced nameHelperNode/emailHelperNode/phoneHelperNode props in UnifiedRegistration and passed TypedText for TEXT_13/15/17 from WelcomeClientPlatform.
+
+### Button BG (CSS) Parser Robustness (v2.3.0 — 2025-09-19T18:35:15.000Z)
+- What: Multiline CSS with multiple background: declarations and linear-gradient(...) containing rgba(...) wasn’t always applied.
+- Why: Naive regex matched only the first occurrence and didn’t balance parentheses for gradients.
+- How: Always take the last background: value (CSS precedence) and add a balanced-parentheses fallback for linear-gradient(...), used across Landing/Welcome/Rules/Result.
+
+### Black Text Defaults (v2.3.0 — 2025-09-19T18:35:15.000Z)
+- What: Ensure all default text appears black with sensible H1/H2/P sizes across Hero/Main.
+- Why: Readability and product direction (“all text BLACK by default”).
+- How: Resolver-level defaults set hero.titleClass and main.h1Class/h2Class/pClass to include text-black while preserving size/weight; shared Blocks default to white background with black text.
+
+### Major Update v4 — DB-driven Font Colors & Baked-in Removal (2025-09-20T13:30:02.000Z)
+- What: Enforced DB-driven font colors across all play pages; removed baked-in text colors/sizes; ensured hero color application.
+- Why: Prevent flicker/snap and guarantee single source of truth via the editor; align with governance (no baked-in styling).
+- How:
+  - Persisted styles.hero.fontColor and styles.main.{h1Color,h2Color,pColor} in schema; extended CTA FG fields and CTA_BUTTONS[].fg.
+  - HeroBlock strips Tailwind text-* from Title Class, sanitizes hex, and applies color inline.
+  - UnifiedRegistration: added props to render TEXT_26/TEXT_27 with exact DB-driven class+color; removed baked-in text-sm.
+  - Removed global CSS with !important enforcing input colors; removed text-* utility colors from GameRulesPage and FB status messages.
+
+### Major Update v3 — Failures & Fixes (2025-09-20T09:00:32.000Z)
+- Flicker/Flash on game start due to map fallbacks and auto-expansion
+  - Why: Placeholder shapes and generated extra coords painted briefly before configured maps loaded
+  - Fix: Removed default shapes and auto-expansion; render only configured maps; added minimal Loading…
+- Font swap flash
+  - Why: Google Fonts default swap behavior
+  - Fix: Use display=block for font CSS to render only once with the final font
+- Transient “configuration error” during load
+  - Why: Validation ran before data load
+  - Fix: Loading guard prevents error overlays until load completion
+- Placeholder typography and label mapping
+  - Why: Inputs and placeholders did not reflect editor typography
+  - Fix: Labels (TEXT_12/14/16) and placeholders (TEXT_13/15/17) now use H1/H2/P mapping; defaults black
+- Gradient BG not applying
+  - Why: Parsing only the first background: …
+  - Fix: Last background precedence and balanced gradient extractor applied globally
+- What: Establish QUIZZZ editor as the standard for all future game editors
+- Why: It enforces DB-driven configuration, one-input-per-line clarity, usage toggles, and a unified CTA grid that improves maintainability and UX
+- How:
+  - Declared in README and ARCHITECTURE; ROADMAP/TASKLIST updated
+  - GameEditor defaults to QUIZZZ as the new-game type
+  - Split-flap scoreboard titles disabled by default in HERO across pages
+
+### QUIZZZ: Editor/Runtime Styling (v2.2.0)
+- What: Provide admin control over board tile styles and per-answer card visuals (colors + emojis); prevent repeated clicks on answered tiles.
+- Why: Visual clarity and brand consistency; reflect correctness immediately; non-blocking UX.
+- How:
+  - Editor: tileStyles (inactiveTileBg, inactiveTileEdge, boardTileBg, boardEdge), cardColors (backBg, frontFg, goodAnswerBg, goodAnswerEmoji, wrongAnswerBg, wrongAnswerEmoji)
+  - Runtime: answered tiles show GOOD/Wrong emojis with configured colors; backgroundCss overrides map image, then falls back to platform main
+
+### Game Types in DB (v2.2.0)
+- What: Replace hardcoded game-type list with a MongoDB-backed list.
+- Why: Central governance of available types; no baked-in content.
+- How: GameTypeDef model (game_types), admin API /api/admin/game-types (GET/POST), editor fetch + de-dup by code, prefer enabled types
 
 ### QUIZZ: SelectedMaps, Strict Fetch, and Cover Images (v2.0.0)
 - What: Replaced legacy mapName/tag with predictive search + selectedMaps (chips), strict type fetch, and optional per-card cover images clipped to polygon.

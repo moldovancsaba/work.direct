@@ -17,15 +17,23 @@ export interface BaseDocument {
 // Hex maps for hexagonal grid layouts (axial coordinates)
 export interface HexCoord { q: number; r: number }
 
+export interface HexFieldExtents { top?: HexCoord; bottom?: HexCoord; left?: HexCoord; right?: HexCoord }
+
 export interface HexMap extends BaseDocument {
   name: string // Unique, human-readable identifier; used as reference in game configs
-  coords: HexCoord[] // Axial coordinates included in the map (within radius)
+  coords: HexCoord[] // Axial coordinates included in the map (within radius) — interactive cards
   radius: number // Maximum hex distance from origin allowed in this map (e.g., 4)
   hexCount: number // Derived: coords.length
   tags?: string[] // Optional hashtags for search and grouping (stored lowercase)
   backgroundImageUrl?: string // Optional background image URL for editor preview and public rendering
   isActive: boolean // Soft delete / archival toggle
   createdBy: string // Admin identifier
+  // WHAT: Optional extents marking the intended visible field across aspect ratios
+  // WHY: Runtime can fit the rotated grid to ensure these extremes are visible on any screen
+  fieldExtents?: HexFieldExtents
+  // WHAT: Optional field mask list — cells visible as the game field regardless of interactivity
+  // WHY: Decouple visibility (field) from interactivity (cards)
+  fieldMask?: HexCoord[]
 }
 
 // Square maps for square grid layouts (Cartesian coordinates with Chebyshev distance)
@@ -33,19 +41,25 @@ export interface HexMap extends BaseDocument {
 // WHY: Enables square-tiled games with intuitive rectangular selection areas
 export interface SquareCoord { x: number; y: number }
 
+export interface SquareFieldExtents { top?: SquareCoord; bottom?: SquareCoord; left?: SquareCoord; right?: SquareCoord }
+
 export interface SquareMap extends BaseDocument {
   name: string // Unique within SquareMap collection
-  coords: SquareCoord[] // Cartesian coordinates within Chebyshev radius
+  coords: SquareCoord[] // Cartesian coordinates within Chebyshev radius — interactive cards
   radius: number // Maximum Chebyshev distance from origin (1-24)
   cellCount: number // Derived: coords.length after deduplication
   tags?: string[] // Optional hashtags for search and grouping (stored lowercase)
   backgroundImageUrl?: string // Optional background image URL for editor preview and public rendering
   isActive: boolean // Soft delete / archival toggle
   createdBy: string // Admin identifier
+  // WHAT: Optional extents marking the intended visible field across aspect ratios
+  fieldExtents?: SquareFieldExtents
+  // WHAT: Optional field mask list — cells visible as the game field regardless of interactivity
+  // WHY: Decouple visibility (field) from interactivity (cards)
+  fieldMask?: SquareCoord[]
 }
 
 // Unified grid map typing for Quizz
-export type GridMapType = 'hex' | 'square'
 export type QuizzCoord = HexCoord | SquareCoord
 
 // Centralized Game System Types
@@ -186,11 +200,45 @@ export interface GameDescriptionProps {
 // Game Types and Interfaces
 // These define the structure for different game types and their configurations
 
-export type GameType = 'STARS_HEXA' | 'PENALTY_SHOOTOUT' | 'FIND_RED' | 'WHEEL_OF_FORTUNE' | 'QUIZZ';
+export type GameType = 'STARS_HEXA' | 'PENALTY_SHOOTOUT' | 'FIND_RED' | 'WHEEL_OF_FORTUNE' | 'QUIZZ' | 'QUIZZZ';
 
 // Lucky Wheel segment type used by the wheel component
 // What: Defines a segment with label and probability for spin logic
 // Why: Provides a reusable contract for wheel-based games and UIs.
+// Quizzz game types
+export type GridMapType = 'hex' | 'square'
+
+export interface QuizzzAnswer { text: string; isCorrect: boolean }
+export interface QuizzzQuestion { id: string; text: string; answers: QuizzzAnswer[] }
+
+export interface QuizzzConfiguration {
+  mapType: GridMapType
+  mapName?: string
+  selectedMaps?: { type: GridMapType; name: string }[]
+  numberOfCards: number
+  rounds: number
+  winLimit: number
+  questions: QuizzzQuestion[]
+  backgroundCss?: string // multiline CSS background
+  tileStyles?: {
+    inactiveTileBg?: string // default transparent
+    inactiveTileEdge?: string // default transparent
+    boardTileBg?: string // default transparent (field)
+    boardEdge?: string // default transparent
+  }
+  cardCoverImages?: string[]
+  cardCoverFill?: boolean // cover/fill toggle, true = cover by default
+  cardColors?: {
+    backBg?: string
+    frontFg?: string
+    goodAnswerBg?: string
+    goodAnswerEmoji?: string
+    wrongAnswerBg?: string
+    wrongAnswerEmoji?: string
+  }
+  overlayBg?: string // default '#00000044'
+}
+
 export interface WheelSegment {
   id: string
   label: string
@@ -386,7 +434,7 @@ export interface PlatformTexts {
   PLAYAGAIN_BG?: string
 
   // Additional CTAs array (unchanged storage)
-  CTA_BUTTONS?: Array<{ text: string; url: string; bg?: string }>
+  CTA_BUTTONS?: Array<{ text: string; url: string; bg?: string; fg?: string }>
 
   // Per-button background CSS (legacy fields, multiline supported)
   // What: precise CSS control per CTA across the flow
@@ -414,12 +462,26 @@ export interface PlatformStyles {
   hero?: {
     background?: string
     titleClass?: string
+    fontColor?: string
   }
   main?: {
     background?: string
+    // Per-type classes
     h1Class?: string
     h2Class?: string
     pClass?: string
+    // Per-type Google Fonts
+    h1FontUrl?: string
+    h1FontStyle?: string
+    h2FontUrl?: string
+    h2FontStyle?: string
+    pFontUrl?: string
+    pFontStyle?: string
+    // Per-type colors
+    h1Color?: string
+    h2Color?: string
+    pColor?: string
+    // Buttons
     buttonPrimaryClass?: string
     buttonSecondaryClass?: string
   }
@@ -427,9 +489,6 @@ export interface PlatformStyles {
     homeBg?: string
     visitorBg?: string
     digitColor?: string
-    showLabels?: boolean
-    homeLabel?: string
-    visitorLabel?: string
   }
 }
 

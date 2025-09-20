@@ -20,7 +20,6 @@ const playmassDefaultsSchema = new Schema<PlaymassDefaultsDoc>({
   moduleId: {
     type: String,
     required: true,
-    enum: ['STARS_HEXA', 'PENALTY_SHOOTOUT'],
     unique: true
   },
   defaults: {

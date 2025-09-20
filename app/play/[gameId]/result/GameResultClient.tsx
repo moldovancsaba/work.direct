@@ -16,7 +16,7 @@ interface GameResultData {
   userScore?: number
   opponentScore?: number
   isTrialMode?: boolean
-  gameType: 'STARS_HEXA' | 'PENALTY_SHOOTOUT' | 'FIND_RED' | 'WHEEL_OF_FORTUNE' | 'QUIZZ'
+  gameType: 'STARS_HEXA' | 'PENALTY_SHOOTOUT' | 'FIND_RED' | 'WHEEL_OF_FORTUNE' | 'QUIZZ' | 'QUIZZZ'
   message?: string
 }
 
@@ -176,7 +176,7 @@ export default function GameResultClient({ gameId, initialGameData, participantU
     if (gameType === 'WHEEL_OF_FORTUNE') {
       return won ? 'Winner!' : 'Better luck next spin!'
     }
-    if (gameType === 'QUIZZ') {
+    if (gameType === 'QUIZZ' || gameType === 'QUIZZZ') {
       return won ? 'Quiz Winner!' : 'Quiz over — try again!'
     }
     if (gameType === 'PENALTY_SHOOTOUT') {
@@ -330,10 +330,7 @@ export default function GameResultClient({ gameId, initialGameData, participantU
         titleFieldBackground={game.configuration?.penaltyShootout?.colors?.titleField || '#444444'}
         gameBackground={getGameBlockBackgroundColor()}
         scoreboardContent={
-          <PenaltyCardText
-            text={game.configuration?.penaltyShootout?.texts?.gameResultsTitle || "GAME RESULTS"}
-            backgroundColor={getHomeScorecardColor()}
-          />
+          <div className="text-white text-3xl md:text-4xl font-bold">{game.configuration?.penaltyShootout?.texts?.gameResultsTitle || 'GAME RESULTS'}</div>
         }
         gameContent={<MainContent />}
       />

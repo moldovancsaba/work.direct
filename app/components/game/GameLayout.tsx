@@ -19,6 +19,7 @@ export interface GameLayoutProps {
   heroLogoHeight?: number,
   heroUseScoreboard?: boolean,
   heroTitleClass?: string
+  heroTitleColor?: string
   
   // Game content (2nd position) 
   gameContent: ReactNode
@@ -37,11 +38,14 @@ export interface GameLayoutProps {
   mainBackgroundCss?: string
   heroFontUrl?: string
   heroFontStyle?: string
+  // Legacy single-main font fields (backward compatibility)
   mainFontUrl?: string
   mainFontStyle?: string
+  // New per-type MAIN fonts
+  mainFonts?: { h1?: { url?: string; style?: string }; h2?: { url?: string; style?: string }; p?: { url?: string; style?: string } }
   
   // Penalty scoreboard (optional)
-  penaltyScore?: { home: number; visitor: number; homeBg?: string; visitorBg?: string; digitColor?: string; showLabels?: boolean; homeLabel?: string; visitorLabel?: string }
+  penaltyScore?: { home: number; visitor: number; homeBg?: string; visitorBg?: string; digitColor?: string }
   
   // State management
   isLoading?: boolean
@@ -79,6 +83,7 @@ export default function GameLayout({
   heroLogoHeight,
   heroUseScoreboard,
   heroTitleClass,
+  heroTitleColor,
   gameContent,
   statusContent,
   descriptionContent,
@@ -91,6 +96,7 @@ export default function GameLayout({
   heroFontStyle,
   mainFontUrl,
   mainFontStyle,
+  mainFonts,
   penaltyScore,
   isLoading = false,
   isGameComplete = false,
@@ -115,11 +121,11 @@ export default function GameLayout({
     return (
       <div
         className="h-screen w-screen flex flex-col items-center justify-center overflow-hidden"
-        style={{ backgroundColor: '#000000FF', color: '#FFFFFFFF', fontFamily: '"Noto Sans", sans-serif' }}
+        style={{ backgroundColor: '#000000FF', fontFamily: '"Noto Sans", sans-serif' }}
       >
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white mb-4 mx-auto"></div>
-          <p className="text-white text-lg">🎮 Loading game...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 mb-4 mx-auto"></div>
+          <p className="text-lg">🎮 Loading game...</p>
         </div>
       </div>
     )
@@ -130,33 +136,30 @@ export default function GameLayout({
   return (
     <div
       className="fixed inset-0 w-screen h-screen overflow-hidden"
-      style={{ backgroundColor: '#000000FF', color: '#FFFFFFFF', fontFamily: '"Noto Sans", sans-serif' }}
+      style={{ backgroundColor: '#000000FF', fontFamily: '"Noto Sans", sans-serif' }}
     >
 {/* HERO (18%) */}
-<HeroBlock
+      <HeroBlock
         backgroundCss={heroBackgroundCss}
         title={penaltyScore ? undefined : `${titleIcon ? `${titleIcon} ` : ''}${title}`}
+        titleColor={heroTitleColor}
         logoUrl={heroLogoUrl}
         logoWidth={heroLogoWidth}
         logoHeight={heroLogoHeight}
-        useScoreboard={heroUseScoreboard ?? true}
+        useScoreboard={false}
         fontUrl={heroFontUrl}
         fontStyle={heroFontStyle}
         titleClass={heroTitleClass}
         {...(penaltyScore ? { scoreboard: {
           home: penaltyScore.home,
           visitor: penaltyScore.visitor,
-          showLabels: penaltyScore.showLabels,
-          homeLabel: penaltyScore.homeLabel,
-          visitorLabel: penaltyScore.visitorLabel,
           homeBg: penaltyScore.homeBg,
           visitorBg: penaltyScore.visitorBg,
           digitColor: penaltyScore.digitColor
         }} : {})}
       />
-
       {/* MAIN (76%) */}
-      <MainBlock backgroundCss={mainBackgroundCss} isGame={true} fontUrl={mainFontUrl} fontStyle={mainFontStyle}>
+      <MainBlock backgroundCss={mainBackgroundCss} isGame={true} fonts={mainFonts} fontUrl={mainFontUrl} fontStyle={mainFontStyle}>
         {/* Game content only - fills the entire main block */}
         <div className="w-full h-full">
           <div className="w-full h-full">

@@ -7,12 +7,9 @@ interface SplitFlapScoreboardProps {
   homeScore?: number
   visitorScore?: number
   className?: string
-  showLabels?: boolean
   homeCardBg?: string
   visitorCardBg?: string
   digitColor?: string
-  homeLabel?: string
-  visitorLabel?: string
 
   // Title mode props (when mode === 'title')
   mode?: 'score' | 'title'
@@ -29,13 +26,10 @@ export default function SplitFlapScoreboard({
   homeScore = 0, 
   visitorScore = 0, 
   className = '',
-  showLabels = false,
   // Defaults per centralized spec
   homeCardBg = '#C00000FF',
   visitorCardBg = '#C00000FF',
   digitColor = '#FFFFFFFF',
-  homeLabel = 'HOME',
-  visitorLabel = 'VISITOR',
   mode = 'score',
   titleText = '',
   titleAlign = 'center',
@@ -436,35 +430,13 @@ export default function SplitFlapScoreboard({
         .flip.bottom .val { transform: translateY(-50%); }
         @keyframes flip-bottom { 0% { transform: rotateX(90deg); } 100% { transform: rotateX(0deg); } }
 
-        /* Labels and layout */
+        /* Layout */
         .split-flap-board {
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 0;
           padding: 15px;
-        }
-
-        .split-flap-label {
-          flex: 1 1 0;
-          font-size: var(--label-font);
-          font-weight: 800;
-          letter-spacing: 1px;
-font-family: 'Noto Sans', sans-serif;
-          user-select: none;
-          white-space: nowrap;
-          line-height: 1;
-          color: white;
-        }
-
-        .split-flap-label-home {
-          text-align: right;
-          padding-right: var(--gap-label);
-        }
-
-        .split-flap-label-visitor {
-          text-align: left;
-          padding-left: var(--gap-label);
         }
 
         @media (max-width: 768px) {
@@ -492,7 +464,6 @@ font-family: 'Noto Sans', sans-serif;
       ) : (
         <div className={`split-flap-scoreboard ${className}`}>
           <div className="split-flap-board">
-{showLabels && (<div className="split-flap-label split-flap-label-home">{homeLabel}</div>)}
             
             <div className="board-wrap" ref={boardRef}>
               <div className="score">
@@ -508,7 +479,6 @@ font-family: 'Noto Sans', sans-serif;
               </div>
             </div>
             
-{showLabels && (<div className="split-flap-label split-flap-label-visitor">{visitorLabel}</div>)}
           </div>
         </div>
       )}

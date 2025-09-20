@@ -159,6 +159,32 @@ Before creating ANY new component, function, or utility:
 | `TASKLIST.md` | Current development priorities |
 | `README.md` | Documentation index and overview |
 
+### 🔎 Indexing Guidelines (for AI and semantic search)
+- Include paths:
+  - `app/` (all application code, API routes, components, lib, modules)
+  - `public/` (only non-sensitive static assets)
+  - Root documentation files: `*.md` (README, ROADMAP, TASKLIST, RELEASE_NOTES, ARCHITECTURE, LEARNINGS, WARP.*)
+  - `scripts/` (if present; automation and governance utilities)
+- Exclude paths (never index):
+  - `node_modules/`, `.next/`, `.vercel/`, `.git/`, `coverage/`, `build/`, `out/`, `logs/`
+- Sensitive files (must not be indexed or committed):
+  - `.env`, `.env.local`, any `*.env.*.local`
+  - Secrets in documentation must be redacted or represented as placeholders like {{FACEBOOK_APP_SECRET}}
+- Index refresh triggers:
+  - Any change under `app/` or `app/lib/`
+  - New or updated API routes under `app/api/**`
+  - Changes to documentation governance (this WARP.md) or type system (`app/types/index.ts`)
+- Query tips:
+  - Prefer path filters when searching (e.g., types in `app/types`, models in `app/lib/models`, routes in `app/api`)
+  - Use exact symbol names with grep for speed; use semantic search for cross-cutting concerns
+
+### ✅ Indexing Readiness Checklist
+1) WARP.md present and updated with indexing rules
+2) README.md links all core docs (TASKLIST, ROADMAP, RELEASE_NOTES, ARCHITECTURE, LEARNINGS, WARP logs)
+3) Health endpoint and DB utilities discoverable under `app/api/health` and `app/lib/mongodb.ts`
+4) Sensitive files ignored by VCS (`.env`, `.env.local`)
+5) Current version and timestamps consistent across docs (ISO 8601 with milliseconds, UTC)
+
 ## Technology Stack Reference
 
 ### Core Dependencies
@@ -249,8 +275,8 @@ const schema = new Schema({
 
 ---
 
-**Current Version**: 2.1.0
-**Last Updated**: 2025-09-17T11:56:16.000Z
+**Current Version**: 2.1.1
+**Last Updated**: 2025-09-18T11:48:22.000Z
 **Maintainer**: AI Development Team
 
 ## Important Notes for WARP Instances

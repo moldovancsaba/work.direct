@@ -7,6 +7,7 @@ import PenaltyHexa from '../../../components/games/PenaltyHexa 2'
 import FindRed from '../../../components/games/FindRed'
 import LuckyWheel from '../../../components/LuckyWheel'
 import QuizzHexa from '../../../components/games/QuizzHexa'
+import QuizzzGame from '../../../components/games/QuizzzGame'
 import { GameOutcome, WheelSegment } from '../../../types'
 
 interface GameClientProps {
@@ -163,7 +164,7 @@ export default function GameClient({ game, cfg }: GameClientProps) {
       spinDuration={game.configuration?.wheelOfFortune?.durationMs || 4500}
       rotations={4}
     />
-  ) : game.type === 'QUIZZ' ? (
+) : game.type === 'QUIZZ' ? (
     <QuizzHexa
       mapType={game.configuration?.quizz?.mapType || 'hex'}
       mapName={game.configuration?.quizz?.mapName}
@@ -202,6 +203,19 @@ export default function GameClient({ game, cfg }: GameClientProps) {
         }
       }}
     />
+  ) : game.type === 'QUIZZZ' ? (
+    <QuizzzGame
+      config={game.configuration?.quizzz}
+      platformMainBackgroundCss={game.configuration?.platform?.styles?.main?.background}
+      onResult={(r) => {
+        const params = new URLSearchParams({ won: r.won ? 'true' : 'false' })
+        if (isTrial) params.set('trial', 'true')
+        if (ref) params.set('ref', ref)
+        params.set('starsFound', String(r.correct))
+        params.set('totalStars', String(r.rounds))
+        window.location.href = `/play/${cfg.meta.gameId}/result?${params.toString()}`
+      }}
+    />
   ) : (
     <PenaltyHexa
       players={game.configuration?.penaltyShootout?.players || []}
@@ -236,34 +250,31 @@ return (
       heroFontUrl={platformStyles?.hero?.fontUrl}
       heroFontStyle={platformStyles?.hero?.fontStyle}
       heroTitleClass={platformStyles?.hero?.titleClass}
+      heroTitleColor={platformStyles?.hero?.fontColor}
       mainFontUrl={platformStyles?.main?.fontUrl}
       mainFontStyle={platformStyles?.main?.fontStyle}
+      mainFonts={{ h1: { url: platformStyles?.main?.h1FontUrl, style: platformStyles?.main?.h1FontStyle }, h2: { url: platformStyles?.main?.h2FontUrl, style: platformStyles?.main?.h2FontStyle }, p: { url: platformStyles?.main?.pFontUrl, style: platformStyles?.main?.pFontStyle } }}
       gameContent={content}
       penaltyScore={game.type === 'PENALTY_SHOOTOUT' ? {
         home: homeScore,
         visitor: visitorScore,
         homeBg: platformStyles?.scoreboard?.homeBg || penaltyColors.homeScoreCard || '#C00000FF',
         visitorBg: platformStyles?.scoreboard?.visitorBg || penaltyColors.visitorScoreCard || '#C00000FF',
-        digitColor: platformStyles?.scoreboard?.digitColor || '#FFFFFFFF',
-        showLabels: !!platformStyles?.scoreboard?.showLabels,
-        homeLabel: platformStyles?.scoreboard?.homeLabel,
-        visitorLabel: platformStyles?.scoreboard?.visitorLabel
+        digitColor: platformStyles?.scoreboard?.digitColor || '#FFFFFFFF'
       } : (game.type === 'STARS_HEXA' ? {
         // Display current round (left) and total rounds (right) for Hexa, per product requirement
         home: hexaCurrentRound,
         visitor: hexaTotalRounds,
         homeBg: platformStyles?.scoreboard?.homeBg || '#C00000FF',
         visitorBg: platformStyles?.scoreboard?.visitorBg || '#C00000FF',
-        digitColor: platformStyles?.scoreboard?.digitColor || '#FFFFFFFF',
-        showLabels: false
+        digitColor: platformStyles?.scoreboard?.digitColor || '#FFFFFFFF'
       } : (game.type === 'FIND_RED' ? {
         // Map to redsFound / targetReds; we re-use the two-digit display semantics
         home: findRedsFound,
         visitor: findTargetReds,
         homeBg: '#C00000FF',
         visitorBg: '#C00000FF',
-        digitColor: '#FFFFFFFF',
-        showLabels: false
+        digitColor: '#FFFFFFFF'
       } : undefined))}
     />
   )

@@ -158,8 +158,8 @@ const gameSchema = new Schema<Game>({
     type: String,
     required: [true, 'Game type is required'],
     enum: {
-      values: ['STARS_HEXA', 'PENALTY_SHOOTOUT', 'FIND_RED', 'WHEEL_OF_FORTUNE', 'QUIZZ'] as GameType[],
-      message: 'Game type must be: STARS_HEXA, PENALTY_SHOOTOUT, FIND_RED, WHEEL_OF_FORTUNE, QUIZZ'
+      values: ['STARS_HEXA', 'PENALTY_SHOOTOUT', 'FIND_RED', 'WHEEL_OF_FORTUNE', 'QUIZZ', 'QUIZZZ'] as GameType[],
+      message: 'Game type must be: STARS_HEXA, PENALTY_SHOOTOUT, FIND_RED, WHEEL_OF_FORTUNE, QUIZZ, QUIZZZ'
     }
   },
   
@@ -233,31 +233,37 @@ const gameSchema = new Schema<Game>({
         CTA1_TEXT: { type: String, default: '' },
         CTA1_URL: { type: String, default: '' },
         CTA1_BG: { type: String, default: '' },
+        CTA1_FG: { type: String, default: '' },
 
         // Welcome — Next With Login (maps from/to TEXT_18, TEXT_18_BG)
         NEXT_LOGIN_TEXT: { type: String, default: '' },
         NEXT_LOGIN_ACTION: { type: String, default: '' },
         NEXT_LOGIN_BG: { type: String, default: '' },
+        NEXT_LOGIN_FG: { type: String, default: '' },
 
         // Welcome — Next Without Login (maps from/to TEXT_19, TEXT_19_BG)
         NEXT_GUEST_TEXT: { type: String, default: '' },
         NEXT_GUEST_ACTION: { type: String, default: '' },
         NEXT_GUEST_BG: { type: String, default: '' },
+        NEXT_GUEST_FG: { type: String, default: '' },
 
         // Rules — Next Play (maps from/to TEXT_25, TEXT_25_BG)
         NEXT_PLAY_TEXT: { type: String, default: '' },
         NEXT_PLAY_ACTION: { type: String, default: '' },
         NEXT_PLAY_BG: { type: String, default: '' },
+        NEXT_PLAY_FG: { type: String, default: '' },
 
         // Result — Invite Friend (maps from/to TEXT_45, TEXT_45_BG)
         INVITE_TEXT: { type: String, default: '' },
         INVITE_ACTION: { type: String, default: '' },
         INVITE_BG: { type: String, default: '' },
+        INVITE_FG: { type: String, default: '' },
 
         // Result — Play Again (maps from/to TEXT_46, TEXT_46_BG)
         PLAYAGAIN_TEXT: { type: String, default: '' },
         PLAYAGAIN_ACTION: { type: String, default: '' },
         PLAYAGAIN_BG: { type: String, default: '' },
+        PLAYAGAIN_FG: { type: String, default: '' },
 
         // Landing Page — Fields and Next Welcome CTA
         // What: Persist configuration for the Landing screen (title, image) and its CTA button.
@@ -267,13 +273,15 @@ const gameSchema = new Schema<Game>({
         NEXT_WELCOME_TEXT: { type: String, default: '' },
         NEXT_WELCOME_ACTION: { type: String, default: 'GO_TO_WELCOME' },
         NEXT_WELCOME_BG: { type: String, default: '' },
+        NEXT_WELCOME_FG: { type: String, default: '' },
 
         CTA_BUTTONS: {
           type: [
             new Schema({
               text: { type: String, default: '' },
               url: { type: String, default: '' },
-              bg: { type: String, default: '' }
+              bg: { type: String, default: '' },
+              fg: { type: String, default: '' }
             }, { _id: false })
           ],
           default: []
@@ -297,28 +305,37 @@ const gameSchema = new Schema<Game>({
           // What: Allow admins to set a Google Fonts family using a specimen URL and style (e.g., "SemiBold 600").
           // Why: Brand-specific typography for the header.
           fontUrl: { type: String, default: '' },
-          fontStyle: { type: String, default: '' }
+          fontStyle: { type: String, default: '' },
+          fontColor: { type: String, default: '' }
         },
         main: {
           background: { type: String, default: '' },
+          // Typography classes
           h1Class: { type: String, default: '' },
           h2Class: { type: String, default: '' },
           pClass: { type: String, default: '' },
+          // Inputs and buttons
+          inputClass: { type: String, default: '' },
           buttonPrimaryClass: { type: String, default: '' },
           buttonSecondaryClass: { type: String, default: '' },
-          // Google Font configuration for MAIN
-          // What: Separate font for the main content area.
-          // Why: Allow different weight/feel for content vs header visuals.
-          fontUrl: { type: String, default: '' },
-          fontStyle: { type: String, default: '' }
+          // Google Font configuration for MAIN (per-type)
+          // What: Allow admins to set different Google Fonts for H1/H2/P to fully control hierarchy.
+          // Why: Prevent style bleeding and enable precise visual customization per text type.
+          h1FontUrl: { type: String, default: '' },
+          h1FontStyle: { type: String, default: '' },
+          h2FontUrl: { type: String, default: '' },
+          h2FontStyle: { type: String, default: '' },
+          pFontUrl: { type: String, default: '' },
+          pFontStyle: { type: String, default: '' },
+          // Per-type colors for MAIN typography
+          h1Color: { type: String, default: '' },
+          h2Color: { type: String, default: '' },
+          pColor: { type: String, default: '' }
         },
         scoreboard: {
           homeBg: { type: String, default: '' },
           visitorBg: { type: String, default: '' },
-          digitColor: { type: String, default: '' },
-          showLabels: { type: Boolean, default: false },
-          homeLabel: { type: String, default: '' },
-          visitorLabel: { type: String, default: '' }
+          digitColor: { type: String, default: '' }
         },
         // Per-text display type mapping (H1/H2/P) used by the editor and optionally runtime rendering
         // What: Allow admins to select a semantic type for each platform text.
@@ -388,6 +405,23 @@ const gameSchema = new Schema<Game>({
     // Find Red (Get Shorty) specific configuration — persisted to ensure traceability of all values
     // What: Round-based card picking game where the user tries to find red cards.
     // Why: Extend platform with a simple, fast, highly configurable game.
+    // Quizzz (board quiz) configuration
+    quizzz: {
+      mapType: { type: String, enum: ['hex','square'], default: 'hex' },
+      mapName: { type: String, default: '' },
+      selectedMaps: { type: [{ type: new Schema({ type: { type: String }, name: { type: String } }, { _id: false }) }], default: [] },
+      numberOfCards: { type: Number, min: [1,'Must be >=1'], default: 6 },
+      rounds: { type: Number, min: [1,'Must be >=1'], default: 5 },
+      winLimit: { type: Number, min: [1,'Must be >=1'], default: 3 },
+      questions: { type: [{ type: new Schema({ id: String, text: String, answers: [{ text: String, isCorrect: Boolean }] }, { _id: false }) }], default: [] },
+      backgroundCss: { type: String, default: '' },
+      tileStyles: { type: Schema.Types.Mixed, default: {} },
+      cardCoverImages: { type: [String], default: [] },
+      cardCoverFill: { type: Boolean, default: true },
+      cardColors: { type: Schema.Types.Mixed, default: {} },
+      overlayBg: { type: String, default: '#00000044' }
+    },
+
     findRed: {
       packSize: { type: Number, min: [3, 'packSize must be at least 3'], max: [32, 'packSize cannot exceed 32'], default: 6 },
       redsPerPack: { type: Number, min: [1, 'redsPerPack must be at least 1'], default: 2 },

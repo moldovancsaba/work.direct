@@ -1,97 +1,108 @@
 // app/api/admin/squaremaps/route.ts
-// WHAT: Admin endpoints to list and create square maps.
-// WHY: Provide CRUD backend for the Square Creator UI, mirroring hex admin endpoints for consistency.
+// WHAT: Admin SquareMap list and create endpoints.
+// WHY: Enables predictive search and CRUD from admin UI (Map Creator, Quizz editor),
+//      reusing the SquareMap Mongoose model and MVP admin auth. Returns stable
+//      JSON shapes expected by existing consumers.
 
 import { NextRequest, NextResponse } from 'next/server'
-import { connectDB } from '../../../lib/mongodb'
-import SquareMapModel from '../../../lib/models/SquareMap'
-import { getAdminUser } from '../../../lib/auth'
-import type { ApiResponse } from '../../../types'
+import { getAdminUser } from '@/lib/auth'
+import { connectDB } from '@/lib/mongodb'
+import SquareMapModel from '@/lib/models/SquareMap'
+
+function toPublic(doc: any) {
+  if (!doc) return null
+  return {
+    id: String(doc._id),
+    name: doc.name,
+    tags: doc.tags || [],
+    radius: doc.radius,
+    cellCount: doc.cellCount,
+    isActive: !!doc.isActive,
+    backgroundImageUrl: doc.backgroundImageUrl,
+    createdAt: doc.createdAt?.toISOString?.() || doc.createdAt,
+    updatedAt: doc.updatedAt?.toISOString?.() || doc.updatedAt,
+  }
+}
 
 export async function GET(request: NextRequest) {
   try {
+    // Admin gate
     const user = await getAdminUser()
-    if (!user) return NextResponse.json({ error: 'Admin authentication required' }, { status: 401 })
+    if (!user) {
+      return NextResponse.json({ error: 'Admin authentication required' }, { status: 401 })
+    }
 
     await connectDB()
 
-    const { searchParams } = new URL(request.url)
-    const query = (searchParams.get('search') || '').trim()
-    const tag = (searchParams.get('tag') || '').trim().toLowerCase()
-    const includeInactive = searchParams.get('includeInactive') === 'true'
-    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
-    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20', 10)))
-
-    const filter: any = {}
-    if (!includeInactive) filter.isActive = true
-    if (tag) filter.tags = tag
-
-    if (query.length >= 2) {
-      filter.$text = { $search: query }
-    } else if (query.length === 1) {
-      filter.name = { $regex: query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' }
-    }
-
+    const url = new URL(request.url)
+    const search = (url.searchParams.get('search') || '').trim()
+    const tag = (url.searchParams.get('tag') || '').trim().replace(/^#+/, '').toLowerCase()
+    const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10))
+    const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get('limit') || '20', 10)))
     const skip = (page - 1) * limit
 
-    const [items, total] = await Promise.all([
-      SquareMapModel.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
-      SquareMapModel.countDocuments(filter)
-    ])
-
-    const payload: ApiResponse = {
-      success: true,
-      data: { items, page, limit, total, hasMore: skip + items.length < total }
+    const q: any = {}
+    if (search) {
+      q.name = { $regex: search, $options: 'i' }
+    }
+    if (tag) {
+      q.tags = tag
     }
 
-    return NextResponse.json(payload)
+    const [items, total] = await Promise.all([
+      SquareMapModel.find(q).sort({ updatedAt: -1 }).skip(skip).limit(limit).lean(),
+      SquareMapModel.countDocuments(q)
+    ])
+
+    return NextResponse.json({
+      data: {
+        items: items.map(toPublic),
+        total,
+        page,
+        pageSize: limit,
+      }
+    })
   } catch (error) {
-    console.error('SquareMaps GET error:', error)
-    return NextResponse.json({ success: false, error: { code: 'SERVER_ERROR', message: 'Failed to fetch maps' } }, { status: 500 })
+    console.error('GET /api/admin/squaremaps error:', error)
+    return NextResponse.json({ error: 'Failed to list square maps' }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
+    // Admin gate
     const user = await getAdminUser()
-    if (!user) return NextResponse.json({ error: 'Admin authentication required' }, { status: 401 })
+    if (!user) {
+      return NextResponse.json({ error: 'Admin authentication required' }, { status: 401 })
+    }
 
     await connectDB()
 
     const body = await request.json()
-    const name: string = (body.name || '').trim()
-    const coords: Array<{ x: number; y: number }> = Array.isArray(body.coords) ? body.coords : []
-    const radius: number = Number.isFinite(body.radius) ? Math.max(1, Math.min(24, Number(body.radius))) : 4
-    const rawTags: string[] = Array.isArray(body.tags) ? body.tags : []
-    const tags = Array.from(new Set(rawTags.map((t) => String(t).trim().toLowerCase()).filter(Boolean)))
-    const backgroundImageUrl: string | undefined = typeof body.backgroundImageUrl === 'string' ? String(body.backgroundImageUrl).trim() : undefined
-
+    const name = String(body?.name || '').trim()
     if (!name) {
-      return NextResponse.json({ success: false, error: { code: 'VALIDATION', message: 'Name is required' } }, { status: 400 })
+      return NextResponse.json({ error: 'name is required' }, { status: 400 })
     }
 
-    // WHAT: Validate integer coordinates before model validation
-    // WHY: Provide clear error messaging for non-integer coordinates
-    for (const c of coords) {
-      if (!Number.isInteger(c.x) || !Number.isInteger(c.y)) {
-        return NextResponse.json({ success: false, error: { code: 'VALIDATION', message: 'All coordinates must be integers' } }, { status: 400 })
-      }
+    const payload: any = {
+      name,
+      coords: Array.isArray(body?.coords) ? body.coords : [],
+      radius: Number(body?.radius ?? 4),
+      cellCount: Number(body?.cellCount ?? 0),
+      tags: Array.isArray(body?.tags) ? body.tags : undefined,
+      isActive: body?.isActive !== false,
+      backgroundImageUrl: body?.backgroundImageUrl || undefined,
+      fieldExtents: body?.fieldExtents || undefined,
+      fieldMask: Array.isArray(body?.fieldMask) ? body.fieldMask : [],
+      createdBy: 'admin', // MVP: static admin creator
     }
 
-    // Unique name check (friendly 409 first)
-    const existing = await SquareMapModel.findOne({ name })
-    if (existing) {
-      return NextResponse.json({ success: false, error: { code: 'DUPLICATE', message: 'A square map with this name already exists' } }, { status: 409 })
-    }
-
-    const doc = new SquareMapModel({ name, coords, radius, tags, backgroundImageUrl, createdBy: user.id || 'admin' })
-    const saved = await doc.save()
-
-    return NextResponse.json({ success: true, data: saved }, { status: 201 })
+    const doc = await SquareMapModel.create(payload)
+    return NextResponse.json({ data: toPublic(doc) }, { status: 201 })
   } catch (error: any) {
-    console.error('SquareMaps POST error:', error)
-    const message = error?.message || 'Failed to create map'
-    const isValidation = /duplicate|unique|required|valid/i.test(message)
-    return NextResponse.json({ success: false, error: { code: 'VALIDATION', message } }, { status: isValidation ? 400 : 500 })
+    console.error('POST /api/admin/squaremaps error:', error)
+    const message = error?.message || 'Failed to create square map'
+    const isValidation = /required|min|max|unique|Radius|Coordinates|Chebyshev/i.test(message)
+    return NextResponse.json({ error: message }, { status: isValidation ? 400 : 500 })
   }
 }
