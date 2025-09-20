@@ -22,10 +22,25 @@ export default function ResultClientPlatform({ gameId, texts, styles, won, refCo
 
   const extractBackgroundValue = (css?: string): string | undefined => {
     if (!css) return undefined
-    const grad = css.match(/linear-gradient\([^\)]+\)/i)
-    if (grad) return grad[0]
-    const bg = css.match(/background:\s*([^;]+);?/i)
-    if (bg && bg[1]) return bg[1].trim()
+    // Grab the last background: ... value, respecting CSS precedence
+    let last: string | undefined
+    const re = /background\s*:\s*([^;]+);?/ig
+    let m: RegExpExecArray | null
+    while ((m = re.exec(css)) !== null) {
+      last = (m[1] || '').trim()
+    }
+    if (last) return last
+    // Fallback: attempt to extract a full linear-gradient(...) block
+    const low = css.toLowerCase()
+    const idx = low.lastIndexOf('linear-gradient(')
+    if (idx >= 0) {
+      let depth = 0
+      for (let i = idx; i < css.length; i++) {
+        const ch = css[i]
+        if (ch === '(') depth++
+        else if (ch === ')') { depth--; if (depth === 0) return css.slice(idx, i + 1) }
+      }
+    }
     return undefined
   }
 
@@ -91,26 +106,21 @@ export default function ResultClientPlatform({ gameId, texts, styles, won, refCo
   return (
     <div
       className="fixed inset-0 w-screen h-screen overflow-hidden"
-      style={{ backgroundColor: '#000000FF', color: '#FFFFFFFF', fontFamily: '"Noto Sans", sans-serif' }}
+      style={{ backgroundColor: '#FFFFFFFF', fontFamily: '"Noto Sans", sans-serif' }}
     >
       <HeroBlock
         backgroundCss={heroBg}
         title={title}
-        useScoreboard={styles?.hero?.useScoreboard !== false}
+        useScoreboard={false}
         logoUrl={texts?.HERO_LOGO_URL}
         logoWidth={Number(texts?.HERO_LOGO_WIDTH) || 64}
         logoHeight={Number(texts?.HERO_LOGO_HEIGHT) || 64}
         fontUrl={styles?.hero?.fontUrl}
         fontStyle={styles?.hero?.fontStyle}
         titleClass={styles?.hero?.titleClass}
-        scoreboard={{
-          home: 0,
-          visitor: 0,
-          homeBg: styles?.scoreboard?.homeBg || '#C00000FF',
-          digitColor: styles?.scoreboard?.digitColor || '#FFFFFFFF'
-        }}
+        titleColor={styles?.hero?.fontColor}
       />
-      <MainBlock backgroundCss={mainBg} fontUrl={styles?.main?.fontUrl} fontStyle={styles?.main?.fontStyle}>
+      <MainBlock backgroundCss={mainBg} fonts={{ h1: { url: styles?.main?.h1FontUrl, style: styles?.main?.h1FontStyle }, h2: { url: styles?.main?.h2FontUrl, style: styles?.main?.h2FontStyle }, p: { url: styles?.main?.pFontUrl, style: styles?.main?.pFontStyle } }} fontUrl={styles?.main?.fontUrl} fontStyle={styles?.main?.fontStyle}>
         <div className="w-full h-full flex justify-center">
           <div className="h-full w-[80vw] min-w-[80vw] max-w-none space-y-6 text-center flex flex-col items-center justify-center">
           {/* Result headline based on win/lose */}
@@ -132,8 +142,8 @@ export default function ResultClientPlatform({ gameId, texts, styles, won, refCo
                     href={primaryUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`${styles?.main?.buttonPrimaryClass || 'px-6 py-3 bg-blue-600 text-white rounded-lg'} text-2xl text-center block`}
-                    style={{ background: extractBackgroundValue(texts?.CTA1_BG), minHeight: '56px', minWidth: '260px', maxWidth: '520px', width: '100%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    className={`${styles?.main?.buttonPrimaryClass || 'px-6 py-3 rounded-lg'} text-2xl text-center block`}
+                    style={{ background: extractBackgroundValue(texts?.CTA1_BG), color: (texts?.CTA1_FG || '').trim() || undefined, minHeight: '56px', minWidth: '260px', maxWidth: '520px', width: '100%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   >
                     {primaryText}
                   </a>
@@ -169,8 +179,8 @@ export default function ResultClientPlatform({ gameId, texts, styles, won, refCo
                         (e.currentTarget as HTMLAnchorElement).className = styles.main.buttonPrimaryClass
                       }
                     }}
-                    className={`${styles?.main?.buttonPrimaryClass || 'px-6 py-3 bg-blue-600 text-white rounded-lg'} text-2xl text-center block`}
-                    style={{ background: extractBackgroundValue(btn?.bg) || extractBackgroundValue(texts?.CTA1_BG), minHeight: '48px', minWidth: '240px', maxWidth: '400px', width: '100%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    className={`${styles?.main?.buttonPrimaryClass || 'px-6 py-3 rounded-lg'} text-2xl text-center block`}
+                    style={{ background: extractBackgroundValue(btn?.bg) || extractBackgroundValue(texts?.CTA1_BG), color: (btn?.fg || texts?.CTA1_FG || '').trim() || undefined, minHeight: '48px', minWidth: '240px', maxWidth: '400px', width: '100%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   >
                     {btn.text}
                   </a>
@@ -182,15 +192,15 @@ export default function ResultClientPlatform({ gameId, texts, styles, won, refCo
           <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4">
             <button
               onClick={onInviteShare}
-              className='px-6 py-3 text-white rounded-lg text-2xl block'
-              style={{ background: extractBackgroundValue(texts?.TEXT_45_BG), minHeight: '48px', minWidth: '240px', maxWidth: '400px', width: '100%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              className='px-6 py-3 rounded-lg text-2xl block'
+              style={{ background: extractBackgroundValue(texts?.TEXT_45_BG) || '#000000FF', color: (texts?.INVITE_FG || texts?.TEXT_45_FG || '').trim() || undefined, minHeight: '48px', minWidth: '240px', maxWidth: '400px', width: '100%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               {texts?.TEXT_45 || 'Invite Friend'}
             </button>
             <button
               onClick={() => navigateWithRef(`/play/${gameId}/welcome`)}
-              className={`${styles?.main?.buttonPrimaryClass || 'px-6 py-3 text-white rounded-lg'} text-2xl block`}
-              style={{ background: extractBackgroundValue(texts?.TEXT_46_BG), minHeight: '48px', minWidth: '240px', maxWidth: '400px', width: '100%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              className={`${styles?.main?.buttonPrimaryClass || 'px-6 py-3 rounded-lg'} text-2xl block`}
+              style={{ background: extractBackgroundValue(texts?.TEXT_46_BG) || '#000000FF', color: (texts?.PLAYAGAIN_FG || texts?.TEXT_46_FG || '').trim() || undefined, minHeight: '48px', minWidth: '240px', maxWidth: '400px', width: '100%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               {texts?.TEXT_46 || 'Play Again'}
             </button>

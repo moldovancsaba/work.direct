@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useReducer, useMemo } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { PenaltyCard, GameOutcome } from '../../types'
-import { axialToPixel, rotatePoint, hexVertices, SQRT3 } from '@/lib/hex/geometry'
+import { axialToPixel, rotatePoint, hexVertices, SQRT3 } from '../../lib/hex/geometry'
 
 interface PenaltyTexts {
   // Registration texts

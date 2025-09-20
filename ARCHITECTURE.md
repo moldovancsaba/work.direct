@@ -1,6 +1,6 @@
 # ARCHITECTURE.md — PlayMass
 
-Last Updated: 2025-09-17T11:56:16.000Z
+Last Updated: 2025-09-20T13:30:02.000Z
 
 ## Overview
 PlayMass is a Next.js (App Router) application with MongoDB/Mongoose persistence and a modular game system. This document describes current system components and their roles, dependencies, and status.
@@ -33,11 +33,28 @@ PlayMass is a Next.js (App Router) application with MongoDB/Mongoose persistence
 - Dependencies: MongoDB, Mongoose
 - Status: Active
 
+### Editor Standard — QUIZZZ (Default)
+- Role: QUIZZZ editor is the canonical pattern all future games must follow
+- Dependencies: GameEditor, QuizzzCustomizationForm, PlatformSettingsForm, MongoDB defaults via /api/config/defaults
+- Status: Adopted (default)
+- Key principles:
+  - DB-driven defaults (no baked-in text) — loaded from playmass_defaults
+  - One-input-per-line layout with black text for readability
+  - Usage toggles before fields to include/exclude values from saved config
+  - Centered, unified CTA grid (primary + additional) with BG CSS per button
+  - Legal texts and Main Fonts & Typography managed from the same DB-driven platform config
+  - Scoreboard-style titles removed from HERO by default
+
 ### Game Engine
+- Update (v2.2.0): QUIZZZ module uses configuration.quizzz for board/covers/styles; answered-state visuals and background precedence logic implemented
+
+### Game Types (Admin)
+- Update (v2.2.0): GameTypeDef model stored in MongoDB (game_types) with admin API (/api/admin/game-types); editor reads enabled types from DB and de-duplicates by code
 - Role: Provide different game types with centralized platform configuration
 - Status: Active; Stars Hexa, Penalty Shootout, Quizz; Wheel component prepared
 
 ### Map System
+- Update (v2.2.0): Added public APIs for map retrieval — /api/hexmaps/[name], /api/hexmaps/random, /api/squaremaps/[name], /api/squaremaps/random — used by QUIZZZ runtime to load board coordinates
 - Role: Provide reusable coordinates for grid-based games
 - Dependencies: HexMap and SquareMap models (MongoDB), unified admin creator (/admin/mapcreator), public APIs /api/hexmaps/* and /api/squaremaps/*
 - Status: Active; referenced by QUIZZ (selectedMaps) and future grid-based games
@@ -68,6 +85,61 @@ PlayMass is a Next.js (App Router) application with MongoDB/Mongoose persistence
   - Access tokens are never stored server-side or client-side
   - Cookie flags: httpOnly, sameSite=lax, secure in production
   - Legacy redirect routes /api/auth/facebook/start and /callback are retained for rollback only; UI uses SDK popup exclusively
+
+## Centralized Game Editor System (v3)
+
+Role
+- Provide a single, DB-driven editor experience split into:
+  1) General Platform Editor (shared across all games): hero/main/legal texts and styles, typography (H1/H2/P), unified CTAs, font tokens, and black text defaults.
+  2) Game-Type Specific Editor: minimal, game-only fields (e.g., QUIZZZ map/questions), composed inside the shared layout.
+
+Configuration Precedence
+- module defaults → PlayMass defaults (DB) → per-game overrides
+- No runtime fallbacks: if a value is not configured, it stays empty (prevents flash/flicker).
+
+Typography & Fonts
+- Each text has a type (H1/H2/P) and uses styles.main.{h1Class,h2Class,pClass}.
+- Fonts load with display=block to prevent style swap.
+- Defaults include text-black while preserving sizes/weights.
+
+Card & Board Management (Grid-based Games)
+- Coordinates come strictly from configured maps (selectedMaps[0] preferred, else mapName). No auto-expansion or default shapes.
+- Cards derive directly from coordinates (slice only; never generate new coords).
+- Optional cover images clip to polygon shapes; emojis/colors configurable per state.
+
+Design Element Governance
+- Button backgrounds accept multiline CSS; the renderer always uses the last background: … value; supports linear-gradient(...) with rgba(...).
+- Hero/Main background precedence: game.backgroundCss > map.bgImage > platform.main.background.
+
+Minimal Loading & Error Handling
+- All async map loads show a minimal Loading… state; error overlays are suppressed during load and displayed only for real configuration errors.
+
+## Legacy Deprecation Plan (QUIZZ/StarsHexa Editors)
+
+Objectives
+- Remove legacy ad-hoc editors in favor of the centralized General Platform Editor + small type-specific fragments.
+
+Phases
+1) Freeze (Immediate)
+- No new features to legacy QUIZZ/StarsHexa editors.
+- Maintain runtime only; centralize all platform fields within the General editor.
+
+2) Migration (By 2025-10-12T12:00:00.000Z)
+- Map legacy fields to platform texts/styles (mirror adapters already in place).
+- Replace legacy editor panels with links/blocks that mount the General editor and a type-specific fragment.
+
+3) Removal (Post-Migration)
+- Delete legacy editor components and references.
+- Keep runtime rendering stable; ensure create/edit uses centralized editor only.
+
+4) New Module Template (By 2025-10-15T12:00:00.000Z)
+- Provide a template with config schema, board/cards management, overlay UX, and result mapping.
+- Document do/don’t (no fallbacks, black defaults, minimal Loading, strict coords usage).
+
+Compliance
+- ISO 8601 timestamps with ms (UTC).
+- No tests (MVP policy).
+- Reuse-before-creation enforced across modules.
 
 ## Future Improvements
 - Admin auth hardening (signed cookies/JWT, rate limiting/lockout, audit logs)

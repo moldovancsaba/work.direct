@@ -1,7 +1,7 @@
 # PlayMass - Interactive Game Platform
 
-Current Version: 2.1.0
-Last Updated: 2025-09-17T11:56:16.000Z
+Current Version: 4.0.0
+Last Updated: 2025-09-20T13:30:02.000Z
 
 ## 🎮 Features
 
@@ -131,6 +131,8 @@ app/
 - `GET /api/squaremaps/random?tag=` - Get random square map by tag
 
 ## 🎲 Game Types
+
+Note: QUIZZZ is the default game type and its admin editor is the standard for all future games (DB-driven, single-input-per-line, usage toggles, centered CTA grid, and fully configurable styles and legal texts from MongoDB).
 
 ### Stars Hexa
 - 7 hexagonal cards in 2-3-2 formation layout

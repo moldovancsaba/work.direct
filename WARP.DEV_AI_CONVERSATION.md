@@ -1,5 +1,10 @@
 # WARP.DEV_AI_CONVERSATION.md — Planning Log
 
+2025-09-20T13:30:02.000Z — Delivery: v4.0.0 Major — DB-driven font colors; remove baked-in overrides; schema + runtime updates
+- Changes: Persisted hero/main font colors and button FG fields; applied across Landing/Welcome/Rules/Result; fixed TEXT_26/27 mapping; removed global !important input color; stripped text-* overrides.
+- Dependencies: Build verification OK.
+- Next: Optionally deploy (vercel --prod) after validation.
+
 2025-09-15T15:54:13.000Z — Plan: Hexa Creator (Admin) initial implementation
 
 2025-09-15T16:28:12.000Z — Delivery: Hexa Creator, hexmaps API/model, geometry refactor, warnings removed
@@ -178,3 +183,27 @@ Notes:
 - Tokens are never stored; only minimal cookie with provider,id,name,email,iat
 - Legacy OAuth routes retained for rollback only (annotated)
 - All timestamps ISO 8601 with ms (UTC)
+
+2025-09-19T09:44:22.000Z — Delivery: v2.2.0 — QUIZZZ editor/runtime styling; DB-backed game types; public map APIs; dropdown de-dup; docs synchronized (ISO 8601 UTC with ms)
+
+2025-09-19T14:54:53.000Z — Delivery: Establish QUIZZZ as default standard; docs updated (README, ROADMAP, TASKLIST, ARCHITECTURE, LEARNINGS); GameEditor defaults to QUIZZZ; HERO scoreboard disabled by default across pages.
+
+2025-09-19T18:35:15.000Z — Plan: Render TEXT_13/15/17 as visible helper lines using H1/H2/P mapping; enforce black text defaults; fix Button BG parser; version bump and docs sync.
+- Steps: 1) Add helper nodes API to UnifiedRegistration; 2) Pass TypedText(TEXT_13/15/17) from Welcome; 3) Resolver and shared blocks enforce black text sizes; 4) Robust background parser; 5) Bump to 2.3.0 and update docs.
+
+2025-09-19T18:35:15.000Z — Delivery: Implemented helper lines on Welcome; black defaults preserved sizing; button BG parser fixed; bumped to v2.3.0; updated README, ROADMAP, TASKLIST, RELEASE_NOTES, ARCHITECTURE, LEARNINGS.
+
+2025-09-20T09:00:32.000Z — Plan: Major Update v3 — Centralized Editor + Anti-Flicker + Legacy Deprecation Roadmap
+- Bump to 3.0.0; update docs (release notes, architecture centralized editor, roadmap milestones, tasklist); add learnings; verify build.
+
+2025-09-20T09:00:32.000Z — Delivery: v3.0.0 published in docs; centralized editor described; anti-flicker (no fallbacks, loading guards, display=block fonts) completed; roadmap and tasklist updated.
+
+2025-09-19T11:05:22.000Z — Plan: v2.2.1 patch bump before dev session (protocol: bump PATCH before npm run dev)
+- Steps: 1) npm install 2) npm run build 3) Update package.json + key docs to 2.1.1 4) npm run dev
+- Compliance: ISO 8601 timestamps with milliseconds (UTC); no tests; reuse-before-creation; no breadcrumbs
+
+2025-09-18T11:48:22.000Z — Plan: Enable semantic indexing and consolidate project rules
+- Added Indexing Guidelines and an Indexing Readiness Checklist to WARP.md
+- Secured secrets by updating .gitignore to ignore .env and .env.local
+- No version bump in this session; docs updated where necessary; runtime verification and deployment deferred
+- Next: If desired, adopt a single-source version in health endpoint (read from package.json) and consider lightweight sync scripts (timestamps/version)

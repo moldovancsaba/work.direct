@@ -75,6 +75,16 @@ const hexMapSchema = new Schema<HexMap>({
     type: String,
     required: [true, 'createdBy is required'],
     trim: true
+  },
+  fieldExtents: {
+    top: { type: Object, default: undefined },
+    bottom: { type: Object, default: undefined },
+    left: { type: Object, default: undefined },
+    right: { type: Object, default: undefined }
+  },
+  fieldMask: {
+    type: [coordSchema],
+    default: []
   }
 }, {
   timestamps: true,

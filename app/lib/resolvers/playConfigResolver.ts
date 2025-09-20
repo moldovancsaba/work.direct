@@ -101,7 +101,18 @@ function derivePlatform(game: any) {
     DELETION_TITLE: platTexts.DELETION_TITLE || 'User Data Deletion',
     DELETION_BODY: platTexts.DELETION_BODY || `To request deletion of your personal data used in this game:\n\n1) In-App: If available, use the account or profile menu to submit a deletion request.\n2) By Email: Contact the game organizer or PlayMass support with your name and (if known) your participant UUID.\n3) Processing: We will verify your request and delete associated data from our systems, subject to legal retention obligations.\n4) Scope: Deletion includes gameplay records and contact information stored for this game.\n5) Questions: For additional details, refer to our Privacy Policy.`
   }
-  return { texts: mergedTexts, styles: platStyles }
+  // Default black text styling across hero/main when not specified
+  // What: Ensure all font color defaults are black by default to satisfy readability and product requirement.
+  // Why: Avoid invisible text when admin has not configured classes; tailwind 'text-black' provides safe default.
+  const mergedStyles = deepMerge({
+    hero: { titleClass: 'text-3xl md:text-4xl font-bold' },
+    main: {
+      h1Class: 'text-3xl font-bold',
+      h2Class: 'text-xl font-semibold',
+      pClass: 'text-base'
+    }
+  } as any, platStyles || {})
+  return { texts: mergedTexts, styles: mergedStyles }
 }
 
 function toStarsHexaConfig(game: Game): PlayFlowResolvedConfig {

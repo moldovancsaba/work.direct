@@ -23,6 +23,7 @@ interface QuizzHexaProps {
 export default function QuizzHexa({ mapType = 'hex', mapName, activeCoords, mapTag, selectedMaps, randomizeSelectedMaps, rounds, targetCorrect, questions, overlayBg = 'rgba(0,0,0,0.6)', cardCoverImages, onResult }: QuizzHexaProps) {
   const stageRef = useRef<HTMLDivElement>(null)
   const [coords, setCoords] = useState<Array<HexCoord | SquareCoord>>([])
+  const [loading, setLoading] = useState<boolean>(true)
   const [cellSize, setCellSize] = useState(80)
   const [currentRound, setCurrentRound] = useState(1)
   const [correct, setCorrect] = useState(0)
@@ -56,6 +57,7 @@ export default function QuizzHexa({ mapType = 'hex', mapName, activeCoords, mapT
   // Load coords strictly based on configured mapType (no cross-type fallback)
   useEffect(() => {
     let aborted = false
+    setLoading(true)
     const load = async () => {
       if (activeCoords && activeCoords.length) {
         setCoords(activeCoords)
@@ -81,6 +83,7 @@ export default function QuizzHexa({ mapType = 'hex', mapName, activeCoords, mapT
               setCoords(chosen as any)
               setEffectiveType(first.type)
               setBackgroundUrl(bg || null)
+              setLoading(false)
               return
             }
           }
@@ -104,6 +107,7 @@ export default function QuizzHexa({ mapType = 'hex', mapName, activeCoords, mapT
               setCoords(chosen as any)
               setEffectiveType(mapType)
               setBackgroundUrl(bg || null)
+              setLoading(false)
               return
             }
           }
@@ -129,11 +133,12 @@ export default function QuizzHexa({ mapType = 'hex', mapName, activeCoords, mapT
         }
       } catch {}
 
-      // If nothing was loaded, fallback to default shape for the configured type
+      // If nothing was loaded, do not fallback to any shape; keep empty to avoid flash
       if (!aborted) {
-        setCoords((mapType === 'hex' ? defaultSevenHex : defaultNineSquare) as any)
+        setCoords([] as any)
         setEffectiveType(mapType)
         setBackgroundUrl(null)
+        setLoading(false)
       }
     }
     load()
@@ -468,6 +473,13 @@ export default function QuizzHexa({ mapType = 'hex', mapName, activeCoords, mapT
     </div>
   ) : null
 
+  if (loading) {
+    return (
+      <div ref={stageRef} className="relative w-full h-full flex items-center justify-center" style={{ minHeight: 480 }}>
+        <div className="text-black text-base">Loading…</div>
+      </div>
+    )
+  }
   return (
     <div
       ref={stageRef}

@@ -55,8 +55,8 @@ export default function GameRulesPage({
 
       {/* Rules List */}
       <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
-        <div className="space-y-4 text-lg">
-          <div className="text-gray-800" dangerouslySetInnerHTML={{
+          <div className="space-y-4 text-lg">
+          <div dangerouslySetInnerHTML={{
             __html: (customTexts?.gameRulesText || 
               '<div class="flex items-start gap-3"><p><strong>Select 5 players</strong> from 11 team members</p></div><div class="flex items-start gap-3 mt-4"><p>If draw, <strong>Visitor WINS!</strong></p></div>'
             ).replace(/\n/g, '<br>')
@@ -66,11 +66,11 @@ export default function GameRulesPage({
 
       {/* Win Conditions */}
       <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 shadow-lg border border-green-100">
-        <h3 className="text-xl font-bold text-green-900 mb-4">
+        <h3 className="text-xl font-bold mb-4">
           {customTexts?.winConditionsTitle || 'Win Conditions:'}
         </h3>
         
-        <div className="text-green-800 text-lg" dangerouslySetInnerHTML={{
+        <div className="text-lg" dangerouslySetInnerHTML={{
           __html: (customTexts?.winConditionsText ||
             '<div class="flex items-start gap-3"><p>Score <strong>more goals</strong> than opponent</p></div><div class="flex items-start gap-3 mt-3"><p>Select players wisely - <strong>you can\'t see who scores</strong> until selected</p></div><div class="flex items-start gap-3 mt-3"><p>In overtime: <strong>first team to score more wins</strong></p></div>'
           ).replace(/\n/g, '<br>')
@@ -111,19 +111,19 @@ export default function GameRulesPage({
       <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
         <div className="space-y-4 text-lg">
           <div className="flex items-start gap-3">
-            <p className="text-gray-800">
+            <p>
               <strong>Find all hidden stars</strong> in the hexagonal cards
             </p>
           </div>
           
           <div className="flex items-start gap-3">
-            <p className="text-gray-800">
+            <p>
               You have <strong>limited flips per round</strong>
             </p>
           </div>
 
           <div className="flex items-start gap-3">
-            <p className="text-gray-800">
+            <p>
               Cards flip back after a short delay if no star found
             </p>
           </div>
@@ -132,25 +132,25 @@ export default function GameRulesPage({
 
       {/* Win Conditions */}
       <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-6 shadow-lg border border-purple-100">
-        <h3 className="text-xl font-bold text-purple-900 mb-4">
+        <h3 className="text-xl font-bold mb-4">
           Win Conditions:
         </h3>
         
         <div className="space-y-3 text-lg">
           <div className="flex items-start gap-3">
-            <p className="text-purple-800">
+            <p>
               Find <strong>all hidden stars</strong> to win the game
             </p>
           </div>
           
           <div className="flex items-start gap-3">
-            <p className="text-purple-800">
+            <p>
               <strong>Remember card positions</strong> - use your memory wisely
             </p>
           </div>
           
           <div className="flex items-start gap-3">
-            <p className="text-purple-800">
+            <p>
               <strong>Multiple rounds</strong> if you don't find all stars in one attempt
             </p>
           </div>
@@ -160,7 +160,7 @@ export default function GameRulesPage({
       {/* Game Description */}
       {gameDescription && (
         <div className="bg-blue-50 rounded-xl p-6 shadow-lg border border-blue-100">
-          <p className="text-blue-800 text-center text-lg">
+          <p className="text-center text-lg">
             {gameDescription}
           </p>
         </div>

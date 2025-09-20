@@ -1,7 +1,7 @@
 'use client'
 
 import React, { ReactNode } from 'react'
-import PenaltyCardText from '../games/PenaltyCardText'
+// import removed — no scoreboard title usage
 
 export interface SimpleGameLayoutProps {
   // Game identification
@@ -54,10 +54,7 @@ export default function SimpleGameLayout({
       {/* 1st Position: Compact Game Header */}
       <div className="flex-shrink-0 text-center py-4 px-4">
         <div className="flex justify-center">
-          <PenaltyCardText
-            text={`${titleIcon ? `${titleIcon} ` : ''}${title}`}
-            variant="title"
-          />
+          <h1 className="text-2xl md:text-3xl font-bold text-white">{`${titleIcon ? `${titleIcon} ` : ''}${title}`}</h1>
         </div>
         {subtitle && (
           <p className="text-lg md:text-xl text-gray-200 mt-2">

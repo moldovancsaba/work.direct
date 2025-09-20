@@ -36,6 +36,38 @@ const SimpleTextInput = ({ code, label, placeholder, multiline, value, onChange 
   </div>
 )
 
+// TypedInput — stable component type (declared at module scope)
+// What: Renders a labeled text input/textarea with a text-type selector (H1/H2/P).
+// Why: Avoids redefining component types on every render which caused remounts and focus loss in React.
+interface TypedInputProps {
+  code: string
+  label: string
+  placeholder?: string
+  multiline?: boolean
+  value: string
+  onChange: (value: string) => void
+  textType: 'H1' | 'H2' | 'P'
+  onTextTypeChange: (val: 'H1' | 'H2' | 'P') => void
+}
+
+const TypedInput = ({ code, label, placeholder = '', multiline = false, value, onChange, textType, onTextTypeChange }: TypedInputProps) => (
+  <div>
+    <div className="flex items-center justify-between mb-1">
+      <label className="block text-sm font-medium text-gray-700">{label} ({code})</label>
+      <select className="px-2 py-1 border rounded-md text-sm" value={textType} onChange={e => onTextTypeChange(e.target.value as any)}>
+        <option value="H1">H1</option>
+        <option value="H2">H2</option>
+        <option value="P">P</option>
+      </select>
+    </div>
+    {multiline ? (
+      <textarea className="w-full px-3 py-2 border rounded-md min-h-20" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} />
+    ) : (
+      <input className="w-full px-3 py-2 border rounded-md" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} />
+    )}
+  </div>
+)
+
 interface PlatformSettingsFormProps {
   texts: Record<string, any>
   styles: any
@@ -138,23 +170,7 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
   }
   const setTextType = (code: string, val: 'H1' | 'H2' | 'P') => setS(`textTypes.${code}`, val)
 
-  const TypedInput = ({ code, label, placeholder = '', multiline = false }: { code: string; label: string; placeholder?: string; multiline?: boolean }) => (
-    <div>
-      <div className="flex items-center justify-between mb-1">
-        <label className="block text-sm font-medium text-gray-700">{label} ({code})</label>
-        <select className="px-2 py-1 border rounded-md text-sm" value={getTextType(code)} onChange={e => setTextType(code, e.target.value as any)}>
-          <option value="H1">H1</option>
-          <option value="H2">H2</option>
-          <option value="P">P</option>
-        </select>
-      </div>
-      {multiline ? (
-        <textarea className="w-full px-3 py-2 border rounded-md min-h-20" value={getT(code)} onChange={e => setT(code, e.target.value)} placeholder={placeholder} />
-      ) : (
-        <input className="w-full px-3 py-2 border rounded-md" value={getT(code)} onChange={e => setT(code, e.target.value)} placeholder={placeholder} />
-      )}
-    </div>
-  )
+  
 
   return (
     <div className="space-y-8">
@@ -163,23 +179,29 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
       <div className="bg-slate-50 p-4 rounded-lg">
         {!hideSectionTitles && <h3 className="text-md font-medium text-gray-800 mb-2">Hero Settings</h3>}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <TypedInput code="LANDING_TITLE" label="Landing Title" placeholder="" />
-          <TypedInput code="TEXT_10" label="Welcome Title" placeholder="Welcome" />
-          <TypedInput code="TEXT_20" label="Rules Title" placeholder="Game Rules" />
-          <TypedInput code="TEXT_30" label="Game Title" placeholder="Game" />
-          <TypedInput code="TEXT_40" label="Result Title" placeholder="Results" />
-          <SimpleTextInput code="HERO_LOGO_URL" label="Hero Logo URL (PNG)" placeholder="https://.../logo.png" value={getT('HERO_LOGO_URL')} onChange={(v)=> setT('HERO_LOGO_URL', v)} />
-          <SimpleTextInput code="HERO_LOGO_WIDTH" label="Hero Logo Width (px)" placeholder="64" value={getT('HERO_LOGO_WIDTH')} onChange={(v)=> setT('HERO_LOGO_WIDTH', v)} />
-          <SimpleTextInput code="HERO_LOGO_HEIGHT" label="Hero Logo Height (px)" placeholder="64" value={getT('HERO_LOGO_HEIGHT')} onChange={(v)=> setT('HERO_LOGO_HEIGHT', v)} />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Hero Background (CSS)</label>
-            <textarea className="w-full px-3 py-2 border rounded-md min-h-20" value={getS('hero.background')} onChange={e => setS('hero.background', e.target.value)} placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} />
+          {/* 1st column: Landing/Welcome/Rules/Game/Result Titles */}
+          <div className="space-y-4">
+            <SimpleTextInput code="LANDING_TITLE" label="Landing Title (LANDING_TITLE)" placeholder="" value={getT('LANDING_TITLE')} onChange={(v)=> setT('LANDING_TITLE', v)} />
+            <SimpleTextInput code="TEXT_10" label="Welcome Title (TEXT_10)" placeholder="Welcome" value={getT('TEXT_10')} onChange={(v)=> setT('TEXT_10', v)} />
+            <SimpleTextInput code="TEXT_20" label="Rules Title (TEXT_20)" placeholder="Game Rules" value={getT('TEXT_20')} onChange={(v)=> setT('TEXT_20', v)} />
+            <SimpleTextInput code="TEXT_30" label="Game Title (TEXT_30)" placeholder="Game" value={getT('TEXT_30')} onChange={(v)=> setT('TEXT_30', v)} />
+            <SimpleTextInput code="TEXT_40" label="Result Title (TEXT_40)" placeholder="Results" value={getT('TEXT_40')} onChange={(v)=> setT('TEXT_40', v)} />
           </div>
-          <div className="md:col-span-2 border rounded-md p-3">
+          {/* 2nd column: Logo + Hero Background */}
+          <div className="space-y-4">
+            <SimpleTextInput code="HERO_LOGO_URL" label="HERO_LOGO_URL" placeholder="https://.../logo.png" value={getT('HERO_LOGO_URL')} onChange={(v)=> setT('HERO_LOGO_URL', v)} />
+            <SimpleTextInput code="HERO_LOGO_WIDTH" label="HERO_LOGO_WIDTH" placeholder="64" value={getT('HERO_LOGO_WIDTH')} onChange={(v)=> setT('HERO_LOGO_WIDTH', v)} />
+            <SimpleTextInput code="HERO_LOGO_HEIGHT" label="HERO_LOGO_HEIGHT" placeholder="64" value={getT('HERO_LOGO_HEIGHT')} onChange={(v)=> setT('HERO_LOGO_HEIGHT', v)} />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">HERO_BACKGROUND</label>
+              <textarea className="w-full px-3 py-2 border rounded-md min-h-20" value={getS('hero.background')} onChange={e => setS('hero.background', e.target.value)} placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} />
+            </div>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 mt-4">
+          <div className="border rounded-md p-3">
             <h4 className="text-sm font-semibold text-gray-800 mb-2">Hero Fonts & Typography</h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Hero Google Font URL</label>
                 <input className="w-full px-3 py-2 border rounded-md" value={getS('hero.fontUrl')} onChange={e => setS('hero.fontUrl', e.target.value)} placeholder="https://fonts.google.com/specimen/Montserrat" />
@@ -190,48 +212,17 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Hero Title Class</label>
-                <input className="w-full px-3 py-2 border rounded-md" value={getS('hero.titleClass')} onChange={e => setS('hero.titleClass', e.target.value)} placeholder="text-2xl md:text-3xl font-bold text-white" />
+                <input className="w-full px-3 py-2 border rounded-md" value={getS('hero.titleClass')} onChange={e => setS('hero.titleClass', e.target.value)} placeholder="text-2xl md:text-3xl font-bold" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Hero Font Color (Hex)</label>
+                <input className="w-full px-3 py-2 border rounded-md" value={getS('hero.fontColor','')} onChange={e => setS('hero.fontColor', e.target.value)} placeholder="#000000" />
               </div>
             </div>
           </div>
         </div>
 
-        {/* Scoreboard Styles (moved under Hero Settings, before Landing) */}
-        <div className="mt-6 pt-4 border-t">
-          <h4 className="text-sm font-semibold text-gray-800 mb-2">Scoreboard Styles</h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Home Card BG (CSS)</label>
-              <textarea className="w-full px-3 py-2 border rounded-md min-h-20" value={getS('scoreboard.homeBg')} onChange={e => setS('scoreboard.homeBg', e.target.value)} placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Visitor Card BG (CSS)</label>
-              <textarea className="w-full px-3 py-2 border rounded-md min-h-20" value={getS('scoreboard.visitorBg')} onChange={e => setS('scoreboard.visitorBg', e.target.value)} placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Digit Color (CSS)</label>
-              <textarea className="w-full px-3 py-2 border rounded-md min-h-20" value={getS('scoreboard.digitColor')} onChange={e => setS('scoreboard.digitColor', e.target.value)} placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 items-center">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Use SCOREBOARD in HERO (Split-Flap)</label>
-              <input type="checkbox" checked={Boolean(getS('hero.useScoreboard', true))} onChange={e => setS('hero.useScoreboard', e.target.checked)} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Show Labels</label>
-              <input type="checkbox" checked={Boolean(getS('scoreboard.showLabels', ''))} onChange={e => setS('scoreboard.showLabels', e.target.checked)} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Home Label</label>
-              <input className="w-full px-3 py-2 border rounded-md" value={getS('scoreboard.homeLabel')} onChange={e => setS('scoreboard.homeLabel', e.target.value)} placeholder="HOME" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Visitor Label</label>
-              <input className="w-full px-3 py-2 border rounded-md" value={getS('scoreboard.visitorLabel')} onChange={e => setS('scoreboard.visitorLabel', e.target.value)} placeholder="VISITOR" />
-            </div>
-          </div>
-        </div>
+        {/* Scoreboard Styles — temporarily hidden/inactive */}
       </div>
       )}
 
@@ -257,17 +248,18 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
           )}
           {/* Buttons: Next Welcome (right subcolumn only) */}
           {showButtons && (
-            <div className="border border-gray-300 rounded-lg p-4 space-y-2">
-              <label className="block text-sm font-semibold text-gray-800">Next Welcome Button</label>
-              <SimpleTextInput code="NEXT_WELCOME_TEXT" label="Button Text" value={getT('NEXT_WELCOME_TEXT')} onChange={(v)=> setT('NEXT_WELCOME_TEXT', v)} />
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Button Action</label>
-                <select className="w-full px-3 py-2 border rounded-md" value={getT('NEXT_WELCOME_ACTION') || 'GO_TO_WELCOME'} onChange={(e)=> setT('NEXT_WELCOME_ACTION', e.target.value)}>
-                  <option value="GO_TO_WELCOME">GO_TO_WELCOME</option>
-                </select>
+              <div className="border border-gray-300 rounded-lg p-4 space-y-2">
+                <label className="block text-sm font-semibold text-gray-800">Next Welcome Button</label>
+                <SimpleTextInput code="NEXT_WELCOME_TEXT" label="Button Text" value={getT('NEXT_WELCOME_TEXT')} onChange={(v)=> setT('NEXT_WELCOME_TEXT', v)} />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Button Action</label>
+                  <select className="w-full px-3 py-2 border rounded-md" value={getT('NEXT_WELCOME_ACTION') || 'GO_TO_WELCOME'} onChange={(e)=> setT('NEXT_WELCOME_ACTION', e.target.value)}>
+                    <option value="GO_TO_WELCOME">GO_TO_WELCOME</option>
+                  </select>
+                </div>
+                <SimpleTextInput code="NEXT_WELCOME_BG" label="Button BG (CSS)" multiline placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} value={getT('NEXT_WELCOME_BG')} onChange={(v)=> setT('NEXT_WELCOME_BG', v)} />
+                <SimpleTextInput code="NEXT_WELCOME_FG" label="Button Font Color (Hex)" value={getT('NEXT_WELCOME_FG')} onChange={(v)=> setT('NEXT_WELCOME_FG', v)} />
               </div>
-              <SimpleTextInput code="NEXT_WELCOME_BG" label="Button BG (CSS)" multiline placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} value={getT('NEXT_WELCOME_BG')} onChange={(v)=> setT('NEXT_WELCOME_BG', v)} />
-            </div>
           )}
         </div>
       </div>
@@ -281,31 +273,31 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
           {showText && (
             <>
               {/* Description (Markdown-capable) - single full-width, multiline */}
-              <TypedInput code="TEXT_11" label="Description (Markdown)" placeholder="Supports Markdown. Use line breaks and **bold** as needed." multiline />
+              <TypedInput code="TEXT_11" label="Description (Markdown)" placeholder="Supports Markdown. Use line breaks and **bold** as needed." multiline value={getT('TEXT_11')} onChange={(v)=> setT('TEXT_11', v)} textType={getTextType('TEXT_11')} onTextTypeChange={(val)=> setTextType('TEXT_11', val)} />
 
               {/* Name pair */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <TypedInput code="TEXT_12" label="Ask Name" />
-                <TypedInput code="TEXT_13" label="Your Name Placeholder" />
+                <TypedInput code="TEXT_12" label="Ask Name" value={getT('TEXT_12')} onChange={(v)=> setT('TEXT_12', v)} textType={getTextType('TEXT_12')} onTextTypeChange={(val)=> setTextType('TEXT_12', val)} />
+                <TypedInput code="TEXT_13" label="Your Name Placeholder" value={getT('TEXT_13')} onChange={(v)=> setT('TEXT_13', v)} textType={getTextType('TEXT_13')} onTextTypeChange={(val)=> setTextType('TEXT_13', val)} />
               </div>
 
               {/* Email pair */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <TypedInput code="TEXT_14" label="Ask Email" />
-                <TypedInput code="TEXT_15" label="Your Email Placeholder" />
+                <TypedInput code="TEXT_14" label="Ask Email" value={getT('TEXT_14')} onChange={(v)=> setT('TEXT_14', v)} textType={getTextType('TEXT_14')} onTextTypeChange={(val)=> setTextType('TEXT_14', val)} />
+                <TypedInput code="TEXT_15" label="Your Email Placeholder" value={getT('TEXT_15')} onChange={(v)=> setT('TEXT_15', v)} textType={getTextType('TEXT_15')} onTextTypeChange={(val)=> setTextType('TEXT_15', val)} />
               </div>
 
               {/* Phone pair */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <TypedInput code="TEXT_16" label="Ask Phone" />
-                <TypedInput code="TEXT_17" label="Your Phone Placeholder" />
+                <TypedInput code="TEXT_16" label="Ask Phone" value={getT('TEXT_16')} onChange={(v)=> setT('TEXT_16', v)} textType={getTextType('TEXT_16')} onTextTypeChange={(val)=> setTextType('TEXT_16', val)} />
+                <TypedInput code="TEXT_17" label="Your Phone Placeholder" value={getT('TEXT_17')} onChange={(v)=> setT('TEXT_17', v)} textType={getTextType('TEXT_17')} onTextTypeChange={(val)=> setTextType('TEXT_17', val)} />
               </div>
 
               {/* Contact required (Markdown-capable) - single full-width, multiline */}
-              <TypedInput code="TEXT_26" label="Contact Required (Markdown)" placeholder="Please provide either email or phone number" multiline />
+              <TypedInput code="TEXT_26" label="Contact Required (Markdown)" placeholder="Please provide either email or phone number" multiline value={getT('TEXT_26')} onChange={(v)=> setT('TEXT_26', v)} textType={getTextType('TEXT_26')} onTextTypeChange={(val)=> setTextType('TEXT_26', val)} />
 
               {/* Try without registration (Markdown-capable) - single full-width, multiline */}
-              <TypedInput code="TEXT_27" label="Try Without Registration Text (Markdown)" placeholder="Want to try without registration?" multiline />
+              <TypedInput code="TEXT_27" label="Try Without Registration Text (Markdown)" placeholder="Want to try without registration?" multiline value={getT('TEXT_27')} onChange={(v)=> setT('TEXT_27', v)} textType={getTextType('TEXT_27')} onTextTypeChange={(val)=> setTextType('TEXT_27', val)} />
             </>
           )}
 
@@ -322,6 +314,7 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
               </select>
             </div>
             <SimpleTextInput code="NEXT_LOGIN_BG" label="CTA Action BG (CSS)" multiline placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} value={getTNew('NEXT_LOGIN_BG')} onChange={(v)=> setTNew('NEXT_LOGIN_BG', v)} />
+            <SimpleTextInput code="NEXT_LOGIN_FG" label="CTA Action Font Color (Hex)" value={getTNew('NEXT_LOGIN_FG')} onChange={(v)=> setTNew('NEXT_LOGIN_FG', v)} />
           </div>
           )}
 
@@ -338,6 +331,7 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
               </select>
             </div>
             <SimpleTextInput code="NEXT_GUEST_BG" label="CTA Action BG (CSS)" multiline placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} value={getTNew('NEXT_GUEST_BG')} onChange={(v)=> setTNew('NEXT_GUEST_BG', v)} />
+            <SimpleTextInput code="NEXT_GUEST_FG" label="CTA Action Font Color (Hex)" value={getTNew('NEXT_GUEST_FG')} onChange={(v)=> setTNew('NEXT_GUEST_FG', v)} />
           </div>
           )}
         </div>
@@ -360,10 +354,10 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
           {!hideSectionTitles && <h3 className="text-md font-medium text-gray-800 mb-2">Rules Main</h3>}
           {showText && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <TypedInput code="TEXT_21" label="Rules Title" />
-              <TypedInput code="TEXT_22" label="Game Rules (multi-line)" multiline />
-              <TypedInput code="TEXT_23" label="Win Title" />
-              <TypedInput code="TEXT_24" label="Win Rules (multi-line)" multiline />
+              <TypedInput code="TEXT_21" label="Rules Title" value={getT('TEXT_21')} onChange={(v)=> setT('TEXT_21', v)} textType={getTextType('TEXT_21')} onTextTypeChange={(val)=> setTextType('TEXT_21', val)} />
+              <TypedInput code="TEXT_22" label="Game Rules (multi-line)" multiline value={getT('TEXT_22')} onChange={(v)=> setT('TEXT_22', v)} textType={getTextType('TEXT_22')} onTextTypeChange={(val)=> setTextType('TEXT_22', val)} />
+              <TypedInput code="TEXT_23" label="Win Title" value={getT('TEXT_23')} onChange={(v)=> setT('TEXT_23', v)} textType={getTextType('TEXT_23')} onTextTypeChange={(val)=> setTextType('TEXT_23', val)} />
+              <TypedInput code="TEXT_24" label="Win Rules (multi-line)" multiline value={getT('TEXT_24')} onChange={(v)=> setT('TEXT_24', v)} textType={getTextType('TEXT_24')} onTextTypeChange={(val)=> setTextType('TEXT_24', val)} />
             </div>
           )}
           {/* Next Play — standardized 3-line block (bordered, editor-only) */}
@@ -379,6 +373,7 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
                 </select>
               </div>
               <SimpleTextInput code="NEXT_PLAY_BG" label="CTA Action BG (CSS)" multiline placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} value={getTNew('NEXT_PLAY_BG')} onChange={(v)=> setTNew('NEXT_PLAY_BG', v)} />
+              <SimpleTextInput code="NEXT_PLAY_FG" label="CTA Action Font Color (Hex)" value={getTNew('NEXT_PLAY_FG')} onChange={(v)=> setTNew('NEXT_PLAY_FG', v)} />
             </div>
           )}
         </div>
@@ -402,85 +397,114 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
           {/* Result headline texts (Markdown-capable) */}
           {showText && (
             <>
-              <TypedInput code="WON_TEXT" label="WON_TEXT (Markdown)" multiline />
-              <TypedInput code="LOST_TEXT" label="LOST_TEXT (Markdown)" multiline />
-              <TypedInput code="CTA_TITLE" label="CTA Title" />
+              <TypedInput code="WON_TEXT" label="WON_TEXT (Markdown)" multiline value={getT('WON_TEXT')} onChange={(v)=> setT('WON_TEXT', v)} textType={getTextType('WON_TEXT')} onTextTypeChange={(val)=> setTextType('WON_TEXT', val)} />
+              <TypedInput code="LOST_TEXT" label="LOST_TEXT (Markdown)" multiline value={getT('LOST_TEXT')} onChange={(v)=> setT('LOST_TEXT', v)} textType={getTextType('LOST_TEXT')} onTextTypeChange={(val)=> setTextType('LOST_TEXT', val)} />
+              <TypedInput code="CTA_TITLE" label="CTA Title" value={getT('CTA_TITLE')} onChange={(v)=> setT('CTA_TITLE', v)} textType={getTextType('CTA_TITLE')} onTextTypeChange={(val)=> setTextType('CTA_TITLE', val)} />
             </>
           )}
 
-          {/* Primary Result CTA — standardized 3-line block (bordered, editor-only) */}
+          {/* Unified Result CTAs — primary + additional in one centered grid */}
           {showButtons && (
-          <div className="border border-gray-300 rounded-lg p-4 space-y-2">
-            <label className="block text-sm font-semibold text-gray-800">Primary CTA (Result)</label>
-            <SimpleTextInput code="CTA1_TEXT" label="CTA Action Text (Button)" value={getTNew('CTA1_TEXT')} onChange={(v)=> setTNew('CTA1_TEXT', v)} />
-            <SimpleTextInput code="CTA1_URL" label="CTA Action URL (URL)" value={getTNew('CTA1_URL')} onChange={(v)=> setTNew('CTA1_URL', v)} />
-            <SimpleTextInput code="CTA1_BG" label="CTA Action BG (CSS)" multiline placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} value={getTNew('CTA1_BG')} onChange={(v)=> setTNew('CTA1_BG', v)} />
-          </div>
-          )}
-
-          {/* Additional CTAs manager (bordered cards with editor-only CTA2_TEXT/CTA2_URL/CTA2_BG labels) */}
-          {showButtons && (
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Additional CTAs</label>
-            <div className="space-y-2">
-              {(texts.CTA_BUTTONS as Array<{text:string;url:string;bg?:string}>)?.slice(1)?.map((cta, idx) => (
-                <div key={idx} className="border border-gray-300 rounded-lg p-4 space-y-2">
-                  <SimpleTextInput
-                    code={`CTA${idx+2}_TEXT`}
-                    label="CTA Action Text (Button)"
-                    value={cta.text}
-                    onChange={val => {
-                      const list = Array.isArray(texts.CTA_BUTTONS) ? [...texts.CTA_BUTTONS] : []
-                      list[idx+1] = { ...list[idx+1], text: val }
-                      onTextsChange({ ...texts, CTA_BUTTONS: list })
-                    }}
-                  />
-                  <SimpleTextInput
-                    code={`CTA${idx+2}_URL`}
-                    label="CTA Action URL (URL)"
-                    value={cta.url}
-                    onChange={val => {
-                      const list = Array.isArray(texts.CTA_BUTTONS) ? [...texts.CTA_BUTTONS] : []
-                      list[idx+1] = { ...list[idx+1], url: val }
-                      onTextsChange({ ...texts, CTA_BUTTONS: list })
-                    }}
-                  />
-                  <SimpleTextInput
-                    code={`CTA${idx+2}_BG`}
-                    label="CTA Action BG (CSS)"
-                    multiline
-                    value={cta.bg || ''}
-                    onChange={val => {
-                      const list = Array.isArray(texts.CTA_BUTTONS) ? [...texts.CTA_BUTTONS] : []
-                      list[idx+1] = { ...list[idx+1], bg: val }
-                      onTextsChange({ ...texts, CTA_BUTTONS: list })
-                    }}
-                  />
-                  <div className="flex justify-end">
-                    <button
-                      type="button"
-                      className="px-3 py-2 bg-red-600 text-white rounded-md"
-                      onClick={() => {
-                        const list = Array.isArray(texts.CTA_BUTTONS) ? [...texts.CTA_BUTTONS] : []
-                        list.splice(idx+1, 1)
-                        onTextsChange({ ...texts, CTA_BUTTONS: list })
+          <div className="border border-gray-300 rounded-lg p-4">
+            <label className="block text-sm font-semibold text-gray-800 mb-2 text-center">Result CTAs</label>
+            <div className="space-y-4">
+              {[{ text: getTNew('CTA1_TEXT'), url: getTNew('CTA1_URL'), bg: getTNew('CTA1_BG') }, ...((texts.CTA_BUTTONS as Array<{ text: string; url: string; bg?: string }>) || [])].map((cta, idx) => (
+                <div key={idx} className="w-full border border-gray-200 rounded-lg p-4 space-y-2">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Button Text {idx === 0 ? '(Primary)' : ''}</label>
+                    <input
+                      className="w-full px-3 py-2 border rounded-md"
+                      value={cta.text || ''}
+                      onChange={(e) => {
+                        const val = e.target.value
+                        if (idx === 0) setTNew('CTA1_TEXT', val)
+                        else {
+                          const list = Array.isArray(texts.CTA_BUTTONS) ? [...texts.CTA_BUTTONS] : []
+                          list[idx - 1] = { ...list[idx - 1], text: val }
+                          onTextsChange({ ...texts, CTA_BUTTONS: list })
+                        }
                       }}
-                    >
-                      Delete CTA
-                    </button>
+                    />
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Button URL</label>
+                    <input
+                      className="w-full px-3 py-2 border rounded-md"
+                      value={cta.url || ''}
+                      onChange={(e) => {
+                        const val = e.target.value
+                        if (idx === 0) setTNew('CTA1_URL', val)
+                        else {
+                          const list = Array.isArray(texts.CTA_BUTTONS) ? [...texts.CTA_BUTTONS] : []
+                          list[idx - 1] = { ...list[idx - 1], url: val }
+                          onTextsChange({ ...texts, CTA_BUTTONS: list })
+                        }
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Button BG (CSS)</label>
+                    <textarea
+                      className="w-full px-3 py-2 border rounded-md min-h-20"
+                      placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'}
+                      value={cta.bg || ''}
+                      onChange={(e) => {
+                        const val = e.target.value
+                        if (idx === 0) setTNew('CTA1_BG', val)
+                        else {
+                          const list = Array.isArray(texts.CTA_BUTTONS) ? [...texts.CTA_BUTTONS] : []
+                          list[idx - 1] = { ...list[idx - 1], bg: val }
+                          onTextsChange({ ...texts, CTA_BUTTONS: list })
+                        }
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Button Font Color (Hex)</label>
+                    <input
+                      className="w-full px-3 py-2 border rounded-md"
+                      value={(idx === 0 ? getTNew('CTA1_FG') : (texts.CTA_BUTTONS?.[idx-1]?.fg || ''))}
+                      onChange={(e) => {
+                        const val = e.target.value
+                        if (idx === 0) setTNew('CTA1_FG', val)
+                        else {
+                          const list = Array.isArray(texts.CTA_BUTTONS) ? [...texts.CTA_BUTTONS] : []
+                          list[idx - 1] = { ...list[idx - 1], fg: val }
+                          onTextsChange({ ...texts, CTA_BUTTONS: list })
+                        }
+                      }}
+                    />
+                  </div>
+                  {idx > 0 && (
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        className="px-3 py-2 bg-red-600 text-white rounded-md"
+                        onClick={() => {
+                          const list = Array.isArray(texts.CTA_BUTTONS) ? [...texts.CTA_BUTTONS] : []
+                          list.splice(idx - 1, 1)
+                          onTextsChange({ ...texts, CTA_BUTTONS: list })
+                        }}
+                      >
+                        Delete CTA
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
-              <button type="button" className="px-4 py-2 bg-blue-600 text-white rounded-md" onClick={() => {
-                const list = Array.isArray(texts.CTA_BUTTONS) ? [...texts.CTA_BUTTONS] : []
-                if (list.length === 0) {
-                  // Seed list with CTA1 from fields if present
-                  const first = { text: (getTNew('CTA1_TEXT') || ''), url: (getTNew('CTA1_URL') || ''), bg: (getTNew('CTA1_BG') || '') }
-                  list.push(first)
-                }
-                list.push({ text: '', url: '', bg: '' })
-                onTextsChange({ ...texts, CTA_BUTTONS: list })
-              }}>ADD CTA</button>
+            </div>
+            <div className="flex justify-center mt-3">
+              <button
+                type="button"
+                className="px-4 py-2 bg-blue-600 text-white rounded-md"
+                onClick={() => {
+                  const list = Array.isArray(texts.CTA_BUTTONS) ? [...texts.CTA_BUTTONS] : []
+                  list.push({ text: '', url: '', bg: '' })
+                  onTextsChange({ ...texts, CTA_BUTTONS: list })
+                }}
+              >
+                ADD CTA
+              </button>
             </div>
           </div>
           )}
@@ -498,6 +522,7 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
               </select>
             </div>
             <SimpleTextInput code="INVITE_BG" label="CTA Action BG (CSS)" multiline value={getTNew('INVITE_BG')} onChange={(v)=> setTNew('INVITE_BG', v)} />
+            <SimpleTextInput code="INVITE_FG" label="CTA Action Font Color (Hex)" value={getTNew('INVITE_FG')} onChange={(v)=> setTNew('INVITE_FG', v)} />
           </div>
           )}
 
@@ -514,6 +539,7 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
               </select>
             </div>
             <SimpleTextInput code="PLAYAGAIN_BG" label="CTA Action BG (CSS)" multiline value={getTNew('PLAYAGAIN_BG')} onChange={(v)=> setTNew('PLAYAGAIN_BG', v)} />
+            <SimpleTextInput code="PLAYAGAIN_FG" label="CTA Action Font Color (Hex)" value={getTNew('PLAYAGAIN_FG')} onChange={(v)=> setTNew('PLAYAGAIN_FG', v)} />
           </div>
           )}
         </div>
@@ -539,30 +565,62 @@ export default function PlatformSettingsForm({ texts, styles, onTextsChange, onS
             <label className="block text-sm font-medium text-gray-700 mb-1">Main Background (CSS)</label>
             <textarea className="w-full px-3 py-2 border rounded-md min-h-20" value={getS('main.background')} onChange={e => setS('main.background', e.target.value)} placeholder={'background: #005e05;\nbackground: linear-gradient(160deg, rgba(0, 94, 5, 1) 0%, rgba(153, 153, 153, 1) 100%);'} />
           </div>
-          <div className="md:col-span-2 border rounded-md p-3">
+            <div className="md:col-span-2 border rounded-md p-3">
             <h4 className="text-sm font-semibold text-gray-800 mb-2">Main Fonts & Typography</h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Main Google Font URL</label>
-                <input className="w-full px-3 py-2 border rounded-md" value={getS('main.fontUrl')} onChange={e => setS('main.fontUrl', e.target.value)} placeholder="https://fonts.google.com/specimen/Montserrat" />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Main H1 Google Font URL</label>
+                <input className="w-full px-3 py-2 border rounded-md" value={getS('main.h1FontUrl')} onChange={e => setS('main.h1FontUrl', e.target.value)} placeholder="https://fonts.google.com/specimen/Montserrat" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Main Font Style</label>
-                <input className="w-full px-3 py-2 border rounded-md" value={getS('main.fontStyle')} onChange={e => setS('main.fontStyle', e.target.value)} placeholder="Regular 400" />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Main H1 Font Style</label>
+                <input className="w-full px-3 py-2 border rounded-md" value={getS('main.h1FontStyle')} onChange={e => setS('main.h1FontStyle', e.target.value)} placeholder="Bold 700" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">H1 Class</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Main H1 Title Class</label>
                 <input className="w-full px-3 py-2 border rounded-md" value={getS('main.h1Class')} onChange={e => setS('main.h1Class', e.target.value)} placeholder="text-3xl font-bold" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">H2 Class</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Main H1 Font Color (Hex)</label>
+                <input className="w-full px-3 py-2 border rounded-md" value={getS('main.h1Color')} onChange={e => setS('main.h1Color', e.target.value)} placeholder="#000000" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Main H2 Google Font URL</label>
+                <input className="w-full px-3 py-2 border rounded-md" value={getS('main.h2FontUrl')} onChange={e => setS('main.h2FontUrl', e.target.value)} placeholder="https://fonts.google.com/specimen/Montserrat" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Main H2 Font Style</label>
+                <input className="w-full px-3 py-2 border rounded-md" value={getS('main.h2FontStyle')} onChange={e => setS('main.h2FontStyle', e.target.value)} placeholder="SemiBold 600" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Main H2 Title Class</label>
                 <input className="w-full px-3 py-2 border rounded-md" value={getS('main.h2Class')} onChange={e => setS('main.h2Class', e.target.value)} placeholder="text-xl font-semibold" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">P Class</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Main H2 Font Color (Hex)</label>
+                <input className="w-full px-3 py-2 border rounded-md" value={getS('main.h2Color')} onChange={e => setS('main.h2Color', e.target.value)} placeholder="#000000" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Main P Google Font URL</label>
+                <input className="w-full px-3 py-2 border rounded-md" value={getS('main.pFontUrl')} onChange={e => setS('main.pFontUrl', e.target.value)} placeholder="https://fonts.google.com/specimen/Montserrat" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Main P Font Style</label>
+                <input className="w-full px-3 py-2 border rounded-md" value={getS('main.pFontStyle')} onChange={e => setS('main.pFontStyle', e.target.value)} placeholder="Regular 400" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Main P Title Class</label>
                 <input className="w-full px-3 py-2 border rounded-md" value={getS('main.pClass')} onChange={e => setS('main.pClass', e.target.value)} placeholder="text-base" />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Main P Font Color (Hex)</label>
+                <input className="w-full px-3 py-2 border rounded-md" value={getS('main.pColor')} onChange={e => setS('main.pColor', e.target.value)} placeholder="#000000" />
+              </div>
             </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Input Class</label>
+            <input className="w-full px-3 py-2 border rounded-md" value={getS('main.inputClass')} onChange={e => setS('main.inputClass', e.target.value)} placeholder="w-full px-4 py-3 rounded-lg" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Primary Button Class</label>

@@ -23,10 +23,25 @@ export default function LandingClientPlatform({ gameId, texts, styles, refCode }
 
   const extractBackgroundValue = (css?: string): string | undefined => {
     if (!css) return undefined
-    const grad = css.match(/linear-gradient\([^\)]+\)/i)
-    if (grad) return grad[0]
-    const bg = css.match(/background:\s*([^;]+);?/i)
-    if (bg && bg[1]) return bg[1].trim()
+    // Grab the last background: ... value, respecting CSS precedence
+    let last: string | undefined
+    const re = /background\s*:\s*([^;]+);?/ig
+    let m: RegExpExecArray | null
+    while ((m = re.exec(css)) !== null) {
+      last = (m[1] || '').trim()
+    }
+    if (last) return last
+    // Fallback: attempt to extract a full linear-gradient(...) block
+    const low = css.toLowerCase()
+    const idx = low.lastIndexOf('linear-gradient(')
+    if (idx >= 0) {
+      let depth = 0
+      for (let i = idx; i < css.length; i++) {
+        const ch = css[i]
+        if (ch === '(') depth++
+        else if (ch === ')') { depth--; if (depth === 0) return css.slice(idx, i + 1) }
+      }
+    }
     return undefined
   }
 
@@ -58,9 +73,9 @@ export default function LandingClientPlatform({ gameId, texts, styles, refCode }
   }, [])
 
   return (
-    <div className="fixed inset-0 w-screen h-screen overflow-hidden" style={{ backgroundColor: '#000000FF', color: '#FFFFFFFF', fontFamily: '"Noto Sans", sans-serif' }}>
-      <HeroBlock backgroundCss={heroBg} title={title} titleClass={styles?.hero?.titleClass} useScoreboard={styles?.hero?.useScoreboard !== false} logoUrl={texts?.HERO_LOGO_URL} logoWidth={Number(texts?.HERO_LOGO_WIDTH) || 64} logoHeight={Number(texts?.HERO_LOGO_HEIGHT) || 64} fontUrl={styles?.hero?.fontUrl} fontStyle={styles?.hero?.fontStyle} scoreboard={{ home: 0, visitor: 0, homeBg: styles?.scoreboard?.homeBg || '#C00000FF', digitColor: styles?.scoreboard?.digitColor || '#FFFFFFFF' }} isLanding={true} />
-      <MainBlock backgroundCss={mainBg} isLanding={true} fontUrl={styles?.main?.fontUrl} fontStyle={styles?.main?.fontStyle}>
+    <div className="fixed inset-0 w-screen h-screen overflow-hidden" style={{ backgroundColor: '#FFFFFFFF', fontFamily: '"Noto Sans", sans-serif' }}>
+      <HeroBlock backgroundCss={heroBg} title={title} titleClass={styles?.hero?.titleClass} titleColor={styles?.hero?.fontColor} useScoreboard={false} logoUrl={texts?.HERO_LOGO_URL} logoWidth={Number(texts?.HERO_LOGO_WIDTH) || 64} logoHeight={Number(texts?.HERO_LOGO_HEIGHT) || 64} fontUrl={styles?.hero?.fontUrl} fontStyle={styles?.hero?.fontStyle} isLanding={true} />
+      <MainBlock backgroundCss={mainBg} isLanding={true} fonts={{ h1: { url: styles?.main?.h1FontUrl, style: styles?.main?.h1FontStyle }, h2: { url: styles?.main?.h2FontUrl, style: styles?.main?.h2FontStyle }, p: { url: styles?.main?.pFontUrl, style: styles?.main?.pFontStyle } }} fontUrl={styles?.main?.fontUrl} fontStyle={styles?.main?.fontStyle}>
         <div className="relative w-full h-full">
           {/* Background cover image */}
           {imageUrl && (
@@ -79,8 +94,8 @@ export default function LandingClientPlatform({ gameId, texts, styles, refCode }
           <div className="absolute inset-0 flex items-center justify-center p-4">
             <button
               onClick={() => onNext(buildHrefForAction(action))}
-              className={`${styles?.main?.buttonPrimaryClass || 'px-6 py-3 text-white rounded-lg'} text-2xl`}
-style={{ background: extractBackgroundValue(texts?.NEXT_WELCOME_BG), minHeight: '48px', minWidth: '240px', maxWidth: '400px', width: '100%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              className={`${styles?.main?.buttonPrimaryClass || 'px-6 py-3 rounded-lg'} text-2xl`}
+style={{ background: extractBackgroundValue(texts?.NEXT_WELCOME_BG) || '#000000FF', color: (texts?.NEXT_WELCOME_FG || '').trim() || undefined, minHeight: '48px', minWidth: '240px', maxWidth: '400px', width: '100%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               {ctaText}
             </button>

@@ -8,7 +8,8 @@ import StarsHexaCustomizationForm from './StarsHexaCustomizationForm 2'
 import GeneralCustomizationForm from './GeneralCustomizationForm'
 import PlatformSettingsForm from './PlatformSettingsForm'
 import QuizzCustomizationForm from './QuizzCustomizationForm'
-import { GameType, QuizzConfiguration } from '../../types'
+import QuizzzCustomizationForm from './QuizzzCustomizationForm'
+import { GameType, QuizzConfiguration, QuizzzConfiguration } from '../../types'
 
 interface HexagonCard {
   id: string
@@ -52,15 +53,18 @@ export default function GameEditor({ mode, gameId, initialGameType, hideTypeSele
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null)
 
   // Game meta
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
+  const [title, setTitle] = useState(mode === 'create' ? 'New Game' : '')
+  const [description, setDescription] = useState(mode === 'create' ? 'Describe your game...' : '')
   const [isActive, setIsActive] = useState(false)
-const [gameType, setGameType] = useState<GameType>(initialGameType || 'STARS_HEXA')
+const [gameType, setGameType] = useState<GameType>(initialGameType || 'QUIZZZ')
+  // DB-driven game types list
+  const [availableTypes, setAvailableTypes] = useState<Array<{ code: GameType; name: string; enabled: boolean; order: number }>>([])
+  const [loadingTypes, setLoadingTypes] = useState<boolean>(false)
 
   // Common configuration
   const [maxRounds, setMaxRounds] = useState(3)
 
-  // QUIZZ configuration (ensures questions are present in edit mode)
+  // QUIZZ configuration (legacy; QUIZZZ will supersede)
   const [quizzConfig, setQuizzConfig] = useState<Partial<QuizzConfiguration>>({
     mapType: 'hex',
     mapName: '',
@@ -75,9 +79,46 @@ const [gameType, setGameType] = useState<GameType>(initialGameType || 'STARS_HEX
     texts: { submitAnswer: 'Submit', correctFeedback: 'Correct!', wrongFeedback: 'Try again' }
   })
 
-// Platform Settings
+// QUIZZZ configuration (new board-quiz)
+  const [quizzzConfig, setQuizzzConfig] = useState<Partial<QuizzzConfiguration>>({
+    mapType: 'hex',
+    mapName: '',
+    selectedMaps: [],
+    numberOfCards: 6,
+    rounds: 5,
+    winLimit: 3,
+    questions: [],
+    backgroundCss: '',
+    tileStyles: {},
+    cardCoverImages: [],
+    cardCoverFill: true,
+    cardColors: {},
+    overlayBg: '#00000044'
+  })
+
+// Platform Settings (DB-driven defaults; no baked-in strings)
 const [platformTexts, setPlatformTexts] = useState<Record<string, string>>({})
 const [platformStyles, setPlatformStyles] = useState<Record<string, any>>({})
+
+// Load PlayMass defaults from DB for create mode (and whenever gameType changes)
+useEffect(() => {
+  if (mode !== 'create') return
+  const controller = new AbortController()
+  const load = async () => {
+    try {
+      const res = await fetch(`/api/config/defaults?module=${encodeURIComponent(gameType)}`, { signal: controller.signal, cache: 'no-store' })
+      if (!res.ok) return
+      const data = await res.json()
+      const defs = data?.data?.defaults || {}
+      const ptxt = defs?.platform?.texts || {}
+      const psty = defs?.platform?.styles || {}
+      setPlatformTexts(ptxt)
+      setPlatformStyles(psty)
+    } catch {}
+  }
+  load()
+  return () => controller.abort()
+}, [mode, gameType])
 
   // Stars Hexa configuration (edit layout form parity)
   const [maxFlipsPerRound, setMaxFlipsPerRound] = useState(3)
@@ -129,6 +170,45 @@ const [platformStyles, setPlatformStyles] = useState<Record<string, any>>({})
   })
 
   const [rewards, setRewards] = useState<RewardConfig[]>([])
+
+  // Load game types from DB for create mode selector
+  useEffect(() => {
+    if (hideTypeSelect) return
+    ;(async () => {
+      try {
+        setLoadingTypes(true)
+        const res = await fetch('/api/admin/game-types', { cache: 'no-store' })
+        const data = await res.json()
+        if (res.ok) {
+          const itemsRaw = (data?.data?.items || []).filter((it: any) => it && typeof it.code === 'string')
+          // Deduplicate by code (prefer enabled=true; then smaller order)
+          const byCode = new Map<string, any>()
+          for (const t of itemsRaw) {
+            const k = String(t.code || '').toUpperCase()
+            const cur = byCode.get(k)
+            if (!cur) { byCode.set(k, t); continue }
+            if ((t.enabled && !cur.enabled) || (t.enabled === cur.enabled && Number(t.order || 0) < Number(cur.order || 0))) {
+              byCode.set(k, t)
+            }
+          }
+          const items = Array.from(byCode.values())
+          setAvailableTypes(items)
+          // If current gameType not present or disabled, default to first enabled type
+          const codes = new Set(items.filter((x: any) => x.enabled !== false).map((x: any) => x.code))
+          if (!codes.has(gameType) && items.length > 0) {
+            const first = items.find((x: any) => x.enabled !== false) || items[0]
+            if (first?.code) setGameType(first.code as GameType)
+          }
+        } else {
+          // leave availableTypes empty; UI will show message
+        }
+      } catch (_) {
+        // ignore
+      } finally {
+        setLoadingTypes(false)
+      }
+    })()
+  }, [hideTypeSelect])
 
   // Load existing game in edit mode
   useEffect(() => {
@@ -253,6 +333,41 @@ const [platformStyles, setPlatformStyles] = useState<Record<string, any>>({})
             })
           }
 
+          if (game.type === 'QUIZZZ' && game.configuration?.quizzz) {
+            const qz = game.configuration.quizzz
+            setQuizzzConfig({
+              mapType: qz.mapType || 'hex',
+              mapName: qz.mapName || '',
+              selectedMaps: Array.isArray(qz.selectedMaps) ? qz.selectedMaps : [],
+              numberOfCards: Number(qz.numberOfCards || 6),
+              rounds: Number(qz.rounds || 5),
+              winLimit: Number(qz.winLimit || 3),
+              questions: Array.isArray(qz.questions) ? qz.questions : [],
+              backgroundCss: qz.backgroundCss || '',
+              tileStyles: qz.tileStyles || {},
+              cardCoverImages: Array.isArray(qz.cardCoverImages) ? qz.cardCoverImages : [],
+              cardCoverFill: qz.cardCoverFill !== false,
+              cardColors: qz.cardColors || {},
+              overlayBg: qz.overlayBg || '#00000044'
+            })
+            // Keep payloadRef in sync for submit
+            ;(payloadRef.current as any).quizzz = {
+              mapType: qz.mapType || 'hex',
+              mapName: qz.mapName || '',
+              selectedMaps: Array.isArray(qz.selectedMaps) ? qz.selectedMaps : [],
+              numberOfCards: Number(qz.numberOfCards || 6),
+              rounds: Number(qz.rounds || 5),
+              winLimit: Number(qz.winLimit || 3),
+              questions: Array.isArray(qz.questions) ? qz.questions : [],
+              backgroundCss: qz.backgroundCss || '',
+              tileStyles: qz.tileStyles || {},
+              cardCoverImages: Array.isArray(qz.cardCoverImages) ? qz.cardCoverImages : [],
+              cardCoverFill: qz.cardCoverFill !== false,
+              cardColors: qz.cardColors || {},
+              overlayBg: qz.overlayBg || '#00000044'
+            } as any
+          }
+
           if (game.type === 'STARS_HEXA' && game.configuration?.starsHexa) {
             setMaxFlipsPerRound(game.configuration.starsHexa.maxFlipsPerAttempt || 3)
             setTheme(game.configuration.starsHexa.theme || 'default')
@@ -368,6 +483,30 @@ const [platformStyles, setPlatformStyles] = useState<Record<string, any>>({})
           colors: starsHexaColors,
           emojis: { win: winEmoji, lose: loseEmoji }
         }
+      } else if (gameType === 'QUIZZZ') {
+        // Validate logical constraints for QUIZZZ
+        const qc = (quizzzConfig || {}) as any
+        const numberOfCards = Number(qc.numberOfCards || 1)
+        const rounds = Number(qc.rounds || 1)
+        const winLimit = Number(qc.winLimit || 1)
+        const questions = Array.isArray(qc.questions) ? qc.questions : []
+        if (questions.length < 1) throw new Error('At least one question is required')
+        if (winLimit > rounds) throw new Error('Win limit cannot exceed rounds')
+        payload.configuration.quizzz = {
+          mapType: qc.mapType || 'hex',
+          mapName: qc.mapName || '',
+          selectedMaps: Array.isArray(qc.selectedMaps) ? qc.selectedMaps : [],
+          numberOfCards,
+          rounds,
+          winLimit,
+          questions,
+          backgroundCss: qc.backgroundCss || '',
+          tileStyles: qc.tileStyles || {},
+          cardCoverImages: Array.isArray(qc.cardCoverImages) ? qc.cardCoverImages : [],
+          cardCoverFill: qc.cardCoverFill !== false,
+          cardColors: qc.cardColors || {},
+          overlayBg: qc.overlayBg || '#00000044'
+        } as any
       } else if (gameType === 'FIND_RED') {
         // Validate relationships
         const p = { ...findRedConfig }
@@ -541,46 +680,51 @@ const [platformStyles, setPlatformStyles] = useState<Record<string, any>>({})
             <div className="lg:col-span-2">
               <div className="space-y-8">
 
-                {/* Segment 1 — GENERAL */}
+                {/* Segment 1 — Basic Info (no header) */}
                 <div className="relative">
-                  <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-gray-200 px-3 py-2 rounded-t-lg">
-                    <h3 className="text-xs font-semibold tracking-wide text-gray-700">GENERAL</h3>
-                  </div>
                   <div className="grid grid-cols-1 gap-4">
                     {/* Left: Basic Information */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 h-full">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                        {/* Row 1: Status checkbox (left) + Game Title (right) */}
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Game Title *</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Active</label>
+                          <label className="inline-flex items-center gap-2 text-black">
+                            <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
+                            <span>active</span>
+                          </label>
+                        </div>
+                        <div>
+<label className="block text-sm font-medium text-gray-700 mb-2">Game Title *</label>
                           <input type="text" value={title} onChange={(e) => setTitle(e.target.value)}
                             className="w-full px-4 py-3 bg-white text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500 caret-black" style={{ backgroundColor: '#ffffff', color: '#000000', caretColor: '#000000' }} placeholder={`My Awesome ${gameTypeName} Game`} required />
                         </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                          <select value={isActive ? 'active' : 'inactive'} onChange={(e) => setIsActive(e.target.value === 'active')}
-                            className="w-full px-4 py-3 bg-white text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" style={{ backgroundColor: '#ffffff', color: '#000000' }}>
-                            <option value="active" className="bg-white text-black">Active</option>
-                            <option value="inactive" className="bg-white text-black">Inactive</option>
-                          </select>
-                        </div>
-                        {mode === 'create' && !hideTypeSelect && (
-                          <div className="lg:col-span-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Game Type</label>
-                            <select value={gameType} onChange={(e) => setGameType(e.target.value as GameType)}
-                              className="w-full px-4 py-3 bg-white text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" style={{ backgroundColor: '#ffffff', color: '#000000' }}>
-                              <option value="STARS_HEXA" className="bg-white text-black">Hexa</option>
-                              <option value="PENALTY_SHOOTOUT" className="bg-white text-black">Penalty Shootout</option>
-                              <option value="FIND_RED" className="bg-white text-black">Get Shorty (Find Red)</option>
-                              <option value="WHEEL_OF_FORTUNE" className="bg-white text-black">Wheel of Fortune</option>
-                              <option value="QUIZZ" className="bg-white text-black">Quizz</option>
-                            </select>
-                          </div>
-                        )}
-                        <div className="lg:col-span-2">
+                        {/* Row 2: Description spanning full width */}
+                        <div className="md:col-span-2">
                           <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
                           <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3}
                             className="w-full px-4 py-3 bg-white text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500 caret-black" style={{ backgroundColor: '#ffffff', color: '#000000', caretColor: '#000000' }} placeholder="Describe your game..." />
                         </div>
+                        {/* Row 3: Game Type selector (create mode only) */}
+                        {mode === 'create' && !hideTypeSelect && (
+                          <div className="md:col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Game Type</label>
+                            {loadingTypes ? (
+                              <div className="text-sm text-gray-600">Loading types…</div>
+                            ) : availableTypes.length > 0 ? (
+                              <select value={gameType} onChange={(e) => setGameType(e.target.value as GameType)}
+                                className="w-full px-4 py-3 bg-white text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" style={{ backgroundColor: '#ffffff', color: '#000000' }}>
+                                {availableTypes.filter(t => t.enabled !== false).map((t) => (
+                                  <option key={t.code} value={t.code} className="bg-white text-black">{t.name}</option>
+                                ))}
+                              </select>
+                            ) : (
+                              <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded p-3">
+                                No game types configured in DB. Please add types via API: POST /api/admin/game-types
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -819,44 +963,34 @@ const [platformStyles, setPlatformStyles] = useState<Record<string, any>>({})
 
             {/* RIGHT COLUMN */}
             <div className="space-y-6">
-              {/* Segment1 - Game Type */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Game Type</h2>
-                {mode === 'create' && !hideTypeSelect ? (
-                  <select value={gameType} onChange={(e) => setGameType(e.target.value as GameType)}
-                    className="w-full px-4 py-3 bg-white text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <option value="STARS_HEXA">Hexa</option>
-                    <option value="PENALTY_SHOOTOUT">Penalty Shootout</option>
-                    <option value="FIND_RED">Get Shorty (Find Red)</option>
-                    <option value="WHEEL_OF_FORTUNE">Wheel of Fortune</option>
-                    <option value="QUIZZ">Quizz</option>
-                  </select>
-                ) : (
-                  <div className="text-gray-800">{gameType}</div>
-                )}
-              </div>
+              
 
-              {/* Segment2 - Game General Settings (Map, Background, ETC) */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Game General Settings</h2>
-                {gameType === 'QUIZZ' ? (
-                  <p className="text-sm text-gray-600">Map settings are configured in the Game Type specific Settings section below.</p>
-                ) : (
-                  <p className="text-sm text-gray-600">No general settings available for this game type.</p>
-                )}
-              </div>
+              {/* Edit Game — QUIZZZ simplified editor in the right column */}
+              {gameType === 'QUIZZZ' && (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Edit Game</h2>
+                  <QuizzzCustomizationForm
+                    config={quizzzConfig as QuizzzConfiguration}
+                    onChange={(cfg) => {
+                      setQuizzzConfig(cfg)
+                      ;(payloadRef.current as any).quizzz = cfg
+                    }}
+                  />
+                </div>
+              )}
 
               {/* Segment3 - Game Type specific Settings */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Game Type specific Settings</h2>
-                {gameType === 'QUIZZ' && (
-                  <QuizzCustomizationForm
-                    config={quizzConfig as any}
-                    onChange={(q)=> setQuizzConfig(q)}
-                  />
-                )}
-                {gameType === 'STARS_HEXA' && (
-                  <StarsHexaCustomizationForm
+              {gameType !== 'QUIZZZ' && (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Game Type specific Settings</h2>
+                  {gameType === 'QUIZZ' && (
+                    <QuizzCustomizationForm
+                      config={quizzConfig as any}
+                      onChange={(q)=> setQuizzConfig(q)}
+                    />
+                  )}
+                  {gameType === 'STARS_HEXA' && (
+                    <StarsHexaCustomizationForm
                     texts={starsHexaTexts}
                     colors={starsHexaColors}
                     settings={{ maxFlipsPerAttempt: maxFlipsPerRound, theme, winEmoji, loseEmoji }}
@@ -934,6 +1068,7 @@ const [platformStyles, setPlatformStyles] = useState<Record<string, any>>({})
                   />
                 )}
               </div>
+              )}
 
               {/* Middle center actions (full width below columns) */}
               <ActionBar />

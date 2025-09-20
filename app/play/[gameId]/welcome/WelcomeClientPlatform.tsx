@@ -5,6 +5,7 @@ import { HeroBlock, MainBlock } from '../../../components/play/Blocks'
 import UnifiedRegistration from '../../../components/game/UnifiedRegistration'
 import FooterLinks from '../../../components/play/FooterLinks'
 import TypedText from '../../../components/play/TypedText'
+import { resolveTextType, classFor } from '../../../components/play/TypedText'
 
 interface WelcomeClientPlatformProps {
   gameId: string
@@ -210,26 +211,21 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
   return (
     <div
       className="fixed inset-0 w-screen h-screen overflow-hidden"
-      style={{ backgroundColor: '#000000FF', color: '#FFFFFFFF', fontFamily: '"Noto Sans", sans-serif' }}
+      style={{ backgroundColor: '#FFFFFFFF', fontFamily: '"Noto Sans", sans-serif' }}
     >
       <HeroBlock
         backgroundCss={heroBg}
         title={title}
-        useScoreboard={styles?.hero?.useScoreboard !== false}
+        useScoreboard={false}
         logoUrl={texts?.HERO_LOGO_URL}
         logoWidth={Number(texts?.HERO_LOGO_WIDTH) || 64}
         logoHeight={Number(texts?.HERO_LOGO_HEIGHT) || 64}
         fontUrl={styles?.hero?.fontUrl}
         fontStyle={styles?.hero?.fontStyle}
         titleClass={styles?.hero?.titleClass}
-        scoreboard={{
-          home: 0,
-          visitor: 0,
-          homeBg: styles?.scoreboard?.homeBg || '#C00000FF',
-          digitColor: styles?.scoreboard?.digitColor || '#FFFFFFFF'
-        }}
+        titleColor={styles?.hero?.fontColor}
       />
-      <MainBlock backgroundCss={mainBg} fontUrl={styles?.main?.fontUrl} fontStyle={styles?.main?.fontStyle}>
+      <MainBlock backgroundCss={mainBg} fonts={{ h1: { url: styles?.main?.h1FontUrl, style: styles?.main?.h1FontStyle }, h2: { url: styles?.main?.h2FontUrl, style: styles?.main?.h2FontStyle }, p: { url: styles?.main?.pFontUrl, style: styles?.main?.pFontStyle } }} fontUrl={styles?.main?.fontUrl} fontStyle={styles?.main?.fontStyle}>
         {description && (
           <div className="text-center">
             <TypedText code="TEXT_11" texts={texts} styles={styles} defaultType="P" />
@@ -238,6 +234,9 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
         <div className="w-full h-full flex justify-center">
           <div className="h-full w-[80vw] min-w-[80vw] max-w-none space-y-3">
           <UnifiedRegistration
+            nameInputClassOverride={(function(){ const t=resolveTextType(styles,'TEXT_13','P'); return classFor(t, styles); })()}
+            emailInputClassOverride={(function(){ const t=resolveTextType(styles,'TEXT_15','P'); return classFor(t, styles); })()}
+            phoneInputClassOverride={(function(){ const t=resolveTextType(styles,'TEXT_17','P'); return classFor(t, styles); })()}
             onRegister={async (p) => {
               try {
                 // Create/refresh 24h end-user session for cross-game persistence (POC)
@@ -257,9 +256,23 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
             showTrialOption={true}
             hideHeader={true}
             containerMode="embedded"
-            headingClass={styles?.main?.h2Class || 'text-xl font-semibold'}
-            primaryButtonBgCss={texts?.TEXT_18_BG}
-            trialButtonBgCss={texts?.TEXT_19_BG}
+            headingClass={styles?.main?.h2Class || ''}
+            nameHeadingClass={(function(){ const t=resolveTextType(styles,'TEXT_12','H2'); return classFor(t, styles); })()}
+            emailHeadingClass={(function(){ const t=resolveTextType(styles,'TEXT_14','H2'); return classFor(t, styles); })()}
+            phoneHeadingClass={(function(){ const t=resolveTextType(styles,'TEXT_16','H2'); return classFor(t, styles); })()}
+            nameHeadingColor={(function(){ const t=resolveTextType(styles,'TEXT_12','H2'); return t==='H1'?styles?.main?.h1Color: t==='H2'?styles?.main?.h2Color: styles?.main?.pColor })()}
+            emailHeadingColor={(function(){ const t=resolveTextType(styles,'TEXT_14','H2'); return t==='H1'?styles?.main?.h1Color: t==='H2'?styles?.main?.h2Color: styles?.main?.pColor })()}
+            phoneHeadingColor={(function(){ const t=resolveTextType(styles,'TEXT_16','H2'); return t==='H1'?styles?.main?.h1Color: t==='H2'?styles?.main?.h2Color: styles?.main?.pColor })()}
+            contactRequiredTextClass={(function(){ const t=resolveTextType(styles,'TEXT_26','P'); return classFor(t, styles); })()}
+            contactRequiredTextColor={(function(){ const t=resolveTextType(styles,'TEXT_26','P'); return t==='H1'?styles?.main?.h1Color: t==='H2'?styles?.main?.h2Color: styles?.main?.pColor })()}
+            tryWithoutRegTextClass={(function(){ const t=resolveTextType(styles,'TEXT_27','P'); return classFor(t, styles); })()}
+            tryWithoutRegTextColor={(function(){ const t=resolveTextType(styles,'TEXT_27','P'); return t==='H1'?styles?.main?.h1Color: t==='H2'?styles?.main?.h2Color: styles?.main?.pColor })()}
+            primaryButtonBgCss={texts?.TEXT_18_BG || texts?.NEXT_LOGIN_BG}
+            trialButtonBgCss={texts?.TEXT_19_BG || texts?.NEXT_GUEST_BG}
+            primaryButtonFg={texts?.NEXT_LOGIN_FG}
+            trialButtonFg={texts?.NEXT_GUEST_FG}
+            // Editor classes for inputs and buttons
+            className=""
             customTexts={{
               // Headings (H2)
               nameHeading: texts?.TEXT_12 || 'Your Name',
@@ -294,13 +307,13 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
           {/* Facebook login status and errors */}
           <div className="mt-2 text-center">
             {!hasAppId && (
-              <p className="text-sm text-red-300">Facebook App ID is not configured. Please set NEXT_PUBLIC_FACEBOOK_APP_ID and rebuild.</p>
+              <p className="text-sm">Facebook App ID is not configured. Please set NEXT_PUBLIC_FACEBOOK_APP_ID and rebuild.</p>
             )}
             {hasAppId && !fbReady && !fbError && (
-              <p className="text-sm text-gray-300">Facebook login is initializing…</p>
+              <p className="text-sm">Facebook login is initializing…</p>
             )}
             {fbError && (
-              <p className="text-sm text-red-300">{fbError}</p>
+              <p className="text-sm">{fbError}</p>
             )}
           </div>
           </div>

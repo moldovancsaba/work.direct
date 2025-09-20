@@ -72,5 +72,10 @@ export const REGISTRY: Record<GameType, GameModule> = {
     id: 'QUIZZ',
     name: 'Quizz',
     defaultConfig: { id: 'QUIZZ' as any, name: 'Quizz', version: '1.0.0', configuration: { quizz: { mapType: 'hex', rounds: 5, targetCorrect: 3, questions: [], theme: 'default', mapTag: 'water' } } }
+  },
+  QUIZZZ: {
+    id: 'QUIZZZ',
+    name: 'Quizzz',
+    defaultConfig: { id: 'QUIZZZ' as any, name: 'Quizzz', version: '1.0.0', configuration: { quizzz: { mapType: 'hex', numberOfCards: 6, rounds: 5, winLimit: 3, questions: [], backgroundCss: '', tileStyles: {}, cardCoverImages: [], cardCoverFill: true, cardColors: {}, overlayBg: '#00000044' } } }
   }
 }

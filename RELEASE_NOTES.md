@@ -1,9 +1,61 @@
 # 📝 RELEASE_NOTES.md - PlayMass
 
-**Current Version**: 2.1.0
-**Last Updated**: 2025-09-17T11:56:16.000Z
+**Current Version**: 4.0.0
+**Last Updated**: 2025-09-20T13:30:02.000Z
 
 ## 🔹 Version History
+
+### [v4.0.0] — 2025-09-20T13:30:02.000Z
+- Major: Enforce DB-driven font colors everywhere; remove baked-in text color/size overrides across play UI.
+  - Hero: Color now guaranteed via styles.hero.fontColor; Tailwind text-* overrides stripped from Hero Title Class; hex color sanitized.
+  - Main Typography: Persist and apply styles.main.h1Color/h2Color/pColor; TypedText + multi-line blocks (Rules) and registration headings honor editor mapping.
+  - Buttons: Persist NEXT_*_FG, CTA1_FG, INVITE_FG, PLAYAGAIN_FG, and CTA_BUTTONS[].fg; runtime applies all FG fields across Landing/Welcome/Rules/Result.
+- Schema: Extended Mongoose Game model to persist hero.fontColor, main.*Color (h1/h2/p), and all button FG fields; CTA_BUTTONS[].fg added.
+- Editor/Runtime: TEXT_26 and TEXT_27 now render with DB-driven classes/colors (no baked-in text-sm); new props in UnifiedRegistration wire the correct class+color.
+- Cleanup: Removed baked-in text color utilities from GameRulesPage and Welcome status messages; removed global CSS that forced input colors via !important.
+- Build: Verified local build.
+- Docs: Bumped to v4.0.0 and synchronized timestamps (ISO 8601 with ms UTC).
+
+### [v3.0.0] — 2025-09-20T09:00:32.000Z
+- Major: Centralized Game Editor System established as the canonical model for all current and future games.
+  - General Platform Editor (shared across all games): hero/main/legal texts and styles, DB-driven defaults (no baked text), H1/H2/P per-text mapping, unified CTA grid.
+  - Game-Type Specific Editor: only game logic and assets (e.g., QUIZZZ board, questions), strictly composed inside the shared layout.
+  - Fonts: Google Fonts set to display=block to eliminate style-swap flicker; typography classes default to black and maintain sizes per H1/H2/P selectors.
+- Breaking: Removed map shape fallbacks and auto-expansion in QUIZZZ and legacy QUIZZ.
+  - Only configured maps (selectedMaps first, else mapName) are used; if none resolve, the board stays empty (no visual flash).
+  - No auto-fill expansion for missing coordinates; uses only the configured/loaded coordinates.
+- UX: Anti-flicker improvements.
+  - Minimal Loading… placeholders for QUIZZZ and QUIZZ while fetching maps.
+  - Suppress transient “configuration error” checks until load completes.
+- Editor improvements:
+  - Input placeholders for Name/Email/Phone use the game-editor H1/H2/P mapping (TEXT_13/15/17) and render in black. Labels (TEXT_12/14/16) also use H1/H2/P.
+  - Robust background parser for button BG (multiline CSS): always picks the last background: … and supports linear-gradient(...) with nested rgba(...).
+- Failures fixed (highlights):
+  - Focus loss on Description (TEXT_11) while typing due to remount — fixed by stabilizing component types.
+  - Duplicate helper lines under inputs on Welcome — removed; only placeholders remain.
+  - White-on-white text defaults — enforced black text defaults across hero/main; preserved type sizes.
+  - Font swap flicker — eliminated with display=block.
+  - Scoreboard titles/props and legacy label leakage — removed and disabled across pages.
+- Governance & Docs: Synchronized versions and timestamps; updated architecture, roadmap, tasklist, and learnings.
+
+### [v2.3.0] — 2025-09-19T18:35:15.000Z
+- Welcome: Render TEXT_13 (Your Name Placeholder), TEXT_15 (Your Email Placeholder), TEXT_17 (Your Phone Placeholder) as visible helper lines using the H1/H2/P dropdown mapping from the editor.
+- Defaults: Enforce black text by default for Hero/Main across Landing, Welcome, Rules, and Result; keep proper H1/H2/P sizes.
+- Buttons: Robust parsing of multiline Button BG (CSS) — applies the last background declaration and supports linear-gradient(...) with nested rgba(...).
+- Admin: Fixed Description (Markdown) TEXT_11 losing focus by stabilizing the input component to prevent remounts on each keystroke.
+
+### [v2.2.1] — 2025-09-19T11:05:22.000Z
+- Chore: Patch bump before dev session; documentation timestamps synchronized; no functional changes in this bump.
+
+### [v2.2.0] — 2025-09-19T09:44:22.000Z
+- QUIZZZ: Editor now supports visual styles (tileStyles: inactiveTileBg/inactiveTileEdge/boardTileBg/boardEdge) and card colors/emojis (backBg/frontFg/goodAnswerBg/goodAnswerEmoji/wrongAnswerBg/wrongAnswerEmoji); persisted in configuration.quizzz
+- QUIZZZ: Runtime wires styles; cards become inactive after answering and show good/wrong emoji; background precedence enforced (backgroundCss > map background image > platform main)
+- Game Types: Added DB-backed model and admin API (/api/admin/game-types); editor dropdown reads from DB and de-duplicates by code
+- Maps: Public endpoints to fetch reusable maps by name or random — hex (/api/hexmaps/[name], /api/hexmaps/random) and square (/api/squaremaps/[name], /api/squaremaps/random)
+- Build: Verified production build; no type or lint errors
+
+### [v2.1.1] — 2025-09-18T09:50:30.000Z
+- Chore: Patch bump before development cycle; synchronized documentation versions; no functional code changes
 
 ### [v2.1.0] — 2025-09-17T11:56:16.000Z
 - Hero: Logo visible on all HERO blocks across Landing/Welcome/Rules/Game/Result/Legal pages

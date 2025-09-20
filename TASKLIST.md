@@ -1,9 +1,35 @@
-2.1.0
+4.0.0
 
-**Last Updated**: 2025-09-17T11:56:16.000Z
+**Last Updated**: 2025-09-20T13:30:02.000Z
 
 ## 🔹 Priority Task Queue
 
+- Title: Major Release v3.0.0 — Centralized Editor + Anti-Flicker
+  - Owner: AI Developer
+  - Expected Delivery: 2025-09-20T12:00:00.000Z
+  - Priority: CRITICAL
+- Title: Legacy Deprecation Plan — Execute QUIZZ/StarsHexa Editor Removal
+  - Owner: AI Developer
+  - Expected Delivery: 2025-10-12T12:00:00.000Z
+  - Priority: CRITICAL
+- Title: New Game Module Template — Editor SDK + Cards/Design Guidelines
+  - Owner: AI Developer
+  - Expected Delivery: 2025-10-15T12:00:00.000Z
+  - Priority: HIGH
+
+- Title: QUIZZZ as Default + Editor Standardization Across Modules
+  - Owner: AI Developer
+  - Expected Delivery: 2025-09-19T18:00:00.000Z
+  - Priority: CRITICAL
+- Title: Documentation Sync — QUIZZZ Standard Notation
+  - Owner: AI Developer
+  - Expected Delivery: 2025-09-19T17:30:00.000Z
+  - Priority: HIGH
+
+- Title: Indexing Guidelines & Governance Consolidation
+  - Owner: AI Developer
+  - Expected Delivery: 2025-09-18T11:48:22.000Z
+  - Priority: HIGH
 - Title: Production deploy — QUIZZ release
   - Owner: AI Developer
   - Expected Delivery: 2025-09-15T17:30:00.000Z
@@ -67,6 +93,8 @@
   - ✅ Configure project structure following established patterns
 
 ### ✅ Recently Completed
+- QUIZZZ Board Quiz v2 — Visual styles and answered-state overlays — Completed: 2025-09-19T09:44:22.000Z | Owner: AI Developer | Priority: HIGH
+- Game Types — DB-backed selector and in-UI dropdown de-duplication — Completed: 2025-09-19T09:44:22.000Z | Owner: AI Developer | Priority: HIGH
 - **Centralized Game Environment Architecture** - Completed: 2025-09-01T07:10:49.000Z | Owner: AI Developer | Priority: CRITICAL
   - ✅ Create unified layout system for all games (title, subtitle, game blocks)
   - ✅ Implement centralized registration/login form
@@ -245,7 +273,7 @@
 
 ## 🔹 Version Control
 
-**Current Version**: 2.1.0
+**Current Version**: 2.1.1
 **Last Commit**: Centralized game environment architecture - unified layout, registration, status, and description components
 **Branch**: main
 **Status**: Active Development

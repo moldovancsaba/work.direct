@@ -1,10 +1,20 @@
 # ROADMAP.md — PlayMass
 
-Last Updated: 2025-09-17T11:56:16.000Z
+Last Updated: 2025-09-20T13:30:02.000Z
 - Forward-looking plan for PlayMass after QUIZZ release.
 - Priorities and dependencies are explicitly stated to enable safe parallelization.
 
 Q3 2025 — Post-Release Stabilization and Hardening
+
+Milestone: QUIZZZ Editor Standardization (Default for New Games)
+- Priority: CRITICAL
+- Target: 2025-09-19T18:00:00.000Z
+- Dependencies: QUIZZZ editor complete and DB-driven defaults
+- Deliverables:
+  - Make QUIZZZ the default new-game type in admin (done)
+  - Declare QUIZZZ editor pattern as the canonical standard in docs (README, ARCHITECTURE)
+  - Ensure all future game editors follow QUIZZZ patterns: one-input-per-line, usage toggles, DB-driven defaults, centered unified CTA grid, black text for readability
+  - Remove/disable scoreboard titles in HERO by default (done)
 
 Milestone: QUIZZ Enhancements & Analytics
 - Priority: HIGH
@@ -39,3 +49,58 @@ Milestone: QA & Production Readiness
 - Deliverables:
   - Manual verification checklist executed (tests prohibited)
   - vercel --prod successful deploy and smoke test
+
+Q4 2025 — Context-Aware Assistance & Governance Hardening
+
+Q4 2025 — Centralized Editor and Legacy Deprecation (v3)
+
+Milestone: Centralized Game Editor Core 1.0
+- Priority: CRITICAL
+- Target: 2025-10-05T12:00:00.000Z
+- Dependencies: QUIZZZ runtime and platform defaults in place
+- Deliverables:
+  - General Platform Editor finalized (hero/main/legal/CTAs/H1-H2-P mapping) and documented
+  - Game-Type Editor SDK surface documented (props, config typing, UX do/don’t)
+  - Minimal Loading patterns standardized for async resources
+
+Milestone: Legacy Deprecation Plan Execution
+- Priority: CRITICAL
+- Target: 2025-10-12T12:00:00.000Z
+- Dependencies: Core Editor 1.0
+- Deliverables:
+  - QUIZZ (legacy) editor screens removed; runtime retained until migration complete
+  - StarsHexa editor tabs replaced by the General Platform Editor + type-specific fragment
+  - Removal PRs staged with toggles; documentation for migration and rollback
+
+Milestone: New Game Module Template
+- Priority: HIGH
+- Target: 2025-10-15T12:00:00.000Z
+- Dependencies: Core Editor 1.0 & SDK docs
+- Deliverables:
+  - Reference module with skeleton: config schema, board/cards, overlay, result mapping
+  - Card management guidelines (coords→cards mapping, cover images, emojis, colors)
+  - Design element governance: per-button BG CSS, font tokens, black defaults enforced
+
+Milestone: Semantic Indexing Operationalization
+- Priority: HIGH
+- Target: 2025-10-01T12:00:00.000Z
+- Dependencies: WARP.md consolidation (Indexing Guidelines present)
+- Deliverables:
+  - Define include/exclude sets for semantic tools (app/, docs/, scripts/; exclude node_modules/.next/.vercel/.git)
+  - Confirm secrets excluded by VCS (.env, .env.local)
+  - Validate search paths for types, models, and routes
+
+Milestone: Governance Automation (Optional)
+- Priority: MEDIUM
+- Target: 2025-10-05T12:00:00.000Z
+- Dependencies: None
+- Deliverables:
+  - Evaluate timestamp/version sync scripts for future cycles (manual execution only)
+
+Milestone: v2.1.x Runtime Verification & Deploy
+- Priority: HIGH
+- Target: 2025-09-19T18:00:00.000Z
+- Dependencies: Documentation updates complete
+- Deliverables:
+  - Manual dev verification (tests prohibited)
+  - Build passes; deploy with vercel --prod

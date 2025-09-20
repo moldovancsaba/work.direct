@@ -1,555 +1,618 @@
 "use client"
 
 // app/admin/mapcreator/page.tsx
-// WHAT: Unified Map Creator UI with dropdown for HEX/SQUARE types and improved styling
-// WHY: Single source of map creation to prevent unnecessary API calls and streamline administration
+// WHAT: Unified Map Creator admin page (initial skeleton) for Hex and Square maps.
+// WHY: Fixes 404 at /admin/mapcreator and provides a minimal, functional UI to
+//      search, list, and create maps. This leverages existing models and admin
+//      authentication, following the Reuse Before Creation rule. The geometry
+//      editors (interactive grids) can be layered on top of this foundation.
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { SQRT3, axialToPixel, rotatePoint, hexVertices, polygonPointsString, hexDistance } from '@/lib/hex/geometry'
-import { cellToPixel, squareVertices, chebyshevWithin, polygonPointsString as squarePolygonPointsString } from '@/lib/square/geometry'
+import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
+import HexGridEditor, { type HexCoord } from '@/components/admin/HexGridEditor'
+import SquareGridEditor, { type SquareCoord } from '@/components/admin/SquareGridEditor'
+import HexMapRuntime from '@/components/runtime/HexMapRuntime'
+import SquareMapRuntime from '@/components/runtime/SquareMapRuntime'
 
-// Lightweight types
-type HexCoord = { q: number; r: number }
-type SquareCoord = { x: number; y: number }
+// NOTE: Admin gating is handled by app/admin/layout.tsx via useAdminAuth.
+// We keep this page as a client component to enable fetch-based admin UI.
+
 type GridMapType = 'hex' | 'square'
-type MapCoord = HexCoord | SquareCoord
 
-interface MapDoc {
-  _id?: string
+type BaseMap = {
+  id: string
   name: string
-  coords: MapCoord[]
-  radius: number
-  hexCount?: number
-  cellCount?: number
   tags?: string[]
+  radius: number
+  isActive: boolean
   backgroundImageUrl?: string
-  isActive?: boolean
-  createdAt?: string
   updatedAt?: string
+  createdAt?: string
 }
 
-const DEFAULT_RADIUS = 4
-const HEX_BASE_COLOR = '#44AA44'
-const SQUARE_BASE_COLOR = '#44AA44'
-const SELECTED_COLOR = '#FF1A1A' // blood-red for high-contrast selected cells
-
-// Clamp helper for square/radius bounds
-const clampRadius = (v: number) => Math.max(1, Math.min(24, Math.floor(v)))
+// Detailed types for editing
+type HexMapDoc = BaseMap & { coords: HexCoord[]; hexCount?: number; fieldExtents?: { top?: HexCoord; bottom?: HexCoord; left?: HexCoord; right?: HexCoord }; fieldMask?: HexCoord[] }
+type SquareMapDoc = BaseMap & { coords: SquareCoord[]; cellCount?: number; fieldExtents?: { top?: SquareCoord; bottom?: SquareCoord; left?: SquareCoord; right?: SquareCoord }; fieldMask?: SquareCoord[] }
 
 export default function MapCreatorPage() {
-  // Map type selection
-  const [mapType, setMapType] = useState<GridMapType>('hex')
-  
-  // View refs and sizing
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [cellSize, setCellSize] = useState(80)
+  const [tab, setTab] = useState<GridMapType>('hex')
+  const [query, setQuery] = useState('')
+  const [isSearching, setIsSearching] = useState(false)
+  const [items, setItems] = useState<BaseMap[]>([])
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
+  const [total, setTotal] = useState(0)
 
-  // Map form state
-  const [mapId, setMapId] = useState<string | null>(null)
+  // Create form state
   const [name, setName] = useState('')
-  const [tags, setTags] = useState<string[]>([])
-  const [radius, setRadius] = useState<number>(DEFAULT_RADIUS)
-  const [backgroundImageUrl, setBackgroundImageUrl] = useState<string>('')
-
-  // Selection model keyed by coordinate string
-  const [selected, setSelected] = useState<Set<string>>(new Set())
-
-  // Search/list state
-  const [search, setSearch] = useState('')
-  const [list, setList] = useState<MapDoc[]>([])
-  const [loadingList, setLoadingList] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [deleting, setDeleting] = useState(false)
+  const [tags, setTags] = useState('')
+  const [radius, setRadius] = useState(4)
+  const [bgUrl, setBgUrl] = useState('')
+  const [creating, setCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [info, setInfo] = useState<string | null>(null)
 
-  // API endpoints based on type
-  const getApiBase = useCallback((type: GridMapType) => {
-    return type === 'hex' ? '/api/admin/hexmaps' : '/api/admin/squaremaps'
-  }, [])
+  // Creation-time grid selections per tab
+  const [createHexCoords, setCreateHexCoords] = useState<HexCoord[]>([])
+  const [createSquareCoords, setCreateSquareCoords] = useState<SquareCoord[]>([])
+  const [createHexFieldMask, setCreateHexFieldMask] = useState<HexCoord[]>([])
+  const [createSquareFieldMask, setCreateSquareFieldMask] = useState<SquareCoord[]>([])
 
-  // Coordinate helpers
-  const keyOf = useCallback((coord: MapCoord, type: GridMapType) => {
-    if (type === 'hex') {
-      const { q, r } = coord as HexCoord
-      return `${q},${r}`
-    } else {
-      const { x, y } = coord as SquareCoord
-      return `${x},${y}`
-    }
-  }, [])
+  // Editing state per tab
+  const [editingHex, setEditingHex] = useState<HexMapDoc | null>(null)
+  const [editingSquare, setEditingSquare] = useState<SquareMapDoc | null>(null)
 
-  const parseKey = useCallback((k: string, type: GridMapType): MapCoord => {
-    const [a, b] = k.split(',').map(n => parseInt(n, 10))
-    if (type === 'hex') {
-      return { q: a, r: b } as HexCoord
-    } else {
-      return { x: a, y: b } as SquareCoord
-    }
-  }, [])
+  const basePath = useMemo(() => (tab === 'hex' ? '/api/admin/hexmaps' : '/api/admin/squaremaps'), [tab])
 
-  // Within radius check based on type
-  const withinRadius = useCallback((coord: MapCoord, type: GridMapType) => {
-    if (type === 'hex') {
-      const { q, r } = coord as HexCoord
-      return hexDistance({ q, r }, { q: 0, r: 0 }) <= radius
-    } else {
-      const { x, y } = coord as SquareCoord
-      return chebyshevWithin(x, y, radius)
-    }
-  }, [radius])
-
-  // Visible range computation
-  const computeVisibleRange = useCallback(() => {
-    const el = containerRef.current
-    if (!el) return mapType === 'hex' 
-      ? { qMin: -8, qMax: 8, rMin: -8, rMax: 8 }
-      : { xMin: -8, xMax: 8, yMin: -8, yMax: 8 }
-
-    const rect = el.getBoundingClientRect()
-    const vw = rect.width || 800
-    const vh = rect.height || 600
-    const s = cellSize
-
-    if (mapType === 'hex') {
-      const xStep = 1.5 * s
-      const yStep = SQRT3 * s
-      const cols = Math.ceil(vw / xStep) + 8
-      const rows = Math.ceil(vh / (yStep / 2)) + 8
-      const qMin = -Math.ceil(cols / 2), qMax = Math.ceil(cols / 2)
-      const rMin = -Math.ceil(rows / 4), rMax = Math.ceil(rows / 4)
-      return { qMin, qMax, rMin, rMax }
-    } else {
-      const pad = 2
-      const halfCols = Math.ceil(vw / (2 * s)) + pad
-      const halfRows = Math.ceil(vh / (2 * s)) + pad
-      const xMin = -halfCols, xMax = halfCols
-      const yMin = -halfRows, yMax = halfRows
-      return { xMin, xMax, yMin, yMax }
-    }
-  }, [cellSize, mapType])
-
-  // Resize handling
+  // WHAT: Debounced search for maps by name or #tag
+  // WHY: Aligns with Quizz predictive search expectations and admin UX
   useEffect(() => {
-    const handleResize = () => {
-      const el = containerRef.current
-      if (!el) return
-      const rect = el.getBoundingClientRect()
-      const vw = rect.width || 800
-      const vh = rect.height || 600
-      const margin = 0.96
-      const s0 = Math.max(24, Math.min(vw, vh) / 10)
-      setCellSize(s0 * margin)
-    }
-    handleResize()
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
-
-  // Selection handlers
-  const toggleSelect = useCallback((coord: MapCoord) => {
-    if (!withinRadius(coord, mapType)) return
-    const k = keyOf(coord, mapType)
-    setSelected(prev => {
-      const next = new Set(prev)
-      if (next.has(k)) next.delete(k)
-      else next.add(k)
-      return next
-    })
-  }, [withinRadius, keyOf, mapType])
-
-  // Clear selection when type changes or ensure selection respects radius
-  useEffect(() => {
-    setSelected(new Set())
-  }, [mapType])
-
-  useEffect(() => {
-    if (mapType === 'square') {
-      setSelected(prev => new Set(Array.from(prev).filter(k => {
-        const coord = parseKey(k, 'square') as SquareCoord
-        return chebyshevWithin(coord.x, coord.y, radius)
-      })))
-    }
-  }, [radius, mapType, parseKey])
-
-  const clearSelection = useCallback(() => setSelected(new Set()), [])
-
-  // Load list with search
-  const loadList = useCallback(async () => {
-    setLoadingList(true)
-    setError(null)
-    try {
-      const url = new URL(getApiBase(mapType), window.location.origin)
-      if (search.trim()) url.searchParams.set('search', search.trim())
-      const res = await fetch(url.toString(), { cache: 'no-store', credentials: 'include' })
-      const data = await res.json()
-      if (res.ok && data?.success) {
-        setList(data.data.items || [])
-      } else {
-        setError(data?.error?.message || 'Failed to fetch maps')
+    let active = true
+    const ctl = new AbortController()
+    const id = setTimeout(async () => {
+      try {
+        setIsSearching(true)
+        setError(null)
+        const isTag = query.trim().startsWith('#')
+        const q = query.trim().replace(/^#+/, '')
+        const url = new URL(basePath, window.location.origin)
+        url.searchParams.set(isTag ? 'tag' : 'search', q)
+        url.searchParams.set('page', String(page))
+        url.searchParams.set('limit', String(pageSize))
+        const res = await fetch(url.toString(), { signal: ctl.signal, cache: 'no-store' })
+        if (!res.ok) {
+          const msg = `Search failed (${res.status})`
+          if (active) setError(msg)
+          return
+        }
+        const data = await res.json()
+        if (!active) return
+        const list: BaseMap[] = Array.isArray(data?.data?.items) ? data.data.items : []
+        setItems(list)
+        setTotal(Number(data?.data?.total || 0))
+        setPage(Number(data?.data?.page || 1))
+        setPageSize(Number(data?.data?.pageSize || 20))
+      } catch (e) {
+        if (!ctl.signal.aborted) {
+          console.error('Map search error:', e)
+          if (active) setError('Search errored, please try again')
+        }
+      } finally {
+        if (active) setIsSearching(false)
       }
-    } catch (e: any) {
-      setError(e?.message || 'Failed to fetch maps')
-    } finally {
-      setLoadingList(false)
+    }, 250)
+
+    return () => {
+      active = false
+      ctl.abort()
+      clearTimeout(id)
     }
-  }, [search, mapType, getApiBase])
+  }, [tab, query, page, pageSize, basePath])
 
-  useEffect(() => { loadList() }, [loadList])
-
-  const startNew = useCallback(() => {
-    setMapId(null)
+  const resetForm = () => {
     setName('')
-    setTags([])
-    setRadius(DEFAULT_RADIUS)
-    setSelected(new Set())
-    setBackgroundImageUrl('')
+    setTags('')
+    setRadius(4)
+    setBgUrl('')
     setError(null)
-  }, [])
+    setInfo(null)
+    setCreateHexCoords([])
+    setCreateSquareCoords([])
+    setCreateHexFieldMask([])
+    setCreateSquareFieldMask([])
+  }
 
-  const loadMap = useCallback(async (id: string) => {
-    setError(null)
+  const onCreate = async () => {
     try {
-      const res = await fetch(`${getApiBase(mapType)}/${id}`, { cache: 'no-store', credentials: 'include' })
-      const data = await res.json()
-      if (res.ok && data?.success) {
-        const doc: MapDoc = data.data
-        setMapId(doc._id || null)
-        setName(doc.name || '')
-        setTags(doc.tags || [])
-        setRadius(mapType === 'square' ? clampRadius(doc.radius || DEFAULT_RADIUS) : (doc.radius || DEFAULT_RADIUS))
-        setSelected(new Set((doc.coords || []).map(c => keyOf(c, mapType))))
-        setBackgroundImageUrl(doc.backgroundImageUrl || '')
-      } else {
-        setError(data?.error?.message || 'Failed to load map')
-      }
-    } catch (e: any) {
-      setError(e?.message || 'Failed to load map')
-    }
-  }, [mapType, getApiBase, keyOf])
-
-  const saveMap = useCallback(async () => {
-    if (!name.trim()) { setError('Name is required'); return }
-    setSaving(true)
-    setError(null)
-    const coords: MapCoord[] = Array.from(selected).map(k => parseKey(k, mapType))
-    const payload = { 
-      name: name.trim(), 
-      coords, 
-      radius: mapType === 'square' ? clampRadius(radius) : radius, 
-      tags, 
-      backgroundImageUrl 
-    }
-    try {
-      if (mapId) {
-        const res = await fetch(`${getApiBase(mapType)}/${mapId}`, {
-          method: 'PUT',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        })
-        const data = await res.json()
-        if (!res.ok || !data?.success) throw new Error(data?.error?.message || 'Failed to update')
-      } else {
-        const res = await fetch(getApiBase(mapType), {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        })
-        const data = await res.json()
-        if (!res.ok || !data?.success) throw new Error(data?.error?.message || 'Failed to create')
-        setMapId(data.data?._id || null)
-      }
-      await loadList()
-    } catch (e: any) {
-      setError(e?.message || 'Save failed')
-    } finally {
-      setSaving(false)
-    }
-  }, [mapId, name, selected, radius, tags, backgroundImageUrl, loadList, mapType, getApiBase, parseKey])
-
-  const deleteMap = useCallback(async () => {
-    if (!mapId) return
-    setDeleting(true)
-    setError(null)
-    try {
-      const res = await fetch(`${getApiBase(mapType)}/${mapId}`, { method: 'DELETE', credentials: 'include' })
-      const data = await res.json()
-      if (!res.ok || !data?.success) throw new Error(data?.error?.message || 'Delete failed')
-      startNew()
-      await loadList()
-    } catch (e: any) {
-      setError(e?.message || 'Delete failed')
-    } finally {
-      setDeleting(false)
-    }
-  }, [mapId, loadList, startNew, mapType, getApiBase])
-
-  // Render SVG grid
-  const gridContent = useMemo(() => {
-    const el = containerRef.current
-    if (!el) return null
-
-    const rect = el.getBoundingClientRect()
-    const vw = rect.width || 800
-    const vh = rect.height || 600
-    const s = cellSize
-    const offsetX = vw / 2
-    const offsetY = vh / 2
-    const range = computeVisibleRange()
-
-    const polygons: JSX.Element[] = []
-    const baseColor = mapType === 'hex' ? HEX_BASE_COLOR : SQUARE_BASE_COLOR
-
-    if (mapType === 'hex') {
-      const { qMin, qMax, rMin, rMax } = range as { qMin: number; qMax: number; rMin: number; rMax: number }
-      for (let r = rMin; r <= rMax; r++) {
-        for (let q = qMin; q <= qMax; q++) {
-          const coord: HexCoord = { q, r }
-          const center = axialToPixel(q, r, s)
-          const verts = hexVertices(center.x, center.y, s).map(p => {
-            const rp = rotatePoint(p.x, p.y)
-            return { x: rp.x + offsetX, y: rp.y + offsetY }
-          })
-          const points = polygonPointsString(verts)
-          const k = keyOf(coord, 'hex')
-          const isSelected = selected.has(k)
-          const inRadius = withinRadius(coord, 'hex')
-          const fill = isSelected ? SELECTED_COLOR : baseColor
-          const opacity = inRadius ? 1 : 0.35
-
-          const cx = verts.reduce((acc, p) => acc + p.x, 0) / 6
-          const cy = verts.reduce((acc, p) => acc + p.y, 0) / 6
-
-          polygons.push(
-            <g key={k}>
-              <polygon
-                points={points}
-                fill={fill}
-                opacity={opacity}
-                stroke="#ffffff"
-                strokeWidth={Math.max(1, s * 0.06)}
-                style={{ cursor: inRadius ? 'pointer' : 'not-allowed', transition: 'fill 120ms ease-out' }}
-                onClick={inRadius ? () => toggleSelect(coord) : undefined}
-              />
-              <text
-                x={cx} y={cy} fill="#ffffff" fontSize={Math.max(10, s * 0.35)} fontWeight={600}
-                textAnchor="middle" dominantBaseline="middle"
-                style={{ pointerEvents: 'none', userSelect: 'none' }}
-              >
-                {q},{r}
-              </text>
-            </g>
-          )
+      setCreating(true)
+      setError(null)
+      setInfo(null)
+        const payload: any = {
+          name: name.trim(),
+          radius: Number(radius) || 4,
+          isActive: true,
+          createdBy: 'admin', // server will set/validate, included for clarity
+          backgroundImageUrl: bgUrl.trim() || undefined,
+          // Coords = cards (interactive); fieldMask = visible grid
+          coords: tab === 'hex' ? createHexCoords : createSquareCoords,
+          fieldMask: tab === 'hex' ? createHexFieldMask : createSquareFieldMask
         }
+      const t = (tags || '').trim()
+      if (t) {
+        // Normalize tags: split by commas or spaces; lowercase; remove empties and leading #
+        payload.tags = t
+          .split(/[,\s]+/)
+          .map((x: string) => x.replace(/^#+/, '').trim().toLowerCase())
+          .filter(Boolean)
       }
-    } else {
-      const { xMin, xMax, yMin, yMax } = range as { xMin: number; xMax: number; yMin: number; yMax: number }
-      for (let y = yMin; y <= yMax; y++) {
-        for (let x = xMin; x <= xMax; x++) {
-          const coord: SquareCoord = { x, y }
-          const p = cellToPixel(x, y, s)
-          const cx = p.x + offsetX
-          const cy = p.y + offsetY
-          const verts = squareVertices(cx, cy, s * 0.92)
-          const points = squarePolygonPointsString(verts)
-          const k = keyOf(coord, 'square')
-          const isSelected = selected.has(k)
-          const inRadius = withinRadius(coord, 'square')
-          const fill = isSelected ? SELECTED_COLOR : baseColor
-          const opacity = inRadius ? 1 : 0.35
 
-          polygons.push(
-            <g key={k}>
-              <polygon
-                points={points}
-                fill={fill}
-                opacity={opacity}
-                stroke="#ffffff"
-                strokeWidth={Math.max(1, s * 0.06)}
-                style={{ cursor: inRadius ? 'pointer' : 'not-allowed', transition: 'fill 120ms ease-out' }}
-                onClick={inRadius ? () => toggleSelect(coord) : undefined}
-              />
-              <text
-                x={cx} y={cy} fill="#ffffff" fontSize={Math.max(10, s * 0.35)} fontWeight={600}
-                textAnchor="middle" dominantBaseline="middle"
-                style={{ pointerEvents: 'none', userSelect: 'none' }}
-              >
-                {x},{y}
-              </text>
-            </g>
-          )
-        }
+      const res = await fetch(basePath, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(payload)
+      })
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => '')
+        throw new Error(`Create failed (${res.status}): ${text || res.statusText}`)
       }
+
+      setInfo('Map created successfully. It will appear in search shortly.')
+      resetForm()
+      // Re-run search and refresh list
+      setQuery('')
+    } catch (e: any) {
+      console.error('Create map error:', e)
+      setError(e?.message || 'Failed to create map')
+    } finally {
+      setCreating(false)
     }
-
-    return polygons
-  }, [computeVisibleRange, cellSize, selected, withinRadius, mapType, keyOf, toggleSelect])
-
-  // Tag input helpers
-  const [tagInput, setTagInput] = useState('')
-  const addTag = useCallback(() => {
-    const t = tagInput.trim().toLowerCase()
-    if (!t) return
-    setTags(prev => Array.from(new Set([...prev, t])))
-    setTagInput('')
-  }, [tagInput])
-
-  const removeTag = useCallback((t: string) => setTags(prev => prev.filter(x => x !== t)), [])
-
-  // Radius steppers for square
-  const decRadius = useCallback(() => setRadius(r => clampRadius(r - 1)), [])
-  const incRadius = useCallback(() => setRadius(r => clampRadius(r + 1)), [])
+  }
 
   return (
-    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-[1fr_360px]">
-      {/* Grid area */}
-      <div 
-        ref={containerRef} 
-        className="relative bg-[#2a562a]" 
-        style={{ 
-          backgroundImage: backgroundImageUrl ? `url(${backgroundImageUrl})` : undefined, 
-          backgroundSize: 'cover', 
-          backgroundPosition: 'center', 
-          backgroundRepeat: 'no-repeat' 
-        }}
-      >
-        <svg className="absolute inset-0 w-full h-full" style={{ display: 'block' }}>
-          {gridContent}
-        </svg>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <span>🗺️</span> Map Creator
+        </h1>
+        <div className="text-xs text-gray-500">
+          Admin • Unified Hex/Square
+        </div>
       </div>
 
-      {/* Controls */}
-      <aside className="border-l border-gray-200 bg-white p-4 flex flex-col gap-4">
-        <h1 className="text-lg font-bold">Map Creator</h1>
+      {/* Tabs */}
+      <div className="flex items-center gap-2 mb-4">
+        <button
+          className={`px-3 py-1.5 rounded ${tab === 'hex' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800'}`}
+          onClick={() => setTab('hex')}
+        >
+          Hex
+        </button>
+        <button
+          className={`px-3 py-1.5 rounded ${tab === 'square' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800'}`}
+          onClick={() => setTab('square')}
+        >
+          Square
+        </button>
+      </div>
 
-        {/* Map Type Selector */}
-        <div className="space-y-2">
-          <label className="text-sm text-gray-600">Map Type</label>
-          <select 
-            value={mapType} 
-            onChange={e => setMapType(e.target.value as GridMapType)}
-            className="w-full border rounded px-3 py-2 bg-white text-black"
-          >
-            <option value="hex">HEXA</option>
-            <option value="square">SQUARE</option>
-          </select>
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm text-gray-600">Map Name</label>
-          <input 
-            value={name} 
-            onChange={e => setName(e.target.value)} 
-            placeholder={mapType === 'hex' ? "e.g. 7cloud" : "e.g. plaza"}
-            className="w-full border rounded px-3 py-2 bg-white text-black"
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left: Search & Results */}
+        <div className="lg:col-span-1">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Find {tab === 'hex' ? 'Hex' : 'Square'} Map by name or #tag
+          </label>
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="e.g. city-center or #water"
+            className="w-full px-3 py-2 border rounded bg-white text-black"
           />
-        </div>
 
-        <div className="space-y-2">
-          <label className="text-sm text-gray-600">Tags</label>
-          <div className="flex gap-2">
-            <input 
-              value={tagInput} 
-              onChange={e => setTagInput(e.target.value)} 
-              placeholder="#hashtag"
-              className="flex-1 border rounded px-3 py-2 bg-white text-black"
-            />
-            <button onClick={addTag} className="px-3 py-2 bg-blue-600 text-white rounded">Add</button>
+          <div className="mt-3 text-sm text-gray-500 flex items-center gap-2">
+            {isSearching && <span>Searching…</span>}
+            {error && <span className="text-red-600">{error}</span>}
           </div>
-          <div className="flex flex-wrap gap-2">
-            {tags.map(t => (
-              <span key={t} className="px-2 py-1 text-xs bg-blue-500 text-black rounded-full">
-                #{t}
-                <button onClick={() => removeTag(t)} className="ml-2 text-black">×</button>
-              </span>
+
+          <div className="mt-3 border rounded divide-y bg-white max-h-[420px] overflow-auto">
+            {items.length === 0 && (
+              <div className="px-3 py-2 text-sm text-gray-500">No maps found</div>
+            )}
+            {items.map((m) => (
+              <div key={m.id} className="px-3 py-2 text-sm flex items-center justify-between">
+                <div>
+                  <div className="font-medium text-gray-800">{m.name}</div>
+                  <div className="text-[11px] text-gray-500">
+                    radius={m.radius} • {m.isActive ? 'active' : 'inactive'}{m.updatedAt ? ` • updated ${m.updatedAt}` : ''}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      setError(null); setInfo(null)
+                      const res = await fetch(`${basePath}/${m.id}`, { credentials: 'include', cache: 'no-store' })
+                      if (!res.ok) throw new Error(`Failed to load map (${res.status})`)
+                      const data = await res.json()
+                      const doc = data?.data
+                      if (!doc) throw new Error('Malformed response')
+                      // Populate form from selected doc
+                      setName(doc.name || '')
+                      setRadius(Number(doc.radius || 4))
+                      setBgUrl(doc.backgroundImageUrl || '')
+                      setTags(Array.isArray(doc.tags) ? doc.tags.map((t: string) => `#${t}`).join(' ') : '')
+                      if (tab === 'hex') {
+                        setEditingSquare(null)
+                        setEditingHex({ ...doc, coords: Array.isArray(doc.coords) ? doc.coords : [] })
+                      } else {
+                        setEditingHex(null)
+                        setEditingSquare({ ...doc, coords: Array.isArray(doc.coords) ? doc.coords : [] })
+                      }
+                    } catch (e: any) {
+                      setError(e?.message || 'Failed to load map')
+                    }
+                  }}
+                  className="text-blue-600 hover:underline text-xs"
+                >
+                  Edit
+                </button>
+              </div>
             ))}
           </div>
-        </div>
 
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-700">Radius: <strong>{radius}</strong></div>
-          {mapType === 'square' && (
-            <div className="flex items-center gap-2">
-              <button onClick={decRadius} className="px-2 py-1 bg-gray-200 rounded">−</button>
-              <button onClick={incRadius} className="px-2 py-1 bg-gray-200 rounded">+</button>
-            </div>
-          )}
-        </div>
-
-        <div className="text-sm text-gray-700">Selected: <strong>{selected.size}</strong></div>
-
-        <div className="space-y-2">
-          <label className="text-sm text-gray-600">Background Image URL</label>
-          <input 
-            value={backgroundImageUrl} 
-            onChange={e => setBackgroundImageUrl(e.target.value)} 
-            placeholder="https://example.com/image.png"
-            className="w-full border rounded px-3 py-2 bg-white text-black"
-          />
-          <div className="text-xs text-gray-500">Stored with the map and returned by the public API.</div>
-        </div>
-
-        <div className="flex gap-2">
-          <button onClick={saveMap} disabled={saving} className="flex-1 px-3 py-2 bg-emerald-600 text-white rounded disabled:opacity-50">
-            {mapId ? 'Update' : 'Save'}
-          </button>
-          <button onClick={clearSelection} className="px-3 py-2 bg-gray-200 rounded">Clear</button>
-        </div>
-
-        {mapId && (
-          <button onClick={deleteMap} disabled={deleting} className="px-3 py-2 bg-red-600 text-white rounded disabled:opacity-50">
-            Delete
-          </button>
-        )}
-        <button onClick={startNew} className="px-3 py-2 bg-gray-100 rounded">New Map</button>
-
-        {error && <div className="text-sm text-red-600">{error}</div>}
-
-        <div className="mt-4 space-y-2">
-          <div className="flex gap-2">
-            <input 
-              value={search} 
-              onChange={e => setSearch(e.target.value)} 
-              placeholder="Search maps by name or tag"
-              className="flex-1 border rounded px-3 py-2 bg-white text-black"
-            />
-            <button onClick={loadList} className="px-3 py-2 bg-gray-200 rounded">Search</button>
+          <div className="mt-2 text-xs text-gray-500">
+            {total > 0 && `Showing ${items.length} of ${total} results`}
           </div>
-          <div className="max-h-80 overflow-auto border rounded">
-            {loadingList ? (
-              <div className="p-3 text-sm text-gray-500">Loading…</div>
-            ) : list.length === 0 ? (
-              <div className="p-3 text-sm text-gray-500">No maps found</div>
-            ) : (
-              <ul>
-                {list.map(m => (
-                  <li key={m._id} className="p-3 border-b flex items-center justify-between hover:bg-gray-50">
-                    <div>
-                      <div className="font-medium text-black">{m.name}</div>
-                      <div className="text-xs text-black">
-                        {(m.hexCount ?? m.cellCount ?? m.coords?.length ?? 0)} {mapType === 'hex' ? 'hex' : 'cells'} • radius {m.radius}
-                      </div>
-                      {m.tags && m.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {m.tags.map(tag => (
-                            <span key={tag} className="px-1 py-0.5 text-xs bg-blue-100 text-black rounded">
-                              #{tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
+        </div>
+
+        {/* Right: Create or Edit panel with interactive grid */}
+        <div className="lg:col-span-2">
+          <div className="bg-white border rounded p-4">
+            {tab === 'hex' && editingHex && (
+              <>
+                <h2 className="text-lg font-semibold mb-3">Edit Hex Map</h2>
+                {info && <div className="mb-3 text-sm text-green-700">{info}</div>}
+                {error && <div className="mb-3 text-sm text-red-700">{error}</div>}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                    <input className="w-full px-3 py-2 border rounded bg-white text-black"
+                      value={editingHex.name}
+                      onChange={(e)=> setEditingHex({ ...editingHex, name: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+                    <input className="w-full px-3 py-2 border rounded bg-white text-black"
+                      value={Array.isArray(editingHex.tags) ? editingHex.tags.map(t=>`#${t}`).join(' ') : ''}
+                      onChange={(e)=> setEditingHex({ ...editingHex, tags: e.target.value.split(/[,\s]+/).map(s=> s.replace(/^#+/, '').trim().toLowerCase()).filter(Boolean) })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Radius (1–24)</label>
+                    <input type="number" min={1} max={24} className="w-full px-3 py-2 border rounded bg-white text-black"
+                      value={editingHex.radius}
+                      onChange={(e)=> setEditingHex({ ...editingHex, radius: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Background Image URL</label>
+                    <input className="w-full px-3 py-2 border rounded bg-white text-black"
+                      value={editingHex.backgroundImageUrl || ''}
+                      onChange={(e)=> setEditingHex({ ...editingHex, backgroundImageUrl: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <h3 className="text-sm font-semibold mb-2">Unified Grid (click: grey → green → red → grey)</h3>
+                  <HexGridEditor
+                    radius={editingHex.radius}
+                    coords={editingHex.coords || []}
+                    fieldMask={editingHex.fieldMask || []}
+                    backgroundImageUrl={editingHex.backgroundImageUrl || ''}
+                    onChange={(nextCoords, nextMask)=> setEditingHex({ ...editingHex, coords: nextCoords, fieldMask: nextMask })}
+                  />
+                </div>
+
+                {/* Runtime Preview */}
+                <div className="mt-6">
+                  <h3 className="text-sm font-semibold mb-2">Runtime Preview</h3>
+                  <HexMapRuntime
+                    radius={editingHex.radius}
+                    fieldMask={editingHex.fieldMask || []}
+                    coords={editingHex.coords || []}
+                    fieldExtents={editingHex.fieldExtents || null}
+                    backgroundImageUrl={editingHex.backgroundImageUrl || ''}
+                    height={360}
+                  />
+                </div>
+
+                {/* Field extents (optional) */}
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+                  {(['top','bottom','left','right'] as const).map((pos) => (
+                    <div key={pos}>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">{pos} (q,r)</label>
+                      <input
+                        placeholder="q,r"
+                        value={editingHex.fieldExtents?.[pos] ? `${editingHex.fieldExtents[pos]!.q},${editingHex.fieldExtents[pos]!.r}` : ''}
+                        onChange={(e)=>{
+                          const val = e.target.value.trim()
+                          const ext = { ...(editingHex.fieldExtents || {}) } as any
+                          if (!val) { delete ext[pos]; setEditingHex({ ...editingHex, fieldExtents: ext }) ; return }
+                          const [qStr,rStr] = val.split(',')
+                          const q = parseInt(qStr,10); const r = parseInt(rStr,10)
+                          if (!Number.isNaN(q) && !Number.isNaN(r)) {
+                            ext[pos] = { q, r }
+                            setEditingHex({ ...editingHex, fieldExtents: ext })
+                          }
+                        }}
+                        className="w-full px-3 py-2 border rounded bg-white text-black"
+                      />
                     </div>
-                    <button onClick={() => loadMap(m._id!)} className="px-2 py-1 text-sm bg-blue-600 text-white rounded">
-                      Load
-                    </button>
-                  </li>
-                ))}
-              </ul>
+                  ))}
+                </div>
+                <div className="mt-4 flex items-center gap-3">
+                  <button
+                    onClick={async ()=>{
+                      try {
+                        setError(null); setInfo(null)
+                        const payload = {
+                          name: editingHex.name.trim(),
+                          radius: editingHex.radius,
+                          backgroundImageUrl: editingHex.backgroundImageUrl || undefined,
+                          tags: Array.isArray(editingHex.tags) ? editingHex.tags : undefined,
+                          coords: editingHex.coords || [],
+                          fieldExtents: editingHex.fieldExtents || undefined,
+                          fieldMask: editingHex.fieldMask || []
+                        }
+                        const res = await fetch(`${basePath}/${editingHex.id}`, {
+                          method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(payload)
+                        })
+                        if (!res.ok) throw new Error(`Save failed (${res.status})`)
+                        const data = await res.json()
+                        setEditingHex(data.data)
+                        setInfo('Saved successfully')
+                      } catch (e:any) {
+                        setError(e?.message || 'Save failed')
+                      }
+                    }}
+                    className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white"
+                  >Save</button>
+                  <button
+                    onClick={async ()=>{
+                      try {
+                        setError(null); setInfo(null)
+                        const res = await fetch(`${basePath}/${editingHex.id}`, { method: 'DELETE', credentials: 'include' })
+                        if (!res.ok) throw new Error(`Delete failed (${res.status})`)
+                        setEditingHex(null)
+                        setInfo('Map archived (isActive=false)')
+                        setQuery('')
+                      } catch (e:any) { setError(e?.message || 'Delete failed') }
+                    }}
+                    className="px-4 py-2 rounded bg-red-600 hover:bg-red-700 text-white"
+                  >Soft Delete</button>
+                  <button
+                    onClick={()=>{ setEditingHex(null); resetForm() }}
+                    className="px-4 py-2 rounded bg-gray-100 text-gray-800 hover:bg-gray-200"
+                  >Clear</button>
+                </div>
+              </>
+            )}
+
+            {tab === 'square' && editingSquare && (
+              <>
+                <h2 className="text-lg font-semibold mb-3">Edit Square Map</h2>
+                {info && <div className="mb-3 text-sm text-green-700">{info}</div>}
+                {error && <div className="mb-3 text-sm text-red-700">{error}</div>}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                    <input className="w-full px-3 py-2 border rounded bg-white text-black"
+                      value={editingSquare.name}
+                      onChange={(e)=> setEditingSquare({ ...editingSquare, name: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+                    <input className="w-full px-3 py-2 border rounded bg-white text-black"
+                      value={Array.isArray(editingSquare.tags) ? editingSquare.tags.map(t=>`#${t}`).join(' ') : ''}
+                      onChange={(e)=> setEditingSquare({ ...editingSquare, tags: e.target.value.split(/[,\s]+/).map(s=> s.replace(/^#+/, '').trim().toLowerCase()).filter(Boolean) })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Radius (1–24)</label>
+                    <input type="number" min={1} max={24} className="w-full px-3 py-2 border rounded bg-white text-black"
+                      value={editingSquare.radius}
+                      onChange={(e)=> setEditingSquare({ ...editingSquare, radius: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Background Image URL</label>
+                    <input className="w-full px-3 py-2 border rounded bg-white text-black"
+                      value={editingSquare.backgroundImageUrl || ''}
+                      onChange={(e)=> setEditingSquare({ ...editingSquare, backgroundImageUrl: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <h3 className="text-sm font-semibold mb-2">Unified Grid (click: grey → green → red → grey)</h3>
+                  <SquareGridEditor
+                    radius={editingSquare.radius}
+                    coords={editingSquare.coords || []}
+                    fieldMask={editingSquare.fieldMask || []}
+                    backgroundImageUrl={editingSquare.backgroundImageUrl || ''}
+                    onChange={(nextCoords, nextMask)=> setEditingSquare({ ...editingSquare, coords: nextCoords, fieldMask: nextMask })}
+                  />
+                </div>
+
+                {/* Runtime Preview */}
+                <div className="mt-6">
+                  <h3 className="text-sm font-semibold mb-2">Runtime Preview</h3>
+                  <SquareMapRuntime
+                    radius={editingSquare.radius}
+                    fieldMask={editingSquare.fieldMask || []}
+                    coords={editingSquare.coords || []}
+                    fieldExtents={editingSquare.fieldExtents || null}
+                    backgroundImageUrl={editingSquare.backgroundImageUrl || ''}
+                    height={360}
+                  />
+                </div>
+
+                {/* Field extents (optional) */}
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+                  {(['top','bottom','left','right'] as const).map((pos) => (
+                    <div key={pos}>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">{pos} (x,y)</label>
+                      <input
+                        placeholder="x,y"
+                        value={editingSquare.fieldExtents?.[pos] ? `${editingSquare.fieldExtents[pos]!.x},${editingSquare.fieldExtents[pos]!.y}` : ''}
+                        onChange={(e)=>{
+                          const val = e.target.value.trim()
+                          const ext = { ...(editingSquare.fieldExtents || {}) } as any
+                          if (!val) { delete ext[pos]; setEditingSquare({ ...editingSquare, fieldExtents: ext }) ; return }
+                          const [xStr,yStr] = val.split(',')
+                          const x = parseInt(xStr,10); const y = parseInt(yStr,10)
+                          if (!Number.isNaN(x) && !Number.isNaN(y)) {
+                            ext[pos] = { x, y }
+                            setEditingSquare({ ...editingSquare, fieldExtents: ext })
+                          }
+                        }}
+                        className="w-full px-3 py-2 border rounded bg-white text-black"
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 flex items-center gap-3">
+                  <button
+                    onClick={async ()=>{
+                      try {
+                        setError(null); setInfo(null)
+                        const payload = {
+                          name: editingSquare.name.trim(),
+                          radius: editingSquare.radius,
+                          backgroundImageUrl: editingSquare.backgroundImageUrl || undefined,
+                          tags: Array.isArray(editingSquare.tags) ? editingSquare.tags : undefined,
+                          coords: editingSquare.coords || [],
+                          fieldExtents: editingSquare.fieldExtents || undefined,
+                          fieldMask: editingSquare.fieldMask || []
+                        }
+                        const res = await fetch(`${basePath}/${editingSquare.id}`, {
+                          method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(payload)
+                        })
+                        if (!res.ok) throw new Error(`Save failed (${res.status})`)
+                        const data = await res.json()
+                        setEditingSquare(data.data)
+                        setInfo('Saved successfully')
+                      } catch (e:any) { setError(e?.message || 'Save failed') }
+                    }}
+                    className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white"
+                  >Save</button>
+                  <button
+                    onClick={async ()=>{
+                      try {
+                        setError(null); setInfo(null)
+                        const res = await fetch(`${basePath}/${editingSquare.id}`, { method: 'DELETE', credentials: 'include' })
+                        if (!res.ok) throw new Error(`Delete failed (${res.status})`)
+                        setEditingSquare(null)
+                        setInfo('Map archived (isActive=false)')
+                        setQuery('')
+                      } catch (e:any) { setError(e?.message || 'Delete failed') }
+                    }}
+                    className="px-4 py-2 rounded bg-red-600 hover:bg-red-700 text-white"
+                  >Soft Delete</button>
+                  <button
+                    onClick={()=>{ setEditingSquare(null); resetForm() }}
+                    className="px-4 py-2 rounded bg-gray-100 text-gray-800 hover:bg-gray-200"
+                  >Clear</button>
+                </div>
+              </>
+            )}
+
+            {/* Create mode (no selection) */}
+            {!editingHex && !editingSquare && (
+              <>
+                <h2 className="text-lg font-semibold mb-3">Create {tab === 'hex' ? 'Hex' : 'Square'} Map</h2>
+                {info && <div className="mb-3 text-sm text-green-700">{info}</div>}
+                {error && <div className="mb-3 text-sm text-red-700">{error}</div>}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                    <input
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="unique-map-name"
+                      className="w-full px-3 py-2 border rounded bg-white text-black"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+                    <input
+                      value={tags}
+                      onChange={(e) => setTags(e.target.value)}
+                      placeholder="#water #park or comma/space-separated"
+                      className="w-full px-3 py-2 border rounded bg-white text-black"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Radius (1–24)</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={24}
+                      value={radius}
+                      onChange={(e) => setRadius(Number(e.target.value))}
+                      className="w-full px-3 py-2 border rounded bg-white text-black"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Background Image URL (optional)</label>
+                    <input
+                      value={bgUrl}
+                      onChange={(e) => setBgUrl(e.target.value)}
+                      placeholder="https://..."
+                      className="w-full px-3 py-2 border rounded bg-white text-black"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <h3 className="text-sm font-semibold mb-2">Unified Grid (click: grey → green → red → grey)</h3>
+                  {tab === 'hex' ? (
+                    <HexGridEditor
+                      radius={radius}
+                      coords={createHexCoords}
+                      fieldMask={createHexFieldMask}
+                      backgroundImageUrl={bgUrl || ''}
+                      onChange={(nextCoords, nextMask)=> { setCreateHexCoords(nextCoords); setCreateHexFieldMask(nextMask) }}
+                    />
+                  ) : (
+                    <SquareGridEditor
+                      radius={radius}
+                      coords={createSquareCoords}
+                      fieldMask={createSquareFieldMask}
+                      backgroundImageUrl={bgUrl || ''}
+                      onChange={(nextCoords, nextMask)=> { setCreateSquareCoords(nextCoords); setCreateSquareFieldMask(nextMask) }}
+                    />
+                  )}
+                </div>
+
+                <div className="mt-4 flex items-center gap-3">
+                  <button
+                    onClick={onCreate}
+                    disabled={creating || !name.trim()}
+                    className={`px-4 py-2 rounded text-white ${creating || !name.trim() ? 'bg-blue-300' : 'bg-blue-600 hover:bg-blue-700'}`}
+                  >
+                    {creating ? 'Creating…' : 'Create Map'}
+                  </button>
+                  <button onClick={resetForm} disabled={creating} className="px-4 py-2 rounded bg-gray-100 text-gray-800 hover:bg-gray-200">Reset</button>
+                </div>
+              </>
             )}
           </div>
         </div>
-      </aside>
+      </div>
     </div>
   )
 }
