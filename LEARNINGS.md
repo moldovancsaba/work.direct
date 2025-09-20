@@ -2,8 +2,8 @@
 
 This document captures implementation insights, technical decisions, and solutions to issues encountered during PlayMass development.
 
-**Current Version**: 4.0.0
-**Last Updated**: 2025-09-20T13:30:02.000Z
+**Current Version**: 4.1.0
+**Last Updated**: 2025-09-20T15:00:22.000Z
 
 ### HERO: Logo visibility across pages, optional scoreboard, half-height (v2.1.0)
 - What: Ensure HERO logo is displayed on all pages; allow toggling SCOREBOARD vs normal text; reduce hero height to optimize screen usage.
