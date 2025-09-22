@@ -235,3 +235,5 @@ Notes:
 - Notes: Automated via scripts/versioning/bump-version.mjs (UTC timestamps with ms)
 2025-09-22T17:00:17.400Z — Delivery: Version bump and doc sync to v4.3.5
 - Notes: Automated via scripts/versioning/bump-version.mjs (UTC timestamps with ms)
+2025-09-22T17:17:47.897Z — Delivery: Version bump and doc sync to v4.4.1
+- Notes: Automated via scripts/versioning/bump-version.mjs (UTC timestamps with ms)

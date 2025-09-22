@@ -643,15 +643,29 @@ useEffect(() => {
   )
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6 enforce-text-black">
+      {/* Enforce absolutely black text across the entire editor */}
+      <style jsx global>{`
+        .enforce-text-black, .enforce-text-black * {
+          color: #000000 !important;
+          --tw-text-opacity: 1 !important;
+        }
+        .enforce-text-black input::placeholder,
+        .enforce-text-black textarea::placeholder {
+          color: #000000 !important;
+          opacity: 1 !important;
+        }
+        .enforce-text-black a { color: #000000 !important; }
+        .enforce-text-black svg { color: #000000 !important; }
+      `}</style>
       <div className="w-full mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">{mode === 'create' ? 'Create New Game' : `Edit ${gameTypeName} Game`}</h1>
-            <p className="text-gray-600 mt-1">{mode === 'create' ? 'Set up your game using the unified editor layout' : `Modify your ${gameTypeName} game configuration`}</p>
+            <h1 className="text-3xl font-bold">{mode === 'create' ? 'Create New Game' : `Edit ${gameTypeName} Game`}</h1>
+            <p className="mt-1">{mode === 'create' ? 'Set up your game using the unified editor layout' : `Modify your ${gameTypeName} game configuration`}</p>
           </div>
-          <Link href="/admin/games" className="text-gray-600 hover:text-gray-800 transition-colors">← Back to Games</Link>
+          <Link href="/admin/games" className="transition-colors">← Back to Games</Link>
         </div>
 
         {/* Error */}
