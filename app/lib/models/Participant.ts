@@ -153,9 +153,11 @@ participantSchema.pre('save', function(next) {
     this.lastActivityAt = new Date()
   }
   
-  // Ensure at least email or phone is provided for identification
-  if (!this.email && !this.phone) {
-    return next(new Error('Participant must have either email or phone number'))
+  // Ensure at least one identity is provided for identification
+  // WHAT: Allow guest/trial participants identified by uuid without email/phone.
+  // WHY: Admin wants guest plays counted; uuid ensures uniqueness while preserving privacy.
+  if (!this.email && !this.phone && !this.uuid) {
+    return next(new Error('Participant must have either email, phone number, or uuid'))
   }
   
   next()

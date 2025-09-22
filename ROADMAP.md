@@ -1,6 +1,6 @@
 # ROADMAP.md — PlayMass
 
-Last Updated: 2025-09-20T15:45:16.787Z
+Last Updated: 2025-09-22T17:02:02.000Z
 - Forward-looking plan for PlayMass after QUIZZ release.
 - Priorities and dependencies are explicitly stated to enable safe parallelization.
 

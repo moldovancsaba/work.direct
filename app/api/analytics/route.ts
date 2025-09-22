@@ -59,31 +59,41 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     }
 
     // Get overview statistics
+    const playsFilter = { isValidated: true, playedAt: { $gte: startDate, $lte: endDate } } as any
+
     const [
       totalGames,
       activeGames,
-      totalParticipants,
-      activeParticipants,
-      totalPlays,
-      recentPlays,
+      totalParticipantsAllTime,
+      totalPlaysAllTime,
+      currentDistinctParticipants,
+      recentDistinctSessions,
       avgSessionData,
       completionRateData
     ] = await Promise.all([
       GameModel.countDocuments(),
       GameModel.countDocuments({ status: 'ACTIVE' }),
-      ParticipantModel.countDocuments(),
-      ParticipantModel.countDocuments({ isActive: true }),
-      GameResultModel.countDocuments(),
-      GameResultModel.countDocuments({ playedAt: { $gte: startDate, $lte: endDate } }),
-      // Average session calculation (placeholder - would need session tracking)
+      // All-time distinct validated participants
+      GameResultModel.distinct('participantId', { isValidated: true }).then((ids: any[]) => ids.length),
+      // All-time validated plays (approximate by validated results)
+      GameResultModel.countDocuments({ isValidated: true }),
+      // Participants in current date range (validated)
+      GameResultModel.distinct('participantId', playsFilter).then((ids: any[]) => ids.length),
+      // Plays in range: approximate distinct sessions by grouping
       GameResultModel.aggregate([
-        { $match: { playedAt: { $gte: startDate, $lte: endDate } } },
+        { $match: playsFilter },
+        { $group: { _id: { $ifNull: ['$sessionId', '$_id'] } } },
+        { $count: 'count' }
+      ]).then((x: any[]) => x[0]?.count || 0),
+      // Average session calculation (validated only)
+      GameResultModel.aggregate([
+        { $match: playsFilter },
         { $group: { _id: '$sessionId', count: { $sum: 1 } } },
         { $group: { _id: null, avgSession: { $avg: '$count' } } }
       ]),
-      // Completion rate calculation
+      // Completion rate calculation (validated only)
       GameResultModel.aggregate([
-        { $match: { playedAt: { $gte: startDate, $lte: endDate } } },
+        { $match: playsFilter },
         {
           $group: {
             _id: null,
@@ -97,6 +107,10 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     const avgSession = avgSessionData[0]?.avgSession || 0
     const completionData = completionRateData[0]
     const completionRate = completionData ? (completionData.wins / completionData.total * 100) : 0
+    const recentPlays = recentDistinctSessions
+
+    const totalParticipants = totalParticipantsAllTime
+    const totalPlays = totalPlaysAllTime
 
     // Get game-specific statistics
     const gameStats = await GameModel.aggregate([
@@ -108,6 +122,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
           as: 'results'
         }
       },
+      { $addFields: { results: { $filter: { input: '$results', as: 'r', cond: { $eq: ['$$r.isValidated', true] } } } } },
       {
         $addFields: {
           totalPlays: { $size: '$results' },
@@ -192,6 +207,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     const dailyActivity = await GameResultModel.aggregate([
       { 
         $match: { 
+          isValidated: true,
           playedAt: { $gte: startDate, $lte: endDate } 
         } 
       },
@@ -242,13 +258,13 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     // Calculate growth rates
     const playsGrowth = previousPlays > 0 ? ((recentPlays - previousPlays) / previousPlays * 100) : 100
     const participantsGrowth = previousParticipants.length > 0 ? 
-      ((activeParticipants - previousParticipants.length) / previousParticipants.length * 100) : 100
+      ((currentDistinctParticipants - previousParticipants.length) / previousParticipants.length * 100) : 100
 
     // Prepare response data
     const analytics = {
       overview: {
         totalPlays: recentPlays,
-        totalPlayers: activeParticipants,
+        totalPlayers: currentDistinctParticipants,
         avgSessionTime: avgSession > 0 ? `${Math.round(avgSession * 4)}m ${Math.round((avgSession * 4 % 1) * 60)}s` : '0m 0s',
         completionRate: Math.round(completionRate * 10) / 10,
         growth: {
@@ -279,7 +295,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
         totalGames,
         activeGames,
         totalParticipants,
-        activeParticipants,
+        activeParticipants: currentDistinctParticipants,
         totalPlays,
         dateRange: {
           start: startDate.toISOString(),

@@ -26,16 +26,18 @@ export async function GET() {
     // Get stats for each game
     const gamesWithStats = await Promise.all(
       games.map(async (game) => {
-        // Use GameResult distinct participants to avoid relying on missing gameId on Participant
-        // WHAT: Count unique participants per game via GameResult participantId distinct.
-        // WHY: Participant documents are global and do not store gameId; GameResult ties participants to games.
-        const [uniqueParticipants, gameResultCount, rewards] = await Promise.all([
-          GameResultModel.distinct('participantId', { gameId: game._id }),
-          GameResultModel.countDocuments({ gameId: game._id }),
+        // WHAT: Count unique participants and sessions (attempts) per game via GameResult
+        // WHY: Participant documents are global and do not store gameId; GameResult ties participants and sessions to games.
+        const filter: any = { gameId: game._id, isValidated: true }
+        const [uniqueParticipants, sessionIds, nullSessionCount, rewards] = await Promise.all([
+          GameResultModel.distinct('participantId', filter),
+          GameResultModel.distinct('sessionId', filter),
+          GameResultModel.countDocuments({ ...filter, $or: [ { sessionId: null }, { sessionId: '' }, { sessionId: { $exists: false } } ] }),
           RewardModel.find({ gameId: game._id })
         ])
-        
+
         const participantCount = Array.isArray(uniqueParticipants) ? uniqueParticipants.length : 0
+        const sessionCount = (Array.isArray(sessionIds) ? sessionIds.filter(Boolean).length : 0) + (nullSessionCount || 0)
         
         return {
           ...game,
@@ -43,7 +45,7 @@ export async function GET() {
           rewards,
           _count: {
             participants: participantCount,
-            gameResults: gameResultCount
+            gameResults: sessionCount
           }
         }
       })

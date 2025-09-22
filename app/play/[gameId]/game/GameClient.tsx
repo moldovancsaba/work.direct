@@ -2,8 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import GameLayout from '../../../components/game/GameLayout'
-import StarsHexa from '../../../components/games/StarsHexa'
-import PenaltyHexa from '../../../components/games/PenaltyHexa 2'
 import FindRed from '../../../components/games/FindRed'
 import LuckyWheel from '../../../components/LuckyWheel'
 import QuizzHexa from '../../../components/games/QuizzHexa'
@@ -34,15 +32,15 @@ export default function GameClient({ game, cfg }: GameClientProps) {
   const sessionId = session?.sessionId
   const ref = session?.ref || cfg?.meta?.ref
 
-  // Scoreboard state
-  const [homeScore, setHomeScore] = useState(0)
-  const [visitorScore, setVisitorScore] = useState(0)
+  // Generate a fresh attemptId per mounted play screen to represent a single attempt/session
+  const attemptId = useMemo(() => {
+    try { return (globalThis as any).crypto?.randomUUID?.() || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2,10)}` } catch { return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2,10)}` }
+  }, [])
+
   // Stars Hexa HUD (legacy): starsRemaining : flipsRemaining (kept for potential UI use)
   const [starsLeft, setStarsLeft] = useState(0)
   const [flipsLeft, setFlipsLeft] = useState(0)
-  // Stars Hexa rounds for header scoreboard: currentRound : totalRounds
-  // WHAT: Track these at the GameClient level to feed the hero scoreboard via GameLayout.
-  // WHY: Product requirement — show the actual round on the left and all rounds on the right.
+  // Stars Hexa rounds (legacy for scoreboard); retained harmlessly
   const [hexaCurrentRound, setHexaCurrentRound] = useState(1)
   const [hexaTotalRounds, setHexaTotalRounds] = useState(0)
   // Find Red scoreboard: redsFound / targetReds and roundsUsed / totalRounds
@@ -109,7 +107,7 @@ export default function GameClient({ game, cfg }: GameClientProps) {
     // Server-authoritative spin
     const res = await fetch(`/api/games/${cfg.meta.gameId}/play`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ participant, sessionId, ref })
+      body: JSON.stringify({ participant, sessionId: attemptId, attemptId, gameType: 'WHEEL_OF_FORTUNE', ref })
     })
     const data = await res.json()
     if (!res.ok || !data?.success) {
@@ -119,29 +117,7 @@ export default function GameClient({ game, cfg }: GameClientProps) {
     return data.data.result as GameOutcome
   }
 
-  const content = game.type === 'STARS_HEXA' ? (
-<StarsHexa
-      hexagons={game.configuration?.starsHexa?.hexagons || []}
-      onFlip={onFlip}
-      maxFlipsPerAttempt={game.configuration?.starsHexa?.maxFlipsPerAttempt || 3}
-      theme={game.configuration?.starsHexa?.theme || 'default'}
-      attemptsRemaining={game.configuration?.maxAttemptsPerUser || 3}
-      gameId={cfg.meta.gameId}
-      isTrialMode={isTrial}
-      referralUuid={ref || undefined}
-      winEmoji={game.configuration?.starsHexa?.emojis?.win || '⭐️'}
-      loseEmoji={game.configuration?.starsHexa?.emojis?.lose || '🍄'}
-      hexGridStyles={{
-        activeHexBg: game.configuration?.starsHexa?.colors?.hexGrid?.activeHexBg,
-        flipGoodBg: game.configuration?.starsHexa?.colors?.hexGrid?.flipGoodBg,
-        flipBadBg: game.configuration?.starsHexa?.colors?.hexGrid?.flipBadBg,
-        inactiveHexBg: game.configuration?.starsHexa?.colors?.hexGrid?.inactiveHexBg,
-        edgeStrokeColor: game.configuration?.starsHexa?.colors?.hexGrid?.edgeStrokeColor,
-      }}
-      onHUDUpdate={(starsRemaining, flipsRemaining) => { setStarsLeft(starsRemaining); setFlipsLeft(flipsRemaining); }}
-      onRoundUpdate={(current, total) => { setHexaCurrentRound(current); setHexaTotalRounds(total); }}
-    />
-  ) : game.type === 'FIND_RED' ? (
+  const content = game.type === 'FIND_RED' ? (
     <FindRed
       config={game.configuration?.findRed}
       platform={game.configuration?.platform}
@@ -152,6 +128,30 @@ export default function GameClient({ game, cfg }: GameClientProps) {
         setFindTargetReds(targetReds)
         setFindRoundsUsed(roundsUsed)
         setFindTotalRounds(totalRounds)
+      }}
+      onComplete={async (summary: { won: boolean, correct: number, rounds: number }) => {
+        const result: GameOutcome = {
+          type: summary.won ? 'WIN' : 'LOSE',
+          starsFound: summary.correct,
+          totalStarsInGame: summary.rounds,
+          foundAllStars: summary.won,
+          value: `${summary.correct}/${summary.rounds}`,
+          rewardIds: [],
+          message: summary.won ? 'You found Shorty!' : 'Shorty got away'
+        }
+        try {
+          await fetch(`/api/games/${cfg.meta.gameId}/play`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ participant, sessionId: attemptId, attemptId, gameType: 'FIND_RED', result, ref })
+          }).catch(()=>{})
+        } finally {
+          const params = new URLSearchParams({ won: summary.won ? 'true' : 'false' })
+          if (isTrial) params.set('trial', 'true')
+          if (ref) params.set('ref', ref)
+          params.set('starsFound', String(summary.correct))
+          params.set('totalStars', String(summary.rounds))
+          window.location.href = `/play/${cfg.meta.gameId}/result?${params.toString()}`
+        }
       }}
     />
   ) : game.type === 'WHEEL_OF_FORTUNE' ? (
@@ -177,9 +177,8 @@ export default function GameClient({ game, cfg }: GameClientProps) {
       questions={game.configuration?.quizz?.questions || []}
       overlayBg={game.configuration?.quizz?.overlayBg || 'rgba(0,0,0,0.6)'}
       cardCoverImages={game.configuration?.quizz?.cardCoverImages || []}
-      onResult={(r)=>{
-        // What: Normalize quiz outcome and route to the unified Result page
-        // Why: Finish when last round is completed or when target correct answers is achieved
+      onResult={async (r)=>{
+        // What: Normalize quiz outcome and persist a single attempt completion before navigating to result
         const result: GameOutcome = {
           type: r.won ? 'WIN' : 'LOSE',
           starsFound: r.correct,
@@ -192,14 +191,19 @@ export default function GameClient({ game, cfg }: GameClientProps) {
         setHexaCurrentRound(r.rounds)
         setHexaTotalRounds(game.configuration?.quizz?.targetCorrect || 0)
         try {
-          const params = new URLSearchParams({ won: r.won ? 'true' : 'false' })
-          if (isTrial) params.set('trial', 'true')
-          if (ref) params.set('ref', ref)
-          params.set('starsFound', String(r.correct))
-          params.set('totalStars', String(r.rounds))
-          window.location.href = `/play/${cfg.meta.gameId}/result?${params.toString()}`
-        } catch {
-          // ignore navigation errors in MVP flow
+          await fetch(`/api/games/${cfg.meta.gameId}/play`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ participant, sessionId: attemptId, attemptId, gameType: 'QUIZZ', result, ref })
+          }).catch(()=>{})
+        } finally {
+          try {
+            const params = new URLSearchParams({ won: r.won ? 'true' : 'false' })
+            if (isTrial) params.set('trial', 'true')
+            if (ref) params.set('ref', ref)
+            params.set('starsFound', String(r.correct))
+            params.set('totalStars', String(r.rounds))
+            window.location.href = `/play/${cfg.meta.gameId}/result?${params.toString()}`
+          } catch { /* ignore */ }
         }
       }}
     />
@@ -207,33 +211,41 @@ export default function GameClient({ game, cfg }: GameClientProps) {
     <QuizzzGame
       config={game.configuration?.quizzz}
       platformMainBackgroundCss={game.configuration?.platform?.styles?.main?.background}
-      onResult={(r) => {
-        const params = new URLSearchParams({ won: r.won ? 'true' : 'false' })
-        if (isTrial) params.set('trial', 'true')
-        if (ref) params.set('ref', ref)
-        params.set('starsFound', String(r.correct))
-        params.set('totalStars', String(r.rounds))
-        window.location.href = `/play/${cfg.meta.gameId}/result?${params.toString()}`
+      onResult={async (r) => {
+        // Persist a single QUIZZZ attempt completion before navigating
+        const result: GameOutcome = {
+          type: r.won ? 'WIN' : 'LOSE',
+          starsFound: r.correct,
+          totalStarsInGame: r.rounds,
+          foundAllStars: r.won,
+          value: `${r.correct}/${r.rounds}`,
+          rewardIds: [],
+          message: r.won ? 'You won the quiz!' : 'Quiz over'
+        }
+        try {
+          await fetch(`/api/games/${cfg.meta.gameId}/play`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ participant, sessionId: attemptId, attemptId, gameType: 'QUIZZZ', result, ref })
+          }).catch(()=>{})
+        } finally {
+          const params = new URLSearchParams({ won: r.won ? 'true' : 'false' })
+          if (isTrial) params.set('trial', 'true')
+          if (ref) params.set('ref', ref)
+          params.set('starsFound', String(r.correct))
+          params.set('totalStars', String(r.rounds))
+          window.location.href = `/play/${cfg.meta.gameId}/result?${params.toString()}`
+        }
       }}
     />
   ) : (
-    <PenaltyHexa
-      players={game.configuration?.penaltyShootout?.players || []}
-      onFlip={onFlip}
-      theme={game.configuration?.penaltyShootout?.theme || 'football'}
-      gameId={cfg.meta.gameId}
-      isTrialMode={isTrial}
-      referralUuid={ref || undefined}
-      customTexts={game.configuration?.penaltyShootout?.texts || {}}
-      customColors={game.configuration?.penaltyShootout?.colors || {}}
-      onScoreUpdate={(home, visitor) => { setHomeScore(home); setVisitorScore(visitor) }}
-    />
+    <div className="w-full h-full flex items-center justify-center text-white/80">
+      Unsupported game type
+    </div>
   )
 
   const headerSubtitle = game.description || ''
 
   const platformStyles = game.configuration?.platform?.styles || {}
-  const penaltyColors = game.configuration?.penaltyShootout?.colors || {}
 
 return (
     <GameLayout
@@ -255,27 +267,14 @@ return (
       mainFontStyle={platformStyles?.main?.fontStyle}
       mainFonts={{ h1: { url: platformStyles?.main?.h1FontUrl, style: platformStyles?.main?.h1FontStyle }, h2: { url: platformStyles?.main?.h2FontUrl, style: platformStyles?.main?.h2FontStyle }, p: { url: platformStyles?.main?.pFontUrl, style: platformStyles?.main?.pFontStyle } }}
       gameContent={content}
-      penaltyScore={game.type === 'PENALTY_SHOOTOUT' ? {
-        home: homeScore,
-        visitor: visitorScore,
-        homeBg: platformStyles?.scoreboard?.homeBg || penaltyColors.homeScoreCard || '#C00000FF',
-        visitorBg: platformStyles?.scoreboard?.visitorBg || penaltyColors.visitorScoreCard || '#C00000FF',
-        digitColor: platformStyles?.scoreboard?.digitColor || '#FFFFFFFF'
-      } : (game.type === 'STARS_HEXA' ? {
-        // Display current round (left) and total rounds (right) for Hexa, per product requirement
-        home: hexaCurrentRound,
-        visitor: hexaTotalRounds,
-        homeBg: platformStyles?.scoreboard?.homeBg || '#C00000FF',
-        visitorBg: platformStyles?.scoreboard?.visitorBg || '#C00000FF',
-        digitColor: platformStyles?.scoreboard?.digitColor || '#FFFFFFFF'
-      } : (game.type === 'FIND_RED' ? {
-        // Map to redsFound / targetReds; we re-use the two-digit display semantics
+      penaltyScore={game.type === 'FIND_RED' ? {
+        // Map to redsFound / targetReds; re-use the two-digit display semantics
         home: findRedsFound,
         visitor: findTargetReds,
         homeBg: '#C00000FF',
         visitorBg: '#C00000FF',
         digitColor: '#FFFFFFFF'
-      } : undefined))}
+      } : undefined}
     />
   )
 }

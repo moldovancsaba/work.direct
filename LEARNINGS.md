@@ -2,8 +2,8 @@
 
 This document captures implementation insights, technical decisions, and solutions to issues encountered during PlayMass development.
 
-**Current Version**: 4.2.0
-**Last Updated**: 2025-09-20T15:45:16.787Z
+**Current Version**: 4.4.0
+**Last Updated**: 2025-09-22T17:02:02.000Z
 
 ### HERO: Logo visibility across pages, optional scoreboard, half-height (v2.1.0)
 - What: Ensure HERO logo is displayed on all pages; allow toggling SCOREBOARD vs normal text; reduce hero height to optimize screen usage.
@@ -30,6 +30,15 @@ This document captures implementation insights, technical decisions, and solutio
 - What: Ensure all default text appears black with sensible H1/H2/P sizes across Hero/Main.
 - Why: Readability and product direction (“all text BLACK by default”).
 - How: Resolver-level defaults set hero.titleClass and main.h1Class/h2Class/pClass to include text-black while preserving size/weight; shared Blocks default to white background with black text.
+
+### Major Update v4.3 — Single Game Policy & Attempt-Level Analytics (2025-09-22T08:42:46.000Z)
+- What: Consolidated the platform to a single standardized game type (QUIZZZ) and enforced attempt-level session analytics.
+- Why: Reduce complexity, improve UX consistency, and ensure accurate analytics for admin views.
+- How:
+  - Admin Editor: Removed STARS_HEXA, PENALTY_SHOOTOUT, FIND_RED, WHEEL_OF_FORTUNE, QUIZZ (legacy) from UI; creation limited to QUIZZZ.
+  - Backend: Play endpoint only supports QUIZZZ, FIND_RED, WHEEL (temporary support retained for WHEEL) — but UI is single-type now; sessions recorded per completed attempt; guest plays counted via uuid.
+  - Analytics: Validated-only, distinct sessionId counting; updated admin list/detail and analytics API paths.
+  - DB: Added indexes for idempotency and analytics (unique sparse (gameId, sessionId)).
 
 ### Major Update v4 — DB-driven Font Colors & Baked-in Removal (2025-09-20T13:30:02.000Z)
 - What: Enforced DB-driven font colors across all play pages; removed baked-in text colors/sizes; ensured hero color application.

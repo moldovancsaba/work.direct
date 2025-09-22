@@ -3,11 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import PenaltyCustomizationForm from './PenaltyCustomizationForm 2'
-import StarsHexaCustomizationForm from './StarsHexaCustomizationForm 2'
 import GeneralCustomizationForm from './GeneralCustomizationForm'
 import PlatformSettingsForm from './PlatformSettingsForm'
-import QuizzCustomizationForm from './QuizzCustomizationForm'
 import QuizzzCustomizationForm from './QuizzzCustomizationForm'
 import { GameType, QuizzConfiguration, QuizzzConfiguration } from '../../types'
 
@@ -191,9 +188,10 @@ useEffect(() => {
               byCode.set(k, t)
             }
           }
+          // Load all enabled types from DB — today only QUIZZZ is enabled by default
           const items = Array.from(byCode.values())
           setAvailableTypes(items)
-          // If current gameType not present or disabled, default to first enabled type
+          // If current gameType not present or disabled, default to first enabled type (QUIZZZ by default)
           const codes = new Set(items.filter((x: any) => x.enabled !== false).map((x: any) => x.code))
           if (!codes.has(gameType) && items.length > 0) {
             const first = items.find((x: any) => x.enabled !== false) || items[0]
@@ -706,7 +704,7 @@ useEffect(() => {
                             className="w-full px-4 py-3 bg-white text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500 caret-black" style={{ backgroundColor: '#ffffff', color: '#000000', caretColor: '#000000' }} placeholder="Describe your game..." />
                         </div>
                         {/* Row 3: Game Type selector (create mode only) */}
-                        {mode === 'create' && !hideTypeSelect && (
+{mode === 'create' && !hideTypeSelect && (
                           <div className="md:col-span-2">
                             <label className="block text-sm font-medium text-gray-700 mb-2">Game Type</label>
                             {loadingTypes ? (
@@ -979,96 +977,8 @@ useEffect(() => {
                 </div>
               )}
 
-              {/* Segment3 - Game Type specific Settings */}
-              {gameType !== 'QUIZZZ' && (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Game Type specific Settings</h2>
-                  {gameType === 'QUIZZ' && (
-                    <QuizzCustomizationForm
-                      config={quizzConfig as any}
-                      onChange={(q)=> setQuizzConfig(q)}
-                    />
-                  )}
-                  {gameType === 'STARS_HEXA' && (
-                    <StarsHexaCustomizationForm
-                    texts={starsHexaTexts}
-                    colors={starsHexaColors}
-                    settings={{ maxFlipsPerAttempt: maxFlipsPerRound, theme, winEmoji, loseEmoji }}
-                    hexagons={hexagons}
-                    onHexagonsChange={(hx) => setHexagons(hx)}
-                    onChange={(texts, colors, settings) => {
-                      setStarsHexaTexts(texts)
-                      setStarsHexaColors(colors)
-                      setMaxFlipsPerRound(settings.maxFlipsPerAttempt)
-                      setTheme(settings.theme as any)
-                      setWinEmoji(settings.winEmoji)
-                      setLoseEmoji(settings.loseEmoji)
-                    }}
-                    hideTextAndColors={true}
-                  />
-                )}
-                {gameType === 'FIND_RED' && (
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Get Shorty Settings</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Cards per Round (X)</label>
-                        <input type="number" className="w-full px-3 py-2 border rounded"
-                          min={3} max={32} value={findRedConfig.packSize}
-                          onChange={(e) => setFindRedConfig((s: any) => ({ ...s, packSize: Number(e.target.value) }))} />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Reds per Pack (Y)</label>
-                        <input type="number" className="w-full px-3 py-2 border rounded"
-                          min={1} max={findRedConfig.packSize} value={findRedConfig.redsPerPack}
-                          onChange={(e) => setFindRedConfig((s: any) => ({ ...s, redsPerPack: Number(e.target.value) }))} />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Selections per Round</label>
-                        <input type="number" className="w-full px-3 py-2 border rounded"
-                          min={1} max={findRedConfig.packSize} value={findRedConfig.selectionsPerRound}
-                          onChange={(e) => setFindRedConfig((s: any) => ({ ...s, selectionsPerRound: Number(e.target.value) }))} />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Target Reds (Z)</label>
-                        <input type="number" className="w-full px-3 py-2 border rounded"
-                          min={1} max={findRedConfig.totalRounds} value={findRedConfig.targetReds}
-                          onChange={(e) => setFindRedConfig((s: any) => ({ ...s, targetReds: Number(e.target.value) }))} />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Total Rounds (W)</label>
-                        <input type="number" className="w-full px-3 py-2 border rounded"
-                          min={1} max={10} value={findRedConfig.totalRounds}
-                          onChange={(e) => setFindRedConfig((s: any) => ({ ...s, totalRounds: Number(e.target.value) }))} />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Shorty Label</label>
-                        <input type="text" className="w-full px-3 py-2 border rounded" value={findRedConfig.texts.shortyLabel}
-                          onChange={(e) => setFindRedConfig((s: any) => ({ ...s, texts: { ...s.texts, shortyLabel: e.target.value } }))} />
-                      </div>
-                    </div>
-                  </div>
-                )}
-                {gameType === 'PENALTY_SHOOTOUT' && (
-                  <PenaltyCustomizationForm
-                    texts={penaltyTexts}
-                    colors={penaltyColors}
-                    gameSettings={penaltyGameSettings}
-                    gameData={{ title, description }}
-                    onChange={(texts, colors, gameSettings) => {
-                      setPenaltyTexts(texts)
-                      setPenaltyColors(colors)
-                      setPenaltyGameSettings(gameSettings)
-                    }}
-                    onGameDataChange={(gameData) => {
-                      setTitle(gameData.title)
-                      setDescription(gameData.description)
-                    }}
-                    hideTextAndColors={true}
-                  />
-                )}
-              </div>
-              )}
+              {/* Segment3 - Only QUIZZZ specific Settings visible */}
+              {/* Other game-type specific UIs removed by design */}
 
               {/* Middle center actions (full width below columns) */}
               <ActionBar />

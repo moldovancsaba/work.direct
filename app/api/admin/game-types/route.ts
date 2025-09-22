@@ -17,11 +17,11 @@ export async function GET() {
     // Auto-seed defaults if empty (admin convenience, dev-safe)
     if (!items || items.length === 0) {
       const defaults = [
-        { code: 'STARS_HEXA', name: 'Hexa', enabled: true, order: 10 },
-        { code: 'PENALTY_SHOOTOUT', name: 'Penalty Shootout', enabled: true, order: 20 },
-        { code: 'FIND_RED', name: 'Get Shorty (Find Red)', enabled: true, order: 30 },
-        { code: 'WHEEL_OF_FORTUNE', name: 'Wheel of Fortune', enabled: true, order: 40 },
-        { code: 'QUIZZ', name: 'Quizz (legacy)', enabled: true, order: 50 },
+        { code: 'STARS_HEXA', name: 'Hexa', enabled: false, order: 10 },
+        { code: 'PENALTY_SHOOTOUT', name: 'Penalty Shootout', enabled: false, order: 20 },
+        { code: 'FIND_RED', name: 'Get Shorty (Find Red)', enabled: false, order: 30 },
+        { code: 'WHEEL_OF_FORTUNE', name: 'Wheel of Fortune', enabled: false, order: 40 },
+        { code: 'QUIZZ', name: 'Quizz (legacy)', enabled: false, order: 50 },
         { code: 'QUIZZZ', name: 'QUIZZZ (Board Quiz)', enabled: true, order: 60 }
       ]
       await GameTypeModel.insertMany(defaults)

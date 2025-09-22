@@ -187,6 +187,16 @@ gameResultSchema.index({
 // Geospatial index for location-based queries (2dsphere for modern geo queries)
 gameResultSchema.index({ 'location.coordinates': '2dsphere' }, { sparse: true })
 
+// Attempt-level analytics and idempotency indexes
+// WHAT: Ensure fast distinct session queries and prevent duplicate attempt writes.
+// WHY: Admin/Analytics count sessions per completed attempt and must be accurate.
+// Distinct sessions per game (validated-only analytics typically filter by isValidated=true):
+gameResultSchema.index({ gameId: 1, isValidated: 1, sessionId: 1 }, { name: 'by_game_validated_session' })
+// Distinct participants per game (validated-only):
+gameResultSchema.index({ gameId: 1, isValidated: 1, participantId: 1 }, { name: 'by_game_validated_participant' })
+// Idempotency guard — allow at most one result per (game, sessionId). Sparse to ignore legacy docs without sessionId
+gameResultSchema.index({ gameId: 1, sessionId: 1 }, { unique: true, sparse: true, name: 'unique_attempt_per_game' })
+
 // Virtual fields for computed properties
 // These provide convenient access to calculated values
 
