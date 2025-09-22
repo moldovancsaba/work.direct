@@ -1,9 +1,13 @@
 # 📝 RELEASE_NOTES.md - PlayMass
 
-**Current Version**: 4.4.0
-**Last Updated**: 2025-09-22T17:02:02.000Z
+**Current Version**: 4.4.1
+**Last Updated**: 2025-09-22T17:17:47.897Z
 
 ## 🔹 Version History
+
+### [v4.4.1] — 2025-09-22T17:17:47.897Z
+- Automatic predev patch bump
+
 
 ### [v4.4.0] — 2025-09-22T17:02:02.000Z
 - Minor: Single standardized game type (QUIZZZ) enforced across admin; Game Type dropdown restored for future extensibility.

@@ -237,6 +237,9 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
             nameInputClassOverride={(function(){ const t=resolveTextType(styles,'TEXT_13','P'); return classFor(t, styles); })()}
             emailInputClassOverride={(function(){ const t=resolveTextType(styles,'TEXT_15','P'); return classFor(t, styles); })()}
             phoneInputClassOverride={(function(){ const t=resolveTextType(styles,'TEXT_17','P'); return classFor(t, styles); })()}
+            nameInputColor={(function(){ const t=resolveTextType(styles,'TEXT_13','P'); return t==='H1'?styles?.main?.h1Color: t==='H2'?styles?.main?.h2Color: (styles?.main?.pColor || '#000000'); })()}
+            emailInputColor={(function(){ const t=resolveTextType(styles,'TEXT_15','P'); return t==='H1'?styles?.main?.h1Color: t==='H2'?styles?.main?.h2Color: (styles?.main?.pColor || '#000000'); })()}
+            phoneInputColor={(function(){ const t=resolveTextType(styles,'TEXT_17','P'); return t==='H1'?styles?.main?.h1Color: t==='H2'?styles?.main?.h2Color: (styles?.main?.pColor || '#000000'); })()}
             onRegister={async (p) => {
               try {
                 // Create/refresh 24h end-user session for cross-game persistence (POC)

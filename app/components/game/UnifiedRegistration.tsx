@@ -92,6 +92,11 @@ export interface UnifiedRegistrationProps {
   nameInputClassOverride?: string
   emailInputClassOverride?: string
   phoneInputClassOverride?: string
+
+  // Optional per-input font colors (resolved by parent from platform styles); defaults to black
+  nameInputColor?: string
+  emailInputColor?: string
+  phoneInputColor?: string
 }
 
 /**
@@ -151,7 +156,10 @@ export default function UnifiedRegistration({
   phoneHelperNode,
   nameInputClassOverride,
   emailInputClassOverride,
-  phoneInputClassOverride
+  phoneInputClassOverride,
+  nameInputColor,
+  emailInputColor,
+  phoneInputColor
 }: UnifiedRegistrationProps) {
   
   // Form state management
@@ -251,7 +259,7 @@ export default function UnifiedRegistration({
   }
   
   // Use editor-configured classes; fallback to minimal defaults
-  const inputClass = (className?: string) => (className && className.trim()) ? className : 'w-full px-4 py-3 rounded-lg bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+  const inputClass = (className?: string) => (className && className.trim()) ? className : 'w-full px-4 py-3 rounded-lg bg-white text-black border border-gray-300 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500 caret-black'
   const buttonPrimaryClass = (className?: string) => (className && className.trim()) ? className : 'w-full px-6 py-3 rounded-lg text-white'
   const buttonSecondaryClass = (className?: string) => (className && className.trim()) ? className : 'w-full px-6 py-3 rounded-lg text-white'
 
@@ -327,7 +335,7 @@ export default function UnifiedRegistration({
                   value={participant.name}
                   onChange={(e) => setParticipant({ ...participant, name: e.target.value })}
                   className={`${inputClass(undefined)} ${nameInputClassOverride || ''} transition-colors`}
-                  style={{}}
+                  style={{ color: (nameInputColor || '#000000') }}
                   placeholder={customTexts?.namePlaceholder || "Enter your name"}
                   required
                   disabled={isLoading || isSubmitting}
@@ -349,7 +357,7 @@ export default function UnifiedRegistration({
                   value={participant.email || ''}
                   onChange={(e) => setParticipant({ ...participant, email: e.target.value })}
                   className={`${inputClass(undefined)} ${emailInputClassOverride || ''} transition-colors`}
-                  style={{}}
+                  style={{ color: (emailInputColor || '#000000') }}
                   placeholder={customTexts?.emailPlaceholder || (requireEmail ? "your@email.com (required)" : "your@email.com")}
                   required={requireEmail}
                   disabled={isLoading || isSubmitting}
@@ -371,7 +379,7 @@ export default function UnifiedRegistration({
                   value={participant.phone || ''}
                   onChange={(e) => setParticipant({ ...participant, phone: e.target.value })}
                   className={`${inputClass(undefined)} ${phoneInputClassOverride || ''} transition-colors`}
-                  style={{}}
+                  style={{ color: (phoneInputColor || '#000000') }}
                   placeholder={customTexts?.phonePlaceholder || (requirePhone ? "+1 (555) 123-4567 (required)" : "+1 (555) 123-4567")}
                   required={requirePhone}
                   disabled={isLoading || isSubmitting}
