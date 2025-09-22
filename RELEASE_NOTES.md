@@ -1,9 +1,48 @@
 # 📝 RELEASE_NOTES.md - PlayMass
 
-**Current Version**: 4.2.0
-**Last Updated**: 2025-09-20T15:45:16.787Z
+**Current Version**: 4.4.0
+**Last Updated**: 2025-09-22T17:02:02.000Z
 
 ## 🔹 Version History
+
+### [v4.4.0] — 2025-09-22T17:02:02.000Z
+- Minor: Single standardized game type (QUIZZZ) enforced across admin; Game Type dropdown restored for future extensibility.
+- Code cleanup: Removed non-QUIZZZ editor UIs; runtime supports attempt-level sessions and guest counting.
+- Analytics: Validated-only session metrics; admin list/detail and analytics updated (distinct sessionId/participantId).
+- DB: Added indexes (by_game_validated_session, by_game_validated_participant, unique_attempt_per_game).
+- Scripts: purge_non_quizzz.js to remove all non-QUIZZZ games and related data safely.
+
+### [v4.3.5] — 2025-09-22T17:00:17.400Z
+- Automatic predev patch bump
+
+
+### [v4.3.4] — 2025-09-22T16:53:57.651Z
+- Automatic predev patch bump
+
+
+### [v4.3.3] — 2025-09-22T07:18:57.537Z
+- Automatic predev patch bump
+
+
+### [v4.3.2] — 2025-09-22T07:13:26.869Z
+- Automatic predev patch bump
+
+
+### [v4.3.1] — 2025-09-21T20:37:06.888Z
+- Automatic predev patch bump
+
+
+### [v4.3.0] — 2025-09-20T19:44:11.000Z
+- Admin stats: switched to attempt-level sessions (validated-only) across admin list/detail and analytics.
+- Guests counted: allow uuid-only participants (trial/guest) — analytics and admin now include guest plays.
+- Play endpoint: supports QUIZZ, QUIZZZ, FIND_RED, WHEEL_OF_FORTUNE with single attempt completion; WOF is server-authoritative.
+- Removed STARS_HEXA and PENALTY_SHOOTOUT gameplay from client and server endpoints.
+- DB: added indexes for attempt-level idempotency and analytics; unique sparse index on (gameId, sessionId).
+- Build: fixed analytics activeParticipants reference; error-free build.
+
+### [v4.2.1] — 2025-09-20T18:54:00.590Z
+- Automatic predev patch bump
+
 
 ### [v4.2.0] — 2025-09-20T15:45:16.787Z
 - Minor release

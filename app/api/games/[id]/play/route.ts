@@ -47,7 +47,7 @@ export async function POST(
     }
     
     // Parse request body
-    const playRequest: PlayGameRequest & { hexagonId?: string } = await request.json()
+    const playRequest: PlayGameRequest & { hexagonId?: string; attemptId?: string; gameType?: string; result?: any } = await request.json()
     
     // Validate required fields
     if (!playRequest.participant?.name) {
@@ -115,11 +115,12 @@ export async function POST(
       }, { status: 403 })
     }
     
-    // Validate game type - support both STARS_HEXA and PENALTY_SHOOTOUT
-    if (game.type !== 'STARS_HEXA' && game.type !== 'PENALTY_SHOOTOUT') {
+    // Validate supported game types — STARS_HEXA and PENALTY_SHOOTOUT are no longer supported
+    const supported = ['QUIZZ', 'QUIZZZ', 'FIND_RED', 'WHEEL_OF_FORTUNE']
+    if (!supported.includes(game.type)) {
       return NextResponse.json({
         success: false,
-        message: 'This endpoint only supports Stars Hexa and Penalty Shootout games',
+        message: 'Unsupported game type',
         error: {
           code: 'UNSUPPORTED_GAME_TYPE',
           message: `Unsupported game type: ${game.type}`
@@ -127,48 +128,20 @@ export async function POST(
       }, { status: 400 })
     }
     
-    // Validate game configuration based on type
-    if (game.type === 'STARS_HEXA') {
-      if (!game.configuration.starsHexa?.hexagons || game.configuration.starsHexa.hexagons.length !== 7) {
-        return NextResponse.json({
-          success: false,
-          message: 'Game configuration is invalid',
-          error: {
-            code: 'INVALID_CONFIGURATION',
-            message: 'Stars Hexa hexagons are missing or invalid'
-          }
-        }, { status: 500 })
-      }
-    } else if (game.type === 'PENALTY_SHOOTOUT') {
-      if (!game.configuration.penaltyShootout?.players || game.configuration.penaltyShootout.players.length !== 11) {
-        return NextResponse.json({
-          success: false,
-          message: 'Game configuration is invalid',
-          error: {
-            code: 'INVALID_CONFIGURATION',
-            message: 'Penalty Shootout players are missing or invalid'
-          }
-        }, { status: 500 })
-      }
-    }
+    // No additional server config validation needed here for supported types
+    // (QUIZZ, QUIZZZ, FIND_RED, WHEEL_OF_FORTUNE)
     
-    // Validate player/hexagon ID is provided
-    if (!playRequest.hexagonId) {
-      return NextResponse.json({
-        success: false,
-        message: 'Player/hexagon ID is required',
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: 'Missing hexagonId/playerId in request'
-        }
-      }, { status: 400 })
-    }
     
     // Find or create participant
     let participant = await (ParticipantModel as any).findByContact(
-      playRequest.participant.email,
-      playRequest.participant.phone
+      playRequest.participant?.email,
+      playRequest.participant?.phone
     )
+
+    // If not found via contact, attempt uuid-based lookup (guest/trial support)
+    if (!participant && (playRequest as any)?.participant?.uuid) {
+      participant = await ParticipantModel.findOne({ uuid: (playRequest as any).participant.uuid })
+    }
 
     // Derive login provider from httpOnly user-session cookie (POC persistence)
     const sessionCookie = request.cookies.get('user-session')?.value
@@ -186,11 +159,11 @@ export async function POST(
     const incomingRef = (playRequest as any).ref as string | undefined
     
     if (!participant) {
-      // Create new participant
+      // Create new participant (allow uuid-only for guest/trial)
       participant = new ParticipantModel({
-        name: playRequest.participant.name,
-        email: playRequest.participant.email || undefined,
-        phone: playRequest.participant.phone || undefined,
+        name: playRequest.participant?.name || 'Guest',
+        email: playRequest.participant?.email || undefined,
+        phone: playRequest.participant?.phone || undefined,
         uuid: incomingUuid,
         referrerUuid: incomingRef && incomingUuid !== incomingRef ? incomingRef : undefined,
         groupIds: [],
@@ -263,121 +236,87 @@ export async function POST(
     // Note: IP-based rate limiting removed to support hostess/event use cases
     // where multiple participants may play from the same location
     
-    // Find the hexagon/player being flipped based on game type
-    let flippedItem: any = null
-    
-    if (game.type === 'STARS_HEXA') {
-      if (!game.configuration.starsHexa?.hexagons) {
-        return NextResponse.json({
-          success: false,
-          message: 'Game configuration is invalid',
-          error: {
-            code: 'INVALID_CONFIGURATION',
-            message: 'Stars Hexa hexagons configuration is missing'
-          }
-        }, { status: 500 })
-      }
-      
-      flippedItem = game.configuration.starsHexa.hexagons.find(h => h.id === playRequest.hexagonId)
-      if (!flippedItem) {
-        return NextResponse.json({
-          success: false,
-          message: 'Hexagon not found',
-          error: {
-            code: 'NOT_FOUND',
-            message: `No hexagon found with ID: ${playRequest.hexagonId}`
-          }
-        }, { status: 404 })
-      }
-    } else if (game.type === 'PENALTY_SHOOTOUT') {
-      if (!game.configuration.penaltyShootout?.players) {
-        return NextResponse.json({
-          success: false,
-          message: 'Game configuration is invalid',
-          error: {
-            code: 'INVALID_CONFIGURATION',
-            message: 'Penalty Shootout players configuration is missing'
-          }
-        }, { status: 500 })
-      }
-      
-      flippedItem = game.configuration.penaltyShootout.players.find(p => p.id === playRequest.hexagonId)
-      if (!flippedItem) {
-        return NextResponse.json({
-          success: false,
-          message: 'Player not found',
-          error: {
-            code: 'NOT_FOUND',
-            message: `No player found with ID: ${playRequest.hexagonId}`
-          }
-        }, { status: 404 })
-      }
-    }
-    
-    // Check if hexagon/player is already revealed in this session
-    const existingFlip = await GameResultModel.findOne({
-      gameId: game._id,
-      participantId: participant._id,
-      'outcome.hexagonId': playRequest.hexagonId,
-      sessionId: sessionId
-    })
-    
-    if (existingFlip) {
-      const itemType = game.type === 'STARS_HEXA' ? 'card' : 'player'
-      return NextResponse.json({
-        success: false,
-        message: `🔄 You've already selected that ${itemType}! Try another one.`,
-        error: {
-          code: 'ALREADY_REVEALED',
-          message: `This ${itemType} has already been selected in this session`
-        }
-      }, { status: 400 })
-    }
+    // No per-click item selection; supported games post completion directly
     
     // Calculate game result based on type
     let gameOutcome: GameOutcome
-    
-    if (game.type === 'STARS_HEXA') {
-      if (!game.configuration.starsHexa?.hexagons) {
-        throw new Error('Stars Hexa configuration missing')
+    const isAttemptCompletion = (game.type === 'QUIZZ' || game.type === 'QUIZZZ' || game.type === 'FIND_RED' || game.type === 'WHEEL_OF_FORTUNE')
+
+    if (game.type === 'QUIZZ' || game.type === 'QUIZZZ') {
+      const clientOutcome = (playRequest as any).result
+      if (!clientOutcome || !clientOutcome.type) {
+        return NextResponse.json({
+          success: false,
+          message: 'Missing result outcome for quiz game',
+          error: { code: 'VALIDATION_ERROR', message: 'Result payload is required for QUIZZ/QUIZZZ' }
+        }, { status: 400 })
       }
-      
-      gameOutcome = calculateHexaResult(flippedItem, game.configuration.starsHexa.hexagons, participant._id.toString(), sessionId)
-      
-      // Log the flipped hexagon for debugging
-      console.log('Flipped hexagon:', {
-        id: flippedItem.id,
-        text: flippedItem.text,
-        hasHiddenStar: flippedItem.hasHiddenStar,
-        position: flippedItem.position,
-        starsFound: gameOutcome.starsFound,
-        totalStars: gameOutcome.totalStarsInGame,
-        foundAllStars: gameOutcome.foundAllStars
-      })
-    } else if (game.type === 'PENALTY_SHOOTOUT') {
-      if (!game.configuration.penaltyShootout?.players) {
-        throw new Error('Penalty Shootout configuration missing')
+      gameOutcome = clientOutcome as GameOutcome
+    } else if (game.type === 'FIND_RED') {
+      const clientOutcome = (playRequest as any).result
+      if (!clientOutcome || !clientOutcome.type) {
+        return NextResponse.json({
+          success: false,
+          message: 'Missing result outcome for find-red game',
+          error: { code: 'VALIDATION_ERROR', message: 'Result payload is required for FIND_RED' }
+        }, { status: 400 })
       }
-      
-      gameOutcome = calculatePenaltyResult(flippedItem, game.configuration.penaltyShootout.players, participant._id.toString(), sessionId)
-      
-      // Log the selected player for debugging
-      console.log('Selected player:', {
-        id: flippedItem.id,
-        playerNumber: flippedItem.playerNumber,
-        hasGoal: flippedItem.hasGoal,
-        position: flippedItem.position,
-        starsFound: gameOutcome.starsFound,
-        totalStars: gameOutcome.totalStarsInGame,
-        foundAllStars: gameOutcome.foundAllStars
-      })
+      gameOutcome = clientOutcome as GameOutcome
+    } else if (game.type === 'WHEEL_OF_FORTUNE') {
+      // Server-authoritative selection for wheel
+      const segments: any[] = game.configuration?.wheelOfFortune?.segments || []
+      const active = segments.filter((s: any) => s?.isActive !== false)
+      if (!Array.isArray(active) || active.length < 1) {
+        return NextResponse.json({ success: false, message: 'Wheel not configured', error: { code: 'INVALID_CONFIGURATION', message: 'No active wheel segments' } }, { status: 500 })
+      }
+      const probs = active.map((s: any) => Number(s.probability || 0))
+      const total = probs.reduce((a: number, b: number) => a + b, 0)
+      let chosen = active[0]
+      if (total > 0) {
+        const r = Math.random() * total
+        let acc = 0
+        for (let i = 0; i < active.length; i++) {
+          acc += probs[i]
+          if (r <= acc) { chosen = active[i]; break }
+        }
+      } else {
+        chosen = active[Math.floor(Math.random() * active.length)]
+      }
+      gameOutcome = {
+        type: chosen?.isWinning ? 'WIN' : 'NO_REWARD',
+        segmentId: chosen?.id,
+        starsFound: 0,
+        totalStarsInGame: 0,
+        foundAllStars: false,
+        value: chosen?.label,
+        rewardIds: [],
+        message: chosen?.label ? `Landed on: ${chosen.label}` : 'Wheel result'
+      } as any
     } else {
-      throw new Error(`Unsupported game type: ${game.type}`)
+      // Should not happen due to earlier 'supported' guard
+      return NextResponse.json({ success: false, message: 'Unsupported game type at runtime', error: { code: 'UNSUPPORTED_GAME_TYPE', message: 'Unsupported game type at runtime' } }, { status: 400 })
     }
     
     const outcome: GameOutcome = gameOutcome
+
+    // Idempotency by (gameId, participantId, sessionId)
+    const attemptId = (playRequest as any).attemptId || sessionId
+    if (attemptId) {
+      const existing = await GameResultModel.findOne({ gameId: game._id, participantId: participant._id, sessionId: attemptId })
+      if (existing) {
+        return NextResponse.json({ 
+          success: true, 
+          data: { 
+            result: existing.outcome,
+            rewards: [],
+            canPlayAgain: false
+          }, 
+          message: 'Duplicate attempt ignored' 
+        })
+      }
+    }
     
-    // Create game result record
+    // Create game result record (validated only for attempt-completion types)
     const gameResultRecord = new GameResultModel({
       gameId: game._id,
       participantId: participant._id,
@@ -385,19 +324,13 @@ export async function POST(
       playedAt: new Date(),
       ipAddress: clientIP,
       userAgent: userAgent,
-      sessionId: sessionId,
-      isValidated: false // Will be validated after anti-cheat checks
+      sessionId: attemptId || sessionId,
+      isValidated: isAttemptCompletion
     })
     
     await gameResultRecord.save()
-    
-    // Perform basic validation (can be enhanced with more sophisticated anti-cheat)
-    const isValidResult = await validateGameResult(gameResultRecord)
-    
-    if (isValidResult) {
-      gameResultRecord.isValidated = true
-      await gameResultRecord.save()
-      
+
+    if (isAttemptCompletion) {
       // Update participant stats
       participant.gameResults.push(gameResultRecord._id)
       participant.totalGamesPlayed += 1
@@ -415,7 +348,7 @@ export async function POST(
     // Handle reward distribution if applicable
     const rewards: any[] = []
     
-    if (outcome.type === 'WIN' && outcome.rewardIds.length > 0 && isValidResult) {
+if (outcome.type === 'WIN' && outcome.rewardIds.length > 0 && isAttemptCompletion) {
       for (const rewardId of outcome.rewardIds) {
         try {
           const reward = await RewardModel.findById(rewardId)
@@ -429,11 +362,11 @@ export async function POST(
               status: 'AVAILABLE',
               claimedAt: new Date(),
               expiresAt: reward.expiresAt || null,
-              metadata: {
-                gameTitle: game.title,
-                itemText: flippedItem.text || `Player #${flippedItem.playerNumber}` || 'Game item',
-                sessionId: sessionId
-              }
+                metadata: {
+                  gameTitle: game.title,
+                  itemText: (typeof outcome.value === 'string' && outcome.value) || (outcome.value != null ? String(outcome.value) : 'Game item'),
+                  sessionId: sessionId
+                }
             })
             
             await rewardClaim.save()
@@ -481,7 +414,7 @@ export async function POST(
     return NextResponse.json({
       success: true,
       data: response,
-      message: isValidResult ? 'Game played successfully' : 'Game result pending validation'
+      message: 'Game played successfully'
     })
     
   } catch (error) {
@@ -632,10 +565,9 @@ async function validateGameResult(gameResult: any): Promise<boolean> {
     const now = new Date()
     const playTime = now.getTime() - gameResult.playedAt.getTime()
     
-    // Reject if result was generated too quickly (less than 1 second)
-    if (playTime < 1000) {
-      console.warn(`Suspiciously fast game result: ${gameResult._id}, time: ${playTime}ms`)
-      return false
+    // Relaxed timing check: do not reject; optionally log
+    if (playTime < 200) {
+      console.warn(`Fast game result: ${gameResult._id}, time: ${playTime}ms`)
     }
     
     // Reject if result was generated too slowly (more than 10 minutes)

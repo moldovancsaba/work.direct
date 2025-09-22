@@ -40,12 +40,17 @@ export async function GET(
       )
     }
 
-    // Get stats for the game
-    const [participantCount, gameResultCount, rewards] = await Promise.all([
-      ParticipantModel.countDocuments({ gameId: game._id }),
-      GameResultModel.countDocuments({ gameId: game._id }),
+    // Get stats for the game — use GameResult as source of truth for per-game counts
+    const filter: any = { gameId: game._id, isValidated: true }
+    const [uniqueParticipants, sessionIds, nullSessionCount, rewards] = await Promise.all([
+      GameResultModel.distinct('participantId', filter),
+      GameResultModel.distinct('sessionId', filter),
+      GameResultModel.countDocuments({ ...filter, $or: [ { sessionId: null }, { sessionId: '' }, { sessionId: { $exists: false } } ] }),
       RewardModel.find({ gameId: game._id })
     ])
+
+    const participantCount = Array.isArray(uniqueParticipants) ? uniqueParticipants.length : 0
+    const sessionCount = (Array.isArray(sessionIds) ? sessionIds.filter(Boolean).length : 0) + (nullSessionCount || 0)
     
     const gameWithStats = {
       ...game,
@@ -53,7 +58,7 @@ export async function GET(
       rewards,
       _count: {
         participants: participantCount,
-        gameResults: gameResultCount
+        gameResults: sessionCount
       }
     }
 

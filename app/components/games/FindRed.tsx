@@ -19,13 +19,15 @@ export default function FindRed({
   platform,
   gameId,
   isTrialMode = false,
-  onHUDUpdate
+  onHUDUpdate,
+  onComplete
 }: {
   config: any
   platform?: any
   gameId: string
   isTrialMode?: boolean
   onHUDUpdate?: (redsFound: number, targetReds: number, roundsUsed: number, totalRounds: number) => void
+  onComplete?: (summary: { won: boolean, correct: number, rounds: number }) => void
 }) {
   // Derived settings with safe defaults
   const packSize = Math.max(3, Math.min(32, Number(config?.packSize ?? 6)))
@@ -77,9 +79,9 @@ export default function FindRed({
   // Finish the game and navigate to result via platformized routing (delegated to parent page)
   const finishGame = useCallback(() => {
     setIsFinished(true)
-    // Parent GameClient is responsible for redirect based on shared flow.
-    // Here we just mark completion; parent can observe via HUD (optional) or local events.
-  }, [])
+    // Notify parent that an attempt has completed so it can persist and navigate
+    try { onComplete?.({ won: redsFound >= targetReds, correct: redsFound, rounds: totalRounds }) } catch {}
+  }, [onComplete, redsFound, targetReds, totalRounds])
 
   // Handle card flip
   const onPick = async (index: number) => {
@@ -99,28 +101,8 @@ export default function FindRed({
     }
     setSelectionsUsed(c => c + 1)
 
-    // Record to backend (MVP client-authoritative)
-    if (!isTrialMode) {
-      try {
-        await fetch(`/api/games/${gameId}/play`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            participant: {}, // populated by GameClient session; server accepts minimal for MVP
-            sessionId: undefined,
-            hexagonId: `findred-${roundIndex}-${index}`,
-            // Provide extra fields for server analytics — not enforced yet
-            roundIndex,
-            selectionIndex: index,
-            wasRed,
-            type: 'FIND_RED'
-          })
-        })
-      } catch (e) {
-        // Non-blocking
-        console.warn('FindRed play record failed', e)
-      }
-    }
+    // No per-pick persistence; we persist once per attempt on completion via onComplete
+    
 
     // Early win if target reached
     const newRedsFound = (wasRed ? redsFound + 1 : redsFound)

@@ -1,16 +1,14 @@
 # PlayMass - Interactive Game Platform
 
-Current Version: 4.2.0
-Last Updated: 2025-09-20T15:45:16.787Z
+Current Version: 4.4.0
+Last Updated: 2025-09-22T17:02:02.000Z
 
 ## 🎮 Features
 
-- **Hexa Games**: Interactive hexagonal star-finding games with customizable text and hidden stars
-- **Penalty Shootout Games**: Professional football penalty games with split-flap scoreboard animations
+- **Board Quiz (QUIZZZ)**: Single standardized game type with DB-driven configuration (maps, questions, styles, legal, CTAs)
 - **Rewards Management**: Complete reward system with points, coupons, physical prizes, and custom rewards
-- **Participant Management**: Track players across multiple games and sessions
-- **Target Groups**: Organize participants into groups for targeted campaigns
-- **Analytics & Tracking**: Monitor game performance, participant engagement, and reward distribution
+- **Participant Management**: Track players across sessions
+- **Analytics & Tracking**: Attempt-level session analytics with validated results
 - **MongoDB Integration**: Robust data persistence with Mongoose ODM
 
 ## 🛠️ Tech Stack
@@ -132,36 +130,25 @@ app/
 
 ## 🎲 Game Types
 
-Note: QUIZZZ is the default game type and its admin editor is the standard for all future games (DB-driven, single-input-per-line, usage toggles, centered CTA grid, and fully configurable styles and legal texts from MongoDB).
+Only one game type is currently supported: **QUIZZZ (Board Quiz)**.
 
-### Stars Hexa
-- 7 hexagonal cards in 2-3-2 formation layout
-- Customizable text for each hexagon
-- Hidden stars (1-3 per game) for discovery gameplay
-- Visual themes (default, colorful, minimal)
-- Limited attempts and flip mechanics
+- QUIZZZ is the canonical pattern for all future games (DB-driven, one-input-per-line, usage toggles, centered CTA grid, legal+typography from DB).
+- All legacy game types (Stars Hexa, Penalty Shootout, Quizz legacy, Wheel of Fortune) have been removed from the admin editor and runtime.
 
-### Quizz (Grid Map Quiz)
-- Grid-map-based quiz: click any active tile to flip and zoom into a question overlay
-- Exactly 3 answers per question; multiple correct answers allowed
-- Win condition: get X correct answers within Y rounds (configurable)
-- Questions are randomly assigned to active coordinates each play
-- Map selector: predictive search across HEXA and SQUARE maps with selectedMaps chips and reordering
-- Optional card cover images (transparent PNGs) clipped to tile shape; hides edges/labels to let the cover act as the card
+To enable additional game types in the future, add or update entries via the admin API:
 
-### Penalty Shootout
-- Professional football penalty game simulation
-- Split-flap scoreboard with animated character cards
-- Dynamic card sizing with 20-character maximum optimization
-- Player selection from team roster (11 players)
-- Real-time score tracking with immersive animations
-- Responsive design with mobile optimization
-- **Comprehensive Text Customization**: All visible text is fully customizable through admin interface
-  - In-game UI texts (score display, player actions, game states)
-  - Result page messages with dynamic score interpolation
-  - Loading and error messages
-  - Registration and rules page content
-  - Victory/defeat messages and labels
+```bash
+curl -X POST \ 
+  -H "Content-Type: application/json" \ 
+  http://localhost:3000/api/admin/game-types \ 
+  -d '{
+    "types": [
+      { "code": "NEW_TYPE", "name": "My New Game", "enabled": true, "order": 70 }
+    ]
+  }'
+```
+
+Once enabled, they will appear in the Game Type dropdown in Create Game. Implement their editor/runtime modules following the QUIZZZ editor standard (centralized platform config + minimal type-specific fragment).
 
 ## 🏆 Reward System
 

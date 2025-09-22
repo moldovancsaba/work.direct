@@ -1,6 +1,6 @@
 # ARCHITECTURE.md — PlayMass
 
-Last Updated: 2025-09-20T13:30:02.000Z
+Last Updated: 2025-09-22T17:02:02.000Z
 
 ## Overview
 PlayMass is a Next.js (App Router) application with MongoDB/Mongoose persistence and a modular game system. This document describes current system components and their roles, dependencies, and status.
@@ -49,9 +49,9 @@ PlayMass is a Next.js (App Router) application with MongoDB/Mongoose persistence
 - Update (v2.2.0): QUIZZZ module uses configuration.quizzz for board/covers/styles; answered-state visuals and background precedence logic implemented
 
 ### Game Types (Admin)
-- Update (v2.2.0): GameTypeDef model stored in MongoDB (game_types) with admin API (/api/admin/game-types); editor reads enabled types from DB and de-duplicates by code
-- Role: Provide different game types with centralized platform configuration
-- Status: Active; Stars Hexa, Penalty Shootout, Quizz; Wheel component prepared
+- Update: Only QUIZZZ (Board Quiz) is supported for creation and editing. All other types are removed from editor UI.
+- Role: Provide a single, standardized game template with a centralized platform configuration.
+- Status: Active; QUIZZZ only.
 
 ### Map System
 - Update (v2.2.0): Added public APIs for map retrieval — /api/hexmaps/[name], /api/hexmaps/random, /api/squaremaps/[name], /api/squaremaps/random — used by QUIZZZ runtime to load board coordinates
