@@ -1,3 +1,5 @@
+export {}
+
 // components/WheelOfFortune.tsx
 "use client";
 

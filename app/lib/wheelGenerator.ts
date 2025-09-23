@@ -1,3 +1,5 @@
+export {}
+
 import { WheelSegment, SimpleWheelConfiguration, WheelOfFortuneConfiguration } from '../types'
 
 // Default sports segment names

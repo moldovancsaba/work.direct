@@ -12,20 +12,17 @@ export async function GET() {
     }
 
     await connectDB()
-    let items = await GameTypeModel.find({}).sort({ enabled: -1, order: 1, name: 1 }).lean()
+    // Purge any non-QUIZZZ entries to enforce single game type policy
+    await GameTypeModel.deleteMany({ code: { $ne: 'QUIZZZ' } })
 
-    // Auto-seed defaults if empty (admin convenience, dev-safe)
+    let items = await GameTypeModel.find({ code: 'QUIZZZ' }).sort({ order: 1, name: 1 }).lean()
+
+    // Auto-seed only QUIZZZ if empty
     if (!items || items.length === 0) {
-      const defaults = [
-        { code: 'STARS_HEXA', name: 'Hexa', enabled: false, order: 10 },
-        { code: 'PENALTY_SHOOTOUT', name: 'Penalty Shootout', enabled: false, order: 20 },
-        { code: 'FIND_RED', name: 'Get Shorty (Find Red)', enabled: false, order: 30 },
-        { code: 'WHEEL_OF_FORTUNE', name: 'Wheel of Fortune', enabled: false, order: 40 },
-        { code: 'QUIZZ', name: 'Quizz (legacy)', enabled: false, order: 50 },
-        { code: 'QUIZZZ', name: 'QUIZZZ (Board Quiz)', enabled: true, order: 60 }
-      ]
-      await GameTypeModel.insertMany(defaults)
-      items = await GameTypeModel.find({}).sort({ enabled: -1, order: 1, name: 1 }).lean()
+      await GameTypeModel.insertMany([
+        { code: 'QUIZZZ', name: 'QUIZZZ (Board Quiz)', enabled: true, order: 1 }
+      ])
+      items = await GameTypeModel.find({ code: 'QUIZZZ' }).sort({ order: 1, name: 1 }).lean()
     }
 
     return NextResponse.json({ success: true, data: { items } })
@@ -52,19 +49,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Nothing to upsert' }, { status: 400 })
     }
 
-    // Normalize and upsert
-    await Promise.all(types.map(async (t) => {
-      const code = String(t.code || '').trim().toUpperCase()
-      const name = String(t.name || '').trim()
-      if (!code || !name) return
+    // Enforce QUIZZZ-only policy: ignore any non-QUIZZZ codes and purge others
+    await GameTypeModel.deleteMany({ code: { $ne: 'QUIZZZ' } })
+
+    const quizzz = types.find(t => String(t.code || '').trim().toUpperCase() === 'QUIZZZ')
+    if (quizzz) {
+      const code = 'QUIZZZ'
+      const name = String(quizzz.name || 'QUIZZZ (Board Quiz)').trim()
+      const enabled = quizzz.enabled !== false
+      const order = Number.isFinite(quizzz.order as any) ? Number(quizzz.order) : 1
       await GameTypeModel.updateOne(
         { code },
-        { $set: { name, enabled: t.enabled !== false, order: Number.isFinite(t.order) ? Number(t.order) : 0 } },
+        { $set: { name, enabled, order } },
         { upsert: true }
       )
-    }))
+    } else {
+      // Ensure QUIZZZ exists even if not provided in payload
+      await GameTypeModel.updateOne(
+        { code: 'QUIZZZ' },
+        { $set: { name: 'QUIZZZ (Board Quiz)', enabled: true, order: 1 } },
+        { upsert: true }
+      )
+    }
 
-    const items = await GameTypeModel.find({}).sort({ enabled: -1, order: 1, name: 1 }).lean()
+    const items = await GameTypeModel.find({ code: 'QUIZZZ' }).sort({ order: 1, name: 1 }).lean()
     return NextResponse.json({ success: true, data: { items } })
   } catch (err) {
     console.error('POST /api/admin/game-types error', err)

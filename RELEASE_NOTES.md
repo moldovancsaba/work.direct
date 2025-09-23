@@ -1,9 +1,24 @@
 # 📝 RELEASE_NOTES.md - PlayMass
 
-**Current Version**: 4.4.1
-**Last Updated**: 2025-09-22T17:17:47.897Z
+**Current Version**: 4.5.0
+**Last Updated**: 2025-09-23T07:34:30.250Z
 
 ## 🔹 Version History
+
+### [v4.5.0] — 2025-09-23T08:44:43.000Z
+- Enforce QUIZZZ-only across admin and runtime.
+  - Admin Game Type API now purges non-QUIZZZ types and seeds only QUIZZZ.
+  - Runtime play and result clients simplified to QUIZZZ-only.
+  - Play API restricted to QUIZZZ; legacy branches removed.
+- Removed legacy code paths and stubs left for unused components to prevent accidental imports.
+  - StarsHexa, Penalty Shootout, Find Red, Wheel of Fortune components stubbed to empty modules.
+  - Module registry restricted to QUIZZZ only.
+- Data hygiene: executed scripts/purge_non_quizzz.js (no non-QUIZZZ games found to purge).
+- Build: Clean compile; only warnings from stub files (unused-expressions) which do not affect runtime.
+
+### [v4.4.2] — 2025-09-23T07:34:30.250Z
+- Automatic predev patch bump
+
 
 ### [v4.4.1] — 2025-09-22T17:17:47.897Z
 - Automatic predev patch bump

@@ -237,3 +237,25 @@ Notes:
 - Notes: Automated via scripts/versioning/bump-version.mjs (UTC timestamps with ms)
 2025-09-22T17:17:47.897Z — Delivery: Version bump and doc sync to v4.4.1
 - Notes: Automated via scripts/versioning/bump-version.mjs (UTC timestamps with ms)
+
+2025-09-23T07:17:15.000Z — Plan: Push v4.4.1 to origin/main; secure auth; verify remote; log updates
+
+2025-09-23T08:44:43.000Z — Delivery: Purged legacy games, enforced QUIZZZ-only, and prepared push
+- Changes:
+  • Admin Game Types: purge non-QUIZZZ and seed only QUIZZZ; GET/POST constrained accordingly.
+  • Runtime: GameClient/GameResult QUIZZZ-only; Play API supports only QUIZZZ.
+  • Registry: reduced to QUIZZZ (Partial<Record> to satisfy types).
+  • Legacy components: replaced with empty modules to avoid accidental imports (StarsHexa, Penalty*, FindRed, Wheel*).
+  • Purge script: ran scripts/purge_non_quizzz.js — no non-QUIZZZ games found.
+- Build: Success.
+- Next: Push to origin/main using env token.
+- Steps:
+  1) Confirm git status and current HEAD
+  2) Ensure GITHUB_TOKEN is set in shell (do not echo)
+  3) Push using `git -c http.extraheader="Authorization: Bearer $GITHUB_TOKEN" push origin main`
+  4) Verify with `git ls-remote origin refs/heads/main`
+  5) Update ROADMAP.md and TASKLIST.md entries with status
+- Compliance: No tests; timestamps ISO 8601 with ms (this log); ROADMAP entry uses CET per policy
+
+2025-09-23T07:34:30.250Z — Delivery: Version bump and doc sync to v4.4.2
+- Notes: Automated via scripts/versioning/bump-version.mjs (UTC timestamps with ms)
