@@ -5,8 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Game } from '../../../types'
 import SimpleGameLayout from '../../../components/game/SimpleGameLayout'
-import PenaltyGameLayout from '../../../components/games/PenaltyGameLayout'
-import PenaltyCardText from '../../../components/games/PenaltyCardText'
 
 interface GameResultData {
   won: boolean
@@ -16,7 +14,7 @@ interface GameResultData {
   userScore?: number
   opponentScore?: number
   isTrialMode?: boolean
-  gameType: 'STARS_HEXA' | 'PENALTY_SHOOTOUT' | 'FIND_RED' | 'WHEEL_OF_FORTUNE' | 'QUIZZ' | 'QUIZZZ'
+  gameType: 'QUIZZZ'
   message?: string
 }
 
@@ -45,7 +43,7 @@ export default function GameResultClient({ gameId, initialGameData, participantU
     const won = outcome === 'WIN' || searchParams.get('won') === 'true'
     const isTrialMode = searchParams.get('trial') === 'true'
     const message = searchParams.get('message') || ''
-    const gameType = game.type
+    const gameType = 'QUIZZZ' as const
     const referralParam = searchParams.get('ref') || null
 
     const starsFound = parseInt(searchParams.get('starsFound') || '0')
@@ -86,7 +84,7 @@ export default function GameResultClient({ gameId, initialGameData, participantU
       if (navigator.share) {
         await navigator.share({
           title: game.title || 'Join me in this game!',
-          text: `Check out this ${gameType === 'PENALTY_SHOOTOUT' ? 'penalty shootout' : gameType === 'STARS_HEXA' ? 'Hexa' : gameType === 'FIND_RED' ? 'Get Shorty' : 'Wheel of Fortune'} game!`,
+text: `Check out this board-quiz game!`,
           url: referralUrl
         })
       } else {
@@ -142,150 +140,28 @@ export default function GameResultClient({ gameId, initialGameData, participantU
   const { won, gameType, message, starsFound, totalStars, roundsUsed, userScore, opponentScore } = resultData
 
   // Get scorecard styling for titles
-  const getHomeScorecardColor = () => {
-    if (gameType === 'PENALTY_SHOOTOUT') {
-      return game.configuration?.penaltyShootout?.colors?.homeScoreCard || '#c00000'
-    }
-    return '#c00000' // Default red for home team
-  }
+  const getHomeScorecardColor = () => { return '#c00000' }
 
-  // Get game background colors
+  // Get game background colors (QUIZZZ-only simplified defaults)
   const getGameBlockBackgroundColor = () => {
-    if (gameType === 'PENALTY_SHOOTOUT') {
-      return game.configuration?.penaltyShootout?.colors?.blockBackground || '#444444'
-    }
     return '#444444' // Default dark background
   }
 
-  const getGameFieldColor = () => {
-    if (gameType === 'PENALTY_SHOOTOUT') {
-      return game.configuration?.penaltyShootout?.colors?.gameField || '#228B22'
-    }
-    return '#228B22' // Default green field color
-  }
-
-  // No need for custom components - use centralized PenaltyCardText
-
   const getResultTitle = () => {
-    if (gameType === 'STARS_HEXA') {
-      return won ? 'You found all the stars!' : `You found ${starsFound} out of ${totalStars} stars`
-    }
-    if (gameType === 'FIND_RED') {
-      return won ? 'You found Shorty!' : `You found ${starsFound} of ${totalStars} Shorties`
-    }
-    if (gameType === 'WHEEL_OF_FORTUNE') {
-      return won ? 'Winner!' : 'Better luck next spin!'
-    }
-    if (gameType === 'QUIZZ' || gameType === 'QUIZZZ') {
-      return won ? 'Quiz Winner!' : 'Quiz over — try again!'
-    }
-    if (gameType === 'PENALTY_SHOOTOUT') {
-      const customTexts = game.configuration?.penaltyShootout?.texts
-      // Use simple win/loss text without score display
-      return won ? 'Victory!' : 'Defeat!'
-    }
-    return 'Game completed!'
+    return won ? 'Quiz Winner!' : 'Quiz over — try again!'
   }
 
   const getResultMessage = () => {
     if (message) return message
-    
-    if (gameType === 'STARS_HEXA') {
-      if (won) {
-        const roundsText = roundsUsed === 1 ? 'round' : 'rounds'
-        return `Amazing! You completed the game in ${roundsUsed} ${roundsText}!`
-      } else {
-        const starsText = starsFound === 1 ? 'star' : 'stars'
-        return `Good try! You found ${starsFound} ${starsText} out of ${totalStars}.`
-      }
-    }
-
-    if (gameType === 'FIND_RED') {
-      if (won) {
-        return `Great! You found all Shorties!`
-      } else {
-        return `You found ${starsFound} / ${totalStars} Shorties.`
-      }
-    }
-
-    if (gameType === 'WHEEL_OF_FORTUNE') {
-      return won ? 'Congrats! The wheel landed on a winning segment.' : 'No reward this time — try another spin.'
-    }
-    
-    if (gameType === 'PENALTY_SHOOTOUT') {
-      const customTexts = game.configuration?.penaltyShootout?.texts
-      if (won) {
-        return `${customTexts?.victoryResultMessage || 'Fantastic! You won the penalty shootout'} ${userScore}-${opponentScore}!`
-      } else {
-        return `${customTexts?.defeatResultMessage || 'Good effort! You lost the penalty shootout. Try again!'} ${userScore}-${opponentScore}.`
-      }
-    }
-    
-    return 'Game completed!'
+    return won ? 'Great job! You reached the win limit.' : 'Better luck next time.'
   }
 
   const MainContent = () => (
     <div className="w-full max-w-4xl mx-auto px-3 md:px-0">
       <div className="rounded-2xl shadow-lg p-8 mb-8" style={{ backgroundColor: getGameBlockBackgroundColor() }}>
         <div className="text-center mb-6">
-          <div className="text-6xl mb-4">
-            {gameType === 'STARS_HEXA' 
-              ? (won ? '' : '')
-              : gameType === 'PENALTY_SHOOTOUT'
-                ? (won 
-                    ? (game.configuration?.penaltyShootout?.texts?.victoryResultEmoji || '')
-                    : (game.configuration?.penaltyShootout?.texts?.defeatResultEmoji || '')
-                  )
-                : (won ? '' : '')
-            }
-          </div>
-          <h2 className={`text-4xl md:text-5xl font-bold mb-4 text-white`}>
-            {gameType === 'STARS_HEXA'
-              ? (won ? 'Congratulations!' : 'Game Over')
-              : gameType === 'PENALTY_SHOOTOUT'
-                ? (won 
-                    ? (game.configuration?.penaltyShootout?.texts?.congratulationsText || 'Victory!') 
-                    : (game.configuration?.penaltyShootout?.texts?.gameOverText || 'Defeat!')
-                  )
-                : (won ? 'Winner!' : 'Complete')
-            }
-          </h2>
-          <h3 className="text-xl md:text-2xl text-white mb-4">
-            {getResultTitle()}
-          </h3>
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-black">{getResultTitle()}</h2>
         </div>
-
-        {gameType === 'STARS_HEXA' ? (
-          <div className="grid grid-cols-2 gap-6 mb-6">
-            <div className="text-center p-4 bg-blue-50 rounded-xl">
-              <div className="text-3xl font-bold text-blue-600">
-                {starsFound}/{totalStars}
-              </div>
-              <div className="text-sm text-gray-600 mt-1">Stars Found</div>
-            </div>
-            <div className="text-center p-4 bg-purple-50 rounded-xl">
-              <div className="text-3xl font-bold text-purple-600">
-                {roundsUsed}
-              </div>
-              <div className="text-sm text-gray-600 mt-1">Rounds Used</div>
-            </div>
-          </div>
-        ) : gameType === 'PENALTY_SHOOTOUT' ? (
-          <div className="grid grid-cols-2 gap-6 mb-6">
-            <div className="text-center p-4 bg-green-50 rounded-xl">
-              <div className="text-3xl font-bold text-green-600">
-                {userScore}
-              </div>
-              <div className="text-sm text-gray-600 mt-1">{game.configuration?.penaltyShootout?.texts?.yourGoalsLabel || 'Your Goals'}</div>
-            </div>
-            <div className="text-center p-4 bg-red-50 rounded-xl">
-              <div className="text-3xl font-bold text-red-600">
-                {opponentScore}
-              </div>
-              <div className="text-sm text-gray-600 mt-1">{game.configuration?.penaltyShootout?.texts?.opponentGoalsLabel || 'Opponent Goals'}</div>
-            </div>
-          </div>
-        ) : null}
 
         <div className={`text-center p-4 rounded-xl ${won ? 'bg-green-50' : 'bg-orange-50'}`}>
           <p className={`text-lg font-medium ${won ? 'text-green-800' : 'text-orange-800'}`}>
@@ -298,46 +174,21 @@ export default function GameResultClient({ gameId, initialGameData, participantU
             onClick={handlePlayAgain}
             className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 px-6 rounded-xl font-semibold text-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
           >
-            {gameType === 'PENALTY_SHOOTOUT' 
-              ? (game.configuration?.penaltyShootout?.texts?.playAgainButton || 'Play Again')
-              : 'Play Again'
-            }
+            Play Again
           </button>
           
           <button
             onClick={handleInviteFriends}
             className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 px-6 rounded-xl font-semibold text-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
           >
-            {gameType === 'PENALTY_SHOOTOUT' 
-              ? (game.configuration?.penaltyShootout?.texts?.inviteFriendsButton || 'Invite Friends')
-              : 'Invite Friends'
-            }
+            Invite Friends
           </button>
         </div>
       </div>
     </div>
   )
 
-  // Use PenaltyGameLayout for penalty games to match the game interface
-  if (gameType === 'PENALTY_SHOOTOUT') {
-    return (
-      <PenaltyGameLayout
-        homeScore={userScore || 0}
-        visitorScore={opponentScore || 0}
-        homeScoreCardColor={game.configuration?.penaltyShootout?.colors?.homeScoreCard}
-        visitorScoreCardColor={game.configuration?.penaltyShootout?.colors?.visitorScoreCard}
-        pageBackground={getGameFieldColor()}
-        titleFieldBackground={game.configuration?.penaltyShootout?.colors?.titleField || '#444444'}
-        gameBackground={getGameBlockBackgroundColor()}
-        scoreboardContent={
-          <div className="text-white text-3xl md:text-4xl font-bold">{game.configuration?.penaltyShootout?.texts?.gameResultsTitle || 'GAME RESULTS'}</div>
-        }
-        gameContent={<MainContent />}
-      />
-    )
-  }
-
-  // Use SimpleGameLayout for other game types
+  // QUIZZZ — use SimpleGameLayout
   return (
     <SimpleGameLayout
       gameId={gameId}

@@ -24,7 +24,7 @@ export default async function GamePage({
     ref: typeof s?.ref === 'string' ? s.ref : undefined,
   })
 
-  const GameClient = (await import('./GameClient')).default
+  const GameClient = (await import('./GameClientClean')).default
   return (
     <GameClient game={data.data} cfg={cfg} />
   )

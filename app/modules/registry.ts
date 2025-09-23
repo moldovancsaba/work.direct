@@ -47,32 +47,7 @@ const wheelDefault: GameConfig = {
   }
 }
 
-export const REGISTRY: Record<GameType, GameModule> = {
-  STARS_HEXA: {
-    id: 'STARS_HEXA',
-    name: 'Hexa',
-    defaultConfig: { id: 'STARS_HEXA', name: 'Stars Hexa', version: '1.0.0', configuration: {} }
-  },
-  PENALTY_SHOOTOUT: {
-    id: 'PENALTY_SHOOTOUT',
-    name: 'Penalty Shootout',
-    defaultConfig: { id: 'PENALTY_SHOOTOUT', name: 'Penalty Shootout', version: '1.0.0', configuration: {} }
-  },
-  FIND_RED: {
-    id: 'FIND_RED',
-    name: 'Get Shorty',
-    defaultConfig: findRedDefault
-  },
-  WHEEL_OF_FORTUNE: {
-    id: 'WHEEL_OF_FORTUNE',
-    name: 'Wheel of Fortune',
-    defaultConfig: wheelDefault
-  },
-  QUIZZ: {
-    id: 'QUIZZ',
-    name: 'Quizz',
-    defaultConfig: { id: 'QUIZZ' as any, name: 'Quizz', version: '1.0.0', configuration: { quizz: { mapType: 'hex', rounds: 5, targetCorrect: 3, questions: [], theme: 'default', mapTag: 'water' } } }
-  },
+export const REGISTRY: Partial<Record<GameType, GameModule>> = {
   QUIZZZ: {
     id: 'QUIZZZ',
     name: 'Quizzz',

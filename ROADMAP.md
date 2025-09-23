@@ -1,6 +1,6 @@
 # ROADMAP.md — PlayMass
 
-Last Updated: 2025-09-22T17:17:47.897Z
+Last Updated: 2025-09-23T07:34:30.250Z
 - Forward-looking plan for PlayMass after QUIZZ release.
 - Priorities and dependencies are explicitly stated to enable safe parallelization.
 
@@ -61,6 +61,16 @@ Milestone: QA & Production Readiness
 - Deliverables:
   - Manual verification checklist executed (tests prohibited)
   - vercel --prod successful deploy and smoke test
+
+Milestone: Git Push — v4.4.1 to origin/main
+- Priority: CRITICAL
+- Target: 2025-09-23T08:00:00.000Z
+- Dependencies: Local production build succeeded; docs synchronized
+- Deliverables:
+  - Push current HEAD to origin/main securely using environment token
+  - Verify remote HEAD matches local HEAD
+  - Log plan and outcome in ROADMAP.md, TASKLIST.md, and WARP.DEV_AI_CONVERSATION.md
+- Logged: 2025-09-23 09:16 CET
 
 Q4 2025 — Context-Aware Assistance & Governance Hardening
 

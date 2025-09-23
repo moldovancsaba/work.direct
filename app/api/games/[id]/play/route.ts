@@ -115,8 +115,8 @@ export async function POST(
       }, { status: 403 })
     }
     
-    // Validate supported game types — STARS_HEXA and PENALTY_SHOOTOUT are no longer supported
-    const supported = ['QUIZZ', 'QUIZZZ', 'FIND_RED', 'WHEEL_OF_FORTUNE']
+    // Validate supported game types — QUIZZZ only
+    const supported = ['QUIZZZ']
     if (!supported.includes(game.type)) {
       return NextResponse.json({
         success: false,
@@ -240,9 +240,9 @@ export async function POST(
     
     // Calculate game result based on type
     let gameOutcome: GameOutcome
-    const isAttemptCompletion = (game.type === 'QUIZZ' || game.type === 'QUIZZZ' || game.type === 'FIND_RED' || game.type === 'WHEEL_OF_FORTUNE')
+    const isAttemptCompletion = (game.type === 'QUIZZZ')
 
-    if (game.type === 'QUIZZ' || game.type === 'QUIZZZ') {
+    if (game.type === 'QUIZZZ') {
       const clientOutcome = (playRequest as any).result
       if (!clientOutcome || !clientOutcome.type) {
         return NextResponse.json({
@@ -252,49 +252,8 @@ export async function POST(
         }, { status: 400 })
       }
       gameOutcome = clientOutcome as GameOutcome
-    } else if (game.type === 'FIND_RED') {
-      const clientOutcome = (playRequest as any).result
-      if (!clientOutcome || !clientOutcome.type) {
-        return NextResponse.json({
-          success: false,
-          message: 'Missing result outcome for find-red game',
-          error: { code: 'VALIDATION_ERROR', message: 'Result payload is required for FIND_RED' }
-        }, { status: 400 })
-      }
-      gameOutcome = clientOutcome as GameOutcome
-    } else if (game.type === 'WHEEL_OF_FORTUNE') {
-      // Server-authoritative selection for wheel
-      const segments: any[] = game.configuration?.wheelOfFortune?.segments || []
-      const active = segments.filter((s: any) => s?.isActive !== false)
-      if (!Array.isArray(active) || active.length < 1) {
-        return NextResponse.json({ success: false, message: 'Wheel not configured', error: { code: 'INVALID_CONFIGURATION', message: 'No active wheel segments' } }, { status: 500 })
-      }
-      const probs = active.map((s: any) => Number(s.probability || 0))
-      const total = probs.reduce((a: number, b: number) => a + b, 0)
-      let chosen = active[0]
-      if (total > 0) {
-        const r = Math.random() * total
-        let acc = 0
-        for (let i = 0; i < active.length; i++) {
-          acc += probs[i]
-          if (r <= acc) { chosen = active[i]; break }
-        }
-      } else {
-        chosen = active[Math.floor(Math.random() * active.length)]
-      }
-      gameOutcome = {
-        type: chosen?.isWinning ? 'WIN' : 'NO_REWARD',
-        segmentId: chosen?.id,
-        starsFound: 0,
-        totalStarsInGame: 0,
-        foundAllStars: false,
-        value: chosen?.label,
-        rewardIds: [],
-        message: chosen?.label ? `Landed on: ${chosen.label}` : 'Wheel result'
-      } as any
     } else {
-      // Should not happen due to earlier 'supported' guard
-      return NextResponse.json({ success: false, message: 'Unsupported game type at runtime', error: { code: 'UNSUPPORTED_GAME_TYPE', message: 'Unsupported game type at runtime' } }, { status: 400 })
+      return NextResponse.json({ success: false, message: 'Unsupported game type at runtime', error: { code: 'UNSUPPORTED_GAME_TYPE', message: 'Only QUIZZZ is supported' } }, { status: 400 })
     }
     
     const outcome: GameOutcome = gameOutcome

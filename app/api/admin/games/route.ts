@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
     // WHY: Admin may create a game with minimal inputs first and configure details later.
     const processedConfiguration: any = { ...(configuration || {}) }
 
-    if (type === 'STARS_HEXA') {
+if (false) {
       if (processedConfiguration.starsHexa?.hexagons) {
         const starsCount = processedConfiguration.starsHexa.hexagons.filter((h: any) => h.hasHiddenStar).length
         processedConfiguration.starsHexa.totalStars = starsCount
@@ -116,10 +116,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    if (type === 'FIND_RED') {
+if (false) {
       // WHAT: Pull default config from registry with safe fallback.
       // WHY: TypeScript marks configuration as optional; provide runtime-safe defaults to satisfy types and prevent runtime errors.
-      const def = ((REGISTRY.FIND_RED.defaultConfig.configuration as any)?.findRed) ?? {
+const def: any = {
         packSize: 6,
         redsPerPack: 2,
         selectionsPerRound: 1,
@@ -156,9 +156,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    if (type === 'WHEEL_OF_FORTUNE') {
+if (false) {
       // WHAT/WHY: Safe access to defaults similar to FIND_RED case above.
-      const def = ((REGISTRY.WHEEL_OF_FORTUNE.defaultConfig.configuration as any)?.wheelOfFortune) ?? {
+const def: any = {
         segments: [],
         spins: 8,
         spinsPerGame: 1,
@@ -195,7 +195,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    if (type === 'PENALTY_SHOOTOUT') {
+if (false) {
       // If admin didn't supply players, generate a valid default
       if (!processedConfiguration.penaltyShootout?.players) {
         const playerNumbers = Array.from({ length: 21 }, (_, i) => i + 2) // 2..22
@@ -222,7 +222,7 @@ export async function POST(request: NextRequest) {
     }
 
     // QUIZZ defaults and validation
-    if (type === 'QUIZZ') {
+if (false) {
       const cfg = processedConfiguration.quizz || {}
       const rounds = Number(cfg.rounds ?? 5)
       const targetCorrect = Number(cfg.targetCorrect ?? 3)

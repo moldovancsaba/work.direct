@@ -1,4 +1,4 @@
-"use client"
+export {}
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { axialToPixel, rotatePoint, hexVertices, polygonPointsString } from '../../lib/hex/geometry'
