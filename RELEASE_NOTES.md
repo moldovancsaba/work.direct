@@ -1,10 +1,15 @@
 # 📝 RELEASE_NOTES.md - PlayMass
 
-**Current Version**: 4.5.2
-**Last Updated**: 2025-09-23T09:27:12.616Z
+**Current Version**: 4.6.0
+**Last Updated**: 2025-09-23T12:19:54.000Z
 
 ## 🔹 Version History
 
+### [v4.6.0] — 2025-09-23T12:19:54.000Z
+- Minor: Version bump and documentation sync across README, ROADMAP, TASKLIST, RELEASE_NOTES, ARCHITECTURE, LEARNINGS.
+- Cleanup: Removed legacy components and spaced-file artifacts; fixed /admin server-side redirect; resolved spaced imports in settings.
+- Build: Clean compile; no ESLint warnings from deleted stubs.
+- Governance: Logged plan in ROADMAP and TASKLIST per delivery protocol.
 ### [v4.5.2] — 2025-09-23T09:27:12.616Z
 - Automatic predev patch bump
 
