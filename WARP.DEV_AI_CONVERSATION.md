@@ -1,5 +1,9 @@
 # WARP.DEV_AI_CONVERSATION.md — Planning Log
 
+2025-09-23T12:19:54.000Z — Plan: Bump minor to v4.6.0 and sync docs; push to origin/main (no deploy)
+- Dependencies: GITHUB_TOKEN env var required for push.
+- Scope: Update package.json and docs (README, ROADMAP, TASKLIST, RELEASE_NOTES, ARCHITECTURE, LEARNINGS); log plan in ROADMAP and TASKLIST.
+- Compliance: ISO 8601 UTC with milliseconds timestamps; no tests.
 2025-09-20T13:30:02.000Z — Delivery: v4.0.0 Major — DB-driven font colors; remove baked-in overrides; schema + runtime updates
 - Changes: Persisted hero/main font colors and button FG fields; applied across Landing/Welcome/Rules/Result; fixed TEXT_26/27 mapping; removed global !important input color; stripped text-* overrides.
 - Dependencies: Build verification OK.
