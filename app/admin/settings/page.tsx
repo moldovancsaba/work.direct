@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useTheme } from '../../contexts/ThemeContext 2'
-import { Input, Select, Textarea, NumberInput } from '../../components/ui/FormControls 2'
+import { useTheme } from '../../contexts/ThemeContext'
+import { Input, Select, Textarea, NumberInput } from '../../components/ui/FormControls'
 
 interface Settings {
   siteName: string
