@@ -1,9 +1,17 @@
 # 📝 RELEASE_NOTES.md - PlayMass
 
-**Current Version**: 4.5.0
-**Last Updated**: 2025-09-23T07:34:30.250Z
+**Current Version**: 4.5.2
+**Last Updated**: 2025-09-23T09:27:12.616Z
 
 ## 🔹 Version History
+
+### [v4.5.2] — 2025-09-23T09:27:12.616Z
+- Automatic predev patch bump
+
+
+### [v4.5.1] — 2025-09-23T09:23:48.422Z
+- Automatic predev patch bump
+
 
 ### [v4.5.0] — 2025-09-23T08:44:43.000Z
 - Enforce QUIZZZ-only across admin and runtime.

@@ -12,13 +12,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   required?: boolean
 }
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(({
-  label,
-  error,
-  required,
-  className = '',
-  ...props
-}, ref) => {
+export const Input = forwardRef<HTMLInputElement, InputProps>(({ label, error, required, className = '', ...props }, ref) => {
   return (
     <div className="space-y-1">
       {label && (
@@ -49,13 +43,7 @@ interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   required?: boolean
 }
 
-export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(({
-  label,
-  error,
-  required,
-  className = '',
-  ...props
-}, ref) => {
+export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(({ label, error, required, className = '', ...props }, ref) => {
   return (
     <div className="space-y-1">
       {label && (
@@ -87,15 +75,7 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   options?: Array<{ value: string; label: string; disabled?: boolean }>
 }
 
-export const Select = forwardRef<HTMLSelectElement, SelectProps>(({
-  label,
-  error,
-  required,
-  options,
-  children,
-  className = '',
-  ...props
-}, ref) => {
+export const Select = forwardRef<HTMLSelectElement, SelectProps>(({ label, error, required, options, children, className = '', ...props }, ref) => {
   return (
     <div className="space-y-1">
       {label && (
@@ -141,13 +121,7 @@ interface NumberInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, '
   max?: number
 }
 
-export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(({
-  label,
-  error,
-  required,
-  className = '',
-  ...props
-}, ref) => {
+export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(({ label, error, required, className = '', ...props }, ref) => {
   return (
     <Input
       ref={ref}
@@ -182,16 +156,7 @@ interface RadioGroupProps {
   className?: string
 }
 
-export const RadioGroup = ({
-  name,
-  value,
-  onChange,
-  options,
-  label,
-  error,
-  required,
-  className = ''
-}: RadioGroupProps) => {
+export const RadioGroup = ({ name, value, onChange, options, label, error, required, className = '' }: RadioGroupProps) => {
   return (
     <div className={`space-y-2 ${className}`}>
       {label && (
@@ -235,13 +200,7 @@ interface FormFieldProps {
   className?: string
 }
 
-export const FormField = ({
-  label,
-  error,
-  required,
-  children,
-  className = ''
-}: FormFieldProps) => {
+export const FormField = ({ label, error, required, children, className = '' }: FormFieldProps) => {
   return (
     <div className={`space-y-1 ${className}`}>
       {label && (
@@ -250,7 +209,9 @@ export const FormField = ({
           {required && <span className="text-red-500 ml-1">*</span>}
         </label>
       )}
-      {children}
+      <div>
+        {children}
+      </div>
       {error && (
         <p className="text-sm text-red-600">{error}</p>
       )}
