@@ -3,6 +3,7 @@ import { connectDB } from '../../lib/mongodb'
 import ParticipantModel from '../../lib/models/Participant'
 import { ApiResponse } from '../../types'
 import { v4 as uuidv4 } from 'uuid'
+import { logger } from '../../lib/logger'
 
 /**
  * Participants API Route Handler
@@ -99,7 +100,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     }, { status: 201 })
     
   } catch (error) {
-    console.error('Register participant error:', error)
+    logger.error('Register participant error', { error })
     
     // Handle validation errors
     if (error instanceof Error && error.name === 'ValidationError') {
@@ -222,7 +223,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     })
     
   } catch (error) {
-    console.error('Get participants error:', error)
+    logger.error('Get participants error', { error })
     
     return NextResponse.json({
       success: false,
@@ -282,7 +283,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse<ApiResp
     })
     
   } catch (error) {
-    console.error('Delete participant error:', error)
+    logger.error('Delete participant error', { error })
     
     // Handle invalid ObjectId errors
     if (error instanceof Error && error.name === 'CastError') {

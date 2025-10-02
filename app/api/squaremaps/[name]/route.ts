@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { connectDB } from '@/lib/mongodb'
 import SquareMapModel from '@/lib/models/SquareMap'
+import { logger } from '@/lib/logger'
 
 export async function GET(request: Request) {
   try {
@@ -14,7 +15,7 @@ export async function GET(request: Request) {
     }
     return NextResponse.json({ success: true, data: { name: map.name, coords: map.coords, radius: map.radius, backgroundImageUrl: map.backgroundImageUrl || null } })
   } catch (err) {
-    console.error('GET /api/squaremaps/[name] error', err)
+    logger.error('GET /api/squaremaps/[name] error', { error: err })
     return NextResponse.json({ error: 'Failed to fetch map' }, { status: 500 })
   }
 }
