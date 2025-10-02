@@ -4,6 +4,7 @@
 
 import { NextResponse } from 'next/server'
 import { getAdminUser } from '@/lib/auth'
+import { logger } from '@/lib/logger'
 
 export async function GET() {
   try {
@@ -13,7 +14,7 @@ export async function GET() {
     }
     return NextResponse.json({ success: false, error: 'Not authenticated' }, { status: 401 })
   } catch (error) {
-    console.error('Admin auth check error:', error)
+    logger.error('Admin auth check error', { error })
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 })
   }
 }
