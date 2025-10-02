@@ -7,6 +7,7 @@ import GameResultModel from '../../../../lib/models/GameResult'
 import mongoose from 'mongoose'
 import { getAdminUser } from '../../../../lib/auth'
 import { logger } from '../../../../lib/logger'
+import { sanitizeObject } from '../../../../lib/validation/middleware'
 
 // GET single game (admin only)
 export async function GET(
@@ -96,9 +97,13 @@ export async function PUT(
       )
     }
     
-    const body = await request.json()
+    // What: Parse request body and apply XSS sanitization to all text fields
+    // Why: Complex nested structure with rewards array makes schema validation difficult,
+    //      but we still need XSS protection on all user input
+    const rawBody = await request.json()
+    const body = sanitizeObject(rawBody)
     
-    logger.debug('API PUT /games/[id] - Received body', { gameId: id, body })
+    logger.debug('API PUT /games/[id] - Received sanitized body', { gameId: id, body })
     
     const {
       title,

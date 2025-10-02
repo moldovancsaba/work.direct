@@ -357,24 +357,25 @@ export const mapQuerySchema = z.object({
 /**
  * What: System settings validation
  * Why: Validates global system configuration updates
+ * Matches exact validation rules from manual implementation
  */
 export const settingsUpdateSchema = z.object({
-  siteName: safeStringSchema.max(100).optional(),
+  siteName: safeStringSchema.min(1, 'Site name must be non-empty').max(100).optional(),
   siteDescription: safeStringSchema.max(500).optional(),
   contactEmail: emailSchema.optional(),
-  defaultMaxAttempts: z.number().int().min(1).max(100).optional(),
-  defaultMaxFlips: z.number().int().min(1).max(50).optional(),
+  defaultMaxAttempts: z.number().int().min(1).max(10, 'Default max attempts must be between 1 and 10').optional(),
+  defaultMaxFlips: z.number().int().min(1).max(7, 'Default max flips must be between 1 and 7').optional(),
   requireRegistration: z.boolean().optional(),
   allowMultipleAttempts: z.boolean().optional(),
   showResults: z.boolean().optional(),
   enableRateLimit: z.boolean().optional(),
-  maxRequestsPerMinute: z.number().int().min(1).max(1000).optional(),
-  sessionTimeout: z.number().int().min(1).max(1440).optional(),
+  maxRequestsPerMinute: z.number().int().min(10).max(1000, 'Max requests per minute must be between 10 and 1000').optional(),
+  sessionTimeout: z.number().int().min(5).max(120, 'Session timeout must be between 5 and 120 minutes').optional(),
   emailNotifications: z.boolean().optional(),
   gameCompletionEmails: z.boolean().optional(),
   adminAlerts: z.boolean().optional(),
   theme: z.enum(['light', 'dark', 'auto']).optional(),
-  primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid color format').optional(),
+  primaryColor: z.string().regex(/^#[0-9A-F]{6}$/i, 'Primary color must be a valid hex color (e.g., #FF0000)').optional(),
   enableAnimations: z.boolean().optional(),
 })
 
