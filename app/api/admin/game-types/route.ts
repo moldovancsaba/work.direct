@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { connectDB } from '../../../lib/mongodb'
 import GameTypeModel from '../../../lib/models/GameTypeDef'
 import { getAdminUser } from '../../../lib/auth'
+import { logger } from '../../../lib/logger'
 
 // GET: list all available game types (admin only)
 export async function GET() {
@@ -27,7 +28,7 @@ export async function GET() {
 
     return NextResponse.json({ success: true, data: { items } })
   } catch (err) {
-    console.error('GET /api/admin/game-types error', err)
+    logger.error('GET /api/admin/game-types error', { error: err })
     return NextResponse.json({ error: 'Failed to fetch game types' }, { status: 500 })
   }
 }
@@ -75,7 +76,7 @@ export async function POST(request: NextRequest) {
     const items = await GameTypeModel.find({ code: 'QUIZZZ' }).sort({ order: 1, name: 1 }).lean()
     return NextResponse.json({ success: true, data: { items } })
   } catch (err) {
-    console.error('POST /api/admin/game-types error', err)
+    logger.error('POST /api/admin/game-types error', { error: err })
     return NextResponse.json({ error: 'Failed to upsert game types' }, { status: 500 })
   }
 }

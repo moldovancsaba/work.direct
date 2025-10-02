@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import crypto from 'crypto'
 import { checkAuthRateLimit, getClientIdentifier, createRateLimitResponse } from '../../../lib/rateLimit'
+import { logger } from '../../../lib/logger'
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || ''
 
@@ -73,7 +74,7 @@ export async function POST(request: NextRequest) {
     })
     return res
   } catch (error) {
-    console.error('Admin login error:', error)
+    logger.error('Admin login error', { error })
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }
@@ -93,7 +94,7 @@ export async function DELETE() {
     } catch {}
     return res
   } catch (error) {
-    console.error('Admin logout error:', error)
+    logger.error('Admin logout error', { error })
     return NextResponse.json(
       { success: false, error: 'Logout failed' },
       { status: 500 }

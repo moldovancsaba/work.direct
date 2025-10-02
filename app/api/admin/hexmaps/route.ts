@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAdminUser } from '@/lib/auth'
 import { connectDB } from '@/lib/mongodb'
 import HexMapModel from '@/lib/models/HexMap'
+import { logger } from '@/lib/logger'
 
 function toPublic(doc: any) {
   if (!doc) return null
@@ -63,7 +64,7 @@ export async function GET(request: NextRequest) {
       }
     })
   } catch (error) {
-    console.error('GET /api/admin/hexmaps error:', error)
+    logger.error('GET /api/admin/hexmaps error', { error })
     return NextResponse.json({ error: 'Failed to list hex maps' }, { status: 500 })
   }
 }
@@ -100,7 +101,7 @@ export async function POST(request: NextRequest) {
     const doc = await HexMapModel.create(payload)
     return NextResponse.json({ data: toPublic(doc) }, { status: 201 })
   } catch (error: any) {
-    console.error('POST /api/admin/hexmaps error:', error)
+    logger.error('POST /api/admin/hexmaps error', { error })
     const message = error?.message || 'Failed to create hex map'
     const isValidation = /required|min|max|unique|Radius|Coordinates/i.test(message)
     return NextResponse.json({ error: message }, { status: isValidation ? 400 : 500 })
