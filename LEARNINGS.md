@@ -3,7 +3,97 @@
 This document captures implementation insights, technical decisions, and solutions to issues encountered during PlayMass development.
 
 **Current Version**: 4.7.1
-**Last Updated**: 2025-10-02T14:05:00.000Z
+**Last Updated**: 2025-10-02T14:30:00.000Z
+
+### Phase 3 Task 14 — Input Validation with Zod COMPLETE ✅ (v4.7.1 — 2025-10-02T14:30:00.000Z)
+- **What**: Implemented comprehensive input validation infrastructure using Zod schemas and XSS sanitization across all critical API endpoints
+- **Why**: Prevent injection attacks, ensure data integrity, enable schema-derived types, and provide anti-cheat protection for game play
+- **How**:
+  - Created `app/lib/validation/schemas.ts` (400+ lines) with comprehensive schemas:
+    - Utility schemas: objectIdSchema, uuidSchema, emailSchema, phoneSchema, safeStringSchema (XSS filtering)
+    - Participant schemas: creation, query, deletion validation
+    - Auth schemas: admin login, Facebook auth
+    - Game schemas: complete CRUD validation with QUIZZZ support
+    - **Game play schemas**: gamePlaySchema + gameOutcomeSchema (critical for anti-cheat)
+    - Map schemas: hex/square map creation and querying
+    - Settings schema: system configuration with exact rule matching (replaced 70+ lines of manual validation)
+  - Created `app/lib/validation/middleware.ts` (340 lines):
+    - `validateBody()` - Validates request body with automatic XSS sanitization via xss library
+    - `validateQuery()` - Validates URL query parameters
+    - `validateParams()` - Validates route parameters
+    - `sanitizeObject()` - Deep XSS protection for complex nested objects
+    - Comprehensive error formatting with structured logging
+  - **XSS Protection**: All user input automatically sanitized to remove `<script>`, `<iframe>`, `javascript:` patterns
+  - **Schema-Derived Types**: All TypeScript types generated from Zod schemas via `z.infer<typeof schema>` for single source of truth
+- **Endpoints Validated**:
+  - `/api/admin/login` (POST) - Admin authentication
+  - `/api/participants` (POST/GET/DELETE) - Participant management
+  - `/api/games/[id]/play` (POST) - **Critical anti-cheat validation** ⭐
+  - `/api/games` (GET) - Game listing/filtering
+  - `/api/admin/games/[id]` (PUT) - Admin game updates with XSS sanitization
+  - `/api/settings` (PUT) - System settings (replaced manual validation)
+- **Key Implementation Patterns**:
+  ```typescript
+  // Pattern 1: Request body validation with XSS protection
+  const validated = await validateBody(request, participantCreateSchema, true)
+  if (!validated.success) {
+    return validated.error as NextResponse<ApiResponse>
+  }
+  const { name, email, phone, uuid } = validated.data  // Type-safe, XSS-sanitized
+  
+  // Pattern 2: Query parameter validation
+  const validated = validateQuery(request, gameQuerySchema)
+  if (!validated.success) {
+    return validated.error as NextResponse<ApiResponse>
+  }
+  const { page, limit, status } = validated.data
+  
+  // Pattern 3: Manual sanitization for complex nested structures
+  const rawBody = await request.json()
+  const sanitized = sanitizeObject(rawBody)  // Deep XSS protection
+  ```
+- **Game Play Validation** (Anti-Cheat Focus):
+  - Flexible participant validation: supports guests (uuid-only), email/phone users, and Facebook users
+  - Validates game outcomes from client (type, rewardIds, message, score)
+  - Session tracking validation (sessionId, attemptId)
+  - Referral tracking (ref parameter)
+  - Schema enforces `result` field for QUIZZZ game type
+  - All participant names, messages XSS-sanitized before storage
+- **Settings Validation** (Code Reduction):
+  - Before: 70+ lines of manual if/else validation
+  - After: Single Zod schema with exact rule matching:
+    - siteName: 1-100 chars, required non-empty
+    - defaultMaxAttempts: 1-10
+    - defaultMaxFlips: 1-7
+    - sessionTimeout: 5-120 minutes
+    - maxRequestsPerMinute: 10-1000
+    - primaryColor: hex format validation (#RRGGBB)
+    - theme: enum ['light', 'dark', 'auto']
+- **Validation Error Response Format**:
+  ```json
+  {
+    "success": false,
+    "message": "Validation failed",
+    "error": {
+      "code": "VALIDATION_ERROR",
+      "message": "name: Name is required, email: Invalid email address"
+    }
+  }
+  ```
+- **Benefits Achieved**:
+  - ✅ XSS protection on all user input (prevents injection attacks)
+  - ✅ Type safety: Schema-derived types ensure compile-time and runtime consistency
+  - ✅ Anti-cheat: Game play endpoint validates all client-submitted data
+  - ✅ Code reduction: 70+ lines of manual validation replaced with 23-line schema
+  - ✅ Structured errors: 400 responses with clear, user-friendly messages
+  - ✅ Single source of truth: Types automatically inferred from validation schemas
+  - ✅ Build passing: Zero TypeScript errors, no security vulnerabilities
+- **Performance Impact**: Minimal overhead; Zod validation is fast, XSS sanitization runs only on text fields
+- **Coverage**: All critical endpoints validated; remaining admin map endpoints can be added incrementally
+- **Dependencies Installed**:
+  - `zod@4.1.11` - Schema validation library
+  - `xss@1.0.15` - XSS sanitization library
+  - Zero security vulnerabilities in dependency tree
 
 ### Phase 3 Task 13 — Structured Logging Implementation COMPLETE ✅ (v4.7.1 — 2025-10-02T14:05:00.000Z)
 - **What**: Replaced all ad-hoc console.* statements with centralized structured logging using Pino
