@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { connectDB } from '../../../lib/mongodb'
-import PlaymassDefaultsModel from '../../../lib/models/PlaymassDefaults 2'
+import PlaymassDefaultsModel from '../../../lib/models/PlaymassDefaults'
 import { ApiResponse, GameType } from '../../../types'
 
-// GET /api/config/defaults?module=STARS_HEXA
+// GET /api/config/defaults?module=QUIZZZ
 // Returns PlayMass defaults document for the requested module id
 export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse>> {
   try {

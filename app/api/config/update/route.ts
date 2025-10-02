@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { ApiResponse } from '../../../types'
 import { connectDB } from '../../../lib/mongodb'
 import GameModel from '../../../lib/models/Game'
-import PlaymassDefaultsModel from '../../../lib/models/PlaymassDefaults 2'
+import PlaymassDefaultsModel from '../../../lib/models/PlaymassDefaults'
 import { deepMerge, resolveConfig } from '../../../modules/core/config'
 import { GameType } from '../../../types'
 import mongoose from 'mongoose'
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     // scope === 'playmass'
     // Determine module id: prefer provided gameType; else infer from gameId
     let moduleId: GameType | null = null
-    if (gameType && (gameType === 'STARS_HEXA' || gameType === 'PENALTY_SHOOTOUT')) {
+if (gameType && gameType === 'QUIZZZ') {
       moduleId = gameType
     } else if (gameId && mongoose.Types.ObjectId.isValid(gameId)) {
       const game = await GameModel.findById(gameId)

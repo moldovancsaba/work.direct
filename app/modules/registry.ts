@@ -5,47 +5,7 @@
 import { GameType } from '../types'
 import { GameModule, GameConfig } from './core/types'
 
-const findRedDefault: GameConfig = {
-  id: 'FIND_RED' as GameType,
-  name: 'Get Shorty',
-  version: '1.0.0',
-  configuration: {
-    findRed: {
-      packSize: 6,
-      redsPerPack: 2,
-      selectionsPerRound: 1,
-      targetReds: 3,
-      totalRounds: 5,
-      theme: 'default',
-      texts: { shortyLabel: 'Shorty' },
-      colors: {
-        background: '#0B1220',
-        winForeground: '#FF1A1A',
-        neutralForeground: '#A0AEC0',
-        cardBack: '#1F2937',
-        cardBorder: '#374151'
-      }
-    }
-  }
-}
 
-const wheelDefault: GameConfig = {
-  id: 'WHEEL_OF_FORTUNE' as GameType,
-  name: 'Wheel of Fortune',
-  version: '1.0.0',
-  configuration: {
-    wheelOfFortune: {
-      segments: [],
-      spins: 8,
-      spinsPerGame: 1,
-      durationMs: 4500,
-      pointerAt: 'top',
-      size: 280,
-      theme: 'default',
-      allowImmediateReplay: false
-    }
-  }
-}
 
 export const REGISTRY: Partial<Record<GameType, GameModule>> = {
   QUIZZZ: {

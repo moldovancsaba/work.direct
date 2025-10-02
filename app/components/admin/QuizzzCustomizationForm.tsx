@@ -392,6 +392,7 @@ export default function QuizzzCustomizationForm({ config, onChange }: QuizzzCust
       <div>
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-md font-medium text-black">Questions</h3>
+          <button type="button" className="px-3 py-2 bg-green-600 text-white rounded" onClick={addQuestion}>(+) add question</button>
         </div>
         <div className="space-y-3">
           {questions.map((q, idx) => (
@@ -420,7 +421,6 @@ export default function QuizzzCustomizationForm({ config, onChange }: QuizzzCust
                   next[idx] = { ...next[idx], answers: [...next[idx].answers, { text: '', isCorrect: false }] }
                   setQuestions(next); emit({ questions: next })
                 }}>(+) add answer</button>
-                <button type="button" className="px-3 py-2 bg-green-600 text-white rounded" onClick={addQuestion}>(+) add question</button>
               </div>
             </div>
           ))}

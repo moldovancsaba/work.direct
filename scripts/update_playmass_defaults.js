@@ -14,7 +14,7 @@ if (!uri) {
 
 const collectionName = 'playmass_defaults'
 
-const modules = ['STARS_HEXA', 'PENALTY_SHOOTOUT']
+const modules = ['QUIZZZ']
 
 const patch = {
   platform: {

@@ -206,8 +206,6 @@ export default function GameRulesPage({
       {/* Game Rules Content - Scrollable or embedded */}
       <div className={`flex-1 flex items-center justify-center p-4 ${containerMode === 'embedded' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
         <div className="max-w-2xl mx-auto w-full">
-          {gameType === 'PENALTY_SHOOTOUT' && getPenaltyShootoutRules()}
-          {gameType === 'STARS_HEXA' && getStarsHexaRules()}
         </div>
       </div>
 
