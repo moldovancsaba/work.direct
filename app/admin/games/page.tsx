@@ -107,17 +107,14 @@ export default function AdminGamesPage() {
     }
   }
 
-  const getGameTypeConfig = (game: GameWithDetails) => {
-    if (game.type === 'STARS_HEXA') {
-      const config = game.configuration as any
-      return {
-        flips: config.starsHexa?.maxFlipsPerAttempt || 3,
-        rounds: game.maxAttemptsPerUser || 3,
-        hexagons: config.starsHexa?.hexagons?.length || 0,
-        stars: config.starsHexa?.hexagons?.filter((h: any) => h.hasHiddenStar).length || 0
-      }
+  const getGameTypeConfig = (game: GameWithDetails): { cards: number; rounds: number; winLimit: number } | null => {
+    const qz = game.configuration?.quizzz
+    if (!qz) return null
+    return {
+      cards: Number(qz.numberOfCards || 0),
+      rounds: Number(qz.rounds || 0),
+      winLimit: Number(qz.winLimit || 0),
     }
-    return null
   }
 
   if (loading) {
@@ -283,15 +280,15 @@ export default function AdminGamesPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            {game.type === 'STARS_HEXA' ? 'Hexa' : game.type}
+                            {game.type}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {config && (
                             <div className="text-xs text-gray-600 space-y-1">
-                              <div>{config.flips} flips/round</div>
+                              <div>{config.cards} cards</div>
                               <div>{config.rounds} rounds</div>
-                              <div>{config.stars}/{config.hexagons} stars</div>
+                              <div>{config.winLimit} to win</div>
                             </div>
                           )}
                         </td>

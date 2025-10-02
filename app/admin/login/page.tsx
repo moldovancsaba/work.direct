@@ -4,7 +4,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, startTransition } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function AdminLoginPage() {
@@ -41,7 +41,12 @@ export default function AdminLoginPage() {
       })
       const data = await res.json()
       if (res.ok) {
-        router.push('/admin')
+        // WHY: Use replace() to avoid back stack to the login page and immediately refresh data caches
+        startTransition(() => {
+          router.replace('/admin')
+          // Force revalidation so server/client see the fresh cookie immediately
+          router.refresh()
+        })
       } else {
         setError(data?.error || 'Invalid password')
       }

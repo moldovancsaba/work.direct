@@ -2,8 +2,8 @@
 
 This document captures implementation insights, technical decisions, and solutions to issues encountered during PlayMass development.
 
-**Current Version**: 4.6.0
-**Last Updated**: 2025-09-23T12:19:54.000Z
+**Current Version**: 4.6.17
+**Last Updated**: 2025-10-02T11:29:31.000Z
 
 ### HERO: Logo visibility across pages, optional scoreboard, half-height (v2.1.0)
 - What: Ensure HERO logo is displayed on all pages; allow toggling SCOREBOARD vs normal text; reduce hero height to optimize screen usage.
@@ -35,8 +35,8 @@ This document captures implementation insights, technical decisions, and solutio
 - What: Consolidated the platform to a single standardized game type (QUIZZZ) and enforced attempt-level session analytics.
 - Why: Reduce complexity, improve UX consistency, and ensure accurate analytics for admin views.
 - How:
-  - Admin Editor: Removed STARS_HEXA, PENALTY_SHOOTOUT, FIND_RED, WHEEL_OF_FORTUNE, QUIZZ (legacy) from UI; creation limited to QUIZZZ.
-  - Backend: Play endpoint only supports QUIZZZ, FIND_RED, WHEEL (temporary support retained for WHEEL) — but UI is single-type now; sessions recorded per completed attempt; guest plays counted via uuid.
+  - Admin Editor: Removed legacy game types from UI; creation limited to QUIZZZ.
+  - Backend: Play endpoint restricted to QUIZZZ; sessions recorded per completed attempt; guest plays counted via uuid.
   - Analytics: Validated-only, distinct sessionId counting; updated admin list/detail and analytics API paths.
   - DB: Added indexes for idempotency and analytics (unique sparse (gameId, sessionId)).
 
@@ -84,7 +84,7 @@ This document captures implementation insights, technical decisions, and solutio
 - Why: Central governance of available types; no baked-in content.
 - How: GameTypeDef model (game_types), admin API /api/admin/game-types (GET/POST), editor fetch + de-dup by code, prefer enabled types
 
-### QUIZZ: SelectedMaps, Strict Fetch, and Cover Images (v2.0.0)
+### Board Quiz: SelectedMaps, Strict Fetch, and Cover Images (v2.0.0)
 - What: Replaced legacy mapName/tag with predictive search + selectedMaps (chips), strict type fetch, and optional per-card cover images clipped to polygon.
 - Why: Single-source map management, reduce 404 noise, enable visually distinct cards via transparent PNGs.
 - How:
@@ -92,8 +92,8 @@ This document captures implementation insights, technical decisions, and solutio
   - Runtime: If selectedMaps present, load first strictly; else fallback to legacy; cover images use SVG clipPath to mask to tile, remove edges/back/labels.
 - Notes: DIAMOND removed across types/schemas.
 
-### QUIZZ: Fixed-length answers and map integration
-- What: QUIZZ requires exactly 3 answers per question (tuple) and supports multiple correct answers; questions map onto active hex coordinates.
+### Board Quiz: Fixed-length answers and map integration
+- What: The board-quiz requires exactly 3 answers per question (tuple) and supports multiple correct answers; questions map onto active hex coordinates.
 - Why: Enforces consistent UI layout and gameplay expectations; multiple correct options enable richer questions.
 - How:
   - Types: QuizzAnswer[] typed as a 3-length tuple [A,B,C]; editor enforces exactly three answers with multi-correct checkboxes.
@@ -139,64 +139,6 @@ This document captures implementation insights, technical decisions, and solutio
 - What: Introduced standardized Welcome → Rules → Game → Result flow and a play config resolver that normalizes per-game texts/colors into a single shape.
 - Why: Ensures a single-source UI contract across modules, decouples the play interface from raw DB schema, and preserves backward compatibility.
 - Notes: Kept /result route unchanged; added backward-compat redirect /play/[gameId] → /welcome; propagated ?ref across steps.
-
-### Performance Optimization: Hexagon Click Responsiveness
-
-**Issue**: Users experienced slow hexagon clicking and unresponsive flip animations in the Stars Hexa game component.
-
-**Root Causes Identified**:
-1. **Blocking UI Updates**: Network calls were blocking visual feedback, making clicks feel unresponsive
-2. **Multiple State Updates**: Sequential state updates caused unnecessary re-renders
-3. **No Click Debouncing**: Rapid clicks could cause state inconsistencies
-4. **Missing Visual Feedback**: No immediate indication that a click was registered
-
-**Solution Implemented** (v1.1.3):
-
-#### 1. Immediate Visual Feedback
-- **Strategy**: Separate UI updates from network calls
-- **Implementation**: Update game state immediately on click, perform network call asynchronously
-- **Result**: Users see hexagon flip animation instantly while backend processes the request
-- **Code Pattern**:
-```typescript
-// IMMEDIATE UI UPDATE - Don't wait for network call
-setGameState(prev => prev.map(h => 
-  h.id === hexagonId ? { ...h, isRevealed: true } : h
-))
-setFlipsUsed(newFlipsUsed)
-setStarsFound(newStarsFound)
-
-// ASYNC NETWORK CALL - Happens after UI update
-const result = await onFlip(hexagonId)
-```
-
-#### 2. Click Debouncing System
-- **Strategy**: Prevent rapid successive clicks that could cause performance issues
-- **Implementation**: Track clicked hexagons in a Set with timeout-based cleanup
-- **Result**: Eliminates double-clicks and rapid clicking performance degradation
-- **Code Pattern**:
-```typescript
-const [clickedHexagons, setClickedHexagons] = useState<Set<string>>(new Set())
-const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-
-// Add immediate feedback, prevent double-clicks
-setClickedHexagons(prev => new Set([...prev, hexagonId]))
-debounceTimeoutRef.current = setTimeout(() => {
-  setClickedHexagons(prev => {
-    const newSet = new Set(prev)
-    newSet.delete(hexagonId)
-    return newSet
-  })
-}, 300)
-```
-
-#### 3. Visual Click Indicators
-- **Strategy**: Provide immediate visual feedback on click registration
-- **Implementation**: Scale and visual state changes based on click state
-- **Result**: Users clearly see when their clicks are registered
-- **Code Pattern**:
-```typescript
-const isBeingClicked = clickedHexagons.has(hexagon.id)
-const isClickable = !disabled && !isGameComplete && flipsUsed < flipsPerRound && !hexagon.isRevealed && !isBeingClicked
 
 className={`transition-all duration-100 ${
   isClickable ? 'cursor-pointer hover:scale-105' : 'cursor-not-allowed'
@@ -526,7 +468,7 @@ interface WheelSegment {
 - **Type safety**: Full TypeScript coverage for mathematical functions and state
 
 **PlayMass Architecture Compatibility**:
-- **Game type system**: Added WHEEL_OF_FORTUNE to existing GameType enum
+- **Game type system**: Updated game type enum
 - **Configuration structure**: Extended GameConfiguration with wheel-specific settings
 - **Result tracking**: Enhanced GameOutcome interface for segment results
 - **Component reusability**: Designed for admin interface and player game integration

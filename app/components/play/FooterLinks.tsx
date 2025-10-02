@@ -26,12 +26,12 @@ export default function FooterLinks({ gameId }: { gameId: string }) {
       try { localStorage.removeItem(`playmass:session:${gameId}`) } catch {}
       const url = new URL(window.location.href)
       const ref = url.searchParams.get('ref')
-      const dest = ref ? `/play/${gameId}/welcome?ref=${encodeURIComponent(ref)}` : `/play/${gameId}/welcome`
+      const dest = ref ? `/play/${gameId}/landing?ref=${encodeURIComponent(ref)}` : `/play/${gameId}/landing`
       window.location.href = dest
     } catch {
       const url = new URL(window.location.href)
       const ref = url.searchParams.get('ref')
-      const dest = ref ? `/play/${gameId}/welcome?ref=${encodeURIComponent(ref)}` : `/play/${gameId}/welcome`
+      const dest = ref ? `/play/${gameId}/landing?ref=${encodeURIComponent(ref)}` : `/play/${gameId}/landing`
       window.location.href = dest
     }
   }

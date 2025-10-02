@@ -69,7 +69,7 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
                 const name = data?.user?.name || 'Facebook User'
                 const email = data?.user?.email
                 saveSession({ name, email }, false)
-                onNext(`/play/${gameId}/rules`)
+                onNext(`/play/${gameId}/game`)
               } else {
                 setFbError(data?.error || 'Facebook login failed. Please try again.')
               }
@@ -153,7 +153,7 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
               const name = data?.user?.name || 'Facebook User'
               const email = data?.user?.email
               saveSession({ name, email }, false)
-              onNext(`/play/${gameId}/rules`)
+              onNext(`/play/${gameId}/game`)
               return
             }
             setFbError(data?.error || 'Facebook login failed. Please try again.')
@@ -188,7 +188,7 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
         const name = data?.user?.name || 'User'
         const email = data?.user?.email
         saveSession({ name, email }, false)
-        onNext(`/play/${gameId}/rules`)
+        onNext(`/play/${gameId}/game`)
       } catch { /* ignore */ }
     })()
     return () => { cancelled = true }
@@ -251,9 +251,9 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
                 })
               } catch {}
               saveSession(p, false)
-              onNext(`/play/${gameId}/rules`)
+              onNext(`/play/${gameId}/game`)
             }}
-            onTrialMode={() => { saveSession({ name: 'Guest' }, true); onNext(`/play/${gameId}/rules`) }}
+            onTrialMode={() => { saveSession({ name: 'Guest' }, true); onNext(`/play/${gameId}/game`) }}
             gameTitle={title}
             gameName={title}
             showTrialOption={true}

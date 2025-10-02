@@ -3,8 +3,8 @@
 // Why: Decouple UI from raw DB schema; ensure consistent texts/colors across modules.
 
 import { Game } from '../../types'
-import { deepMerge } from '../utils/deepMerge 2'
-import { PlaymassDefaults } from '../config/playmassDefaults 2'
+import { deepMerge } from '../utils/deepMerge'
+import { PlaymassDefaults } from '../config/playmassDefaults'
 
 export interface ColorsPalette {
   primary?: string
@@ -316,23 +316,7 @@ function toWheelConfig(game: Game): PlayFlowResolvedConfig {
 
 export async function resolvePlayConfig(game: Game, options?: { ref?: string }): Promise<PlayFlowResolvedConfig> {
   const type = game.type
-  let base: PlayFlowResolvedConfig
-  switch (type) {
-    case 'STARS_HEXA':
-      base = toStarsHexaConfig(game)
-      break
-    case 'PENALTY_SHOOTOUT':
-      base = toPenaltyConfig(game)
-      break
-    case 'FIND_RED':
-      base = toFindRedConfig(game)
-      break
-    case 'WHEEL_OF_FORTUNE':
-      base = toWheelConfig(game)
-      break
-    default:
-      base = toStarsHexaConfig(game)
-  }
+  let base: PlayFlowResolvedConfig = toFindRedConfig(game)
   if (options?.ref) base.meta.ref = options.ref
   return base
 }

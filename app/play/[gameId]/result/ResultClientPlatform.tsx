@@ -198,7 +198,7 @@ export default function ResultClientPlatform({ gameId, texts, styles, won, refCo
               {texts?.TEXT_45 || 'Invite Friend'}
             </button>
             <button
-              onClick={() => navigateWithRef(`/play/${gameId}/welcome`)}
+              onClick={() => navigateWithRef(`/play/${gameId}/landing`)}
               className={`${styles?.main?.buttonPrimaryClass || 'px-6 py-3 rounded-lg'} text-2xl block`}
               style={{ background: extractBackgroundValue(texts?.TEXT_46_BG) || '#000000FF', color: (texts?.PLAYAGAIN_FG || texts?.TEXT_46_FG || '').trim() || undefined, minHeight: '48px', minWidth: '240px', maxWidth: '400px', width: '100%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >

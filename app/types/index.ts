@@ -131,13 +131,13 @@ export interface UnifiedRegistrationProps {
 // Game Status Props for centralized status tracking
 export interface GameStatusProps {
   // Game type identification
-  gameType: 'STARS_HEXA' | string
+  gameType: string
   
   // Common game state
   isGameComplete?: boolean
   isLoading?: boolean
   
-  // Stars Hexa specific stats
+  // Hex-grid specific stats
   starsHexa?: {
     currentRound: number
     totalRounds: number
@@ -164,7 +164,7 @@ export interface GameStatusProps {
 // Game Description Props for centralized game information
 export interface GameDescriptionProps {
   // Game type identification
-  gameType: 'STARS_HEXA' | string
+  gameType: string
   
   // Game state context
   isGameComplete?: boolean
@@ -178,7 +178,7 @@ export interface GameDescriptionProps {
   showWinConditions?: boolean
   showCurrentState?: boolean
   
-  // Stars Hexa specific content
+  // Hex-grid specific content
   starsHexaRules?: {
     maxFlipsPerRound: number
     totalRounds: number
@@ -200,7 +200,7 @@ export interface GameDescriptionProps {
 // Game Types and Interfaces
 // These define the structure for different game types and their configurations
 
-export type GameType = 'STARS_HEXA' | 'PENALTY_SHOOTOUT' | 'FIND_RED' | 'WHEEL_OF_FORTUNE' | 'QUIZZ' | 'QUIZZZ';
+export type GameType = 'QUIZZZ';
 
 // Lucky Wheel segment type used by the wheel component
 // What: Defines a segment with label and probability for spin logic
@@ -527,6 +527,60 @@ export interface QuizzConfiguration {
   cardCoverImages?: string[]
 }
 
+export type PageBlockType = 'HERO' | 'MAIN'
+
+export interface TextContent {
+  id: string
+  kind: 'TEXT'
+  name: string
+  text: string
+  style: 'HERO' | 'H1' | 'H2' | 'P'
+}
+
+export type PredefinedAction = 'GOTO_PAGE' | 'INVITE_FRIEND' | 'PLAY_AS_GUEST' | 'START_GAME' | 'REGISTER' | 'RESTART_GAME' | 'FB_LOGIN'
+
+export interface ButtonContent {
+  id: string
+  kind: 'BUTTON'
+  name: string
+  mode: 'PREDEFINED' | 'URL'
+  action?: PredefinedAction
+  targetPageName?: string
+  text: string
+  url?: string
+  backgroundCss?: string
+  fontColor?: string
+  command?: string
+}
+
+export interface InputContent {
+  id: string
+  kind: 'INPUT'
+  name: string // semantic name/key
+  field: 'NAME' | 'EMAIL' | 'PHONE' | 'CUSTOM'
+  label?: string
+  placeholder?: string
+  required?: boolean
+}
+
+export type ContentItem = TextContent | ButtonContent | InputContent
+
+export interface BoxDef {
+  id: string
+  name: string
+  block: PageBlockType
+  columns: 1 | 2 | 3
+  items: ContentItem[]
+}
+
+export interface PageDef {
+  id: string
+  name: string
+  isActive: boolean
+  layout?: string
+  boxes: BoxDef[]
+}
+
 export interface GameConfiguration {
   // Central platform configuration
   platform?: {
@@ -581,7 +635,7 @@ export interface GameConfiguration {
     defaultRewardId?: string
   }
 
-  // Stars Hexa specific configuration
+  // Hex-grid specific configuration
   starsHexa?: {
     hexagons: HexagonCard[]
     totalStars: number // Number of hidden stars (1-3)
@@ -732,6 +786,9 @@ export interface GameConfiguration {
   // Quizz configuration (hexamap-based quiz)
   quizz?: QuizzConfiguration
 
+  // Structured pages editor configuration
+  pages?: PageDef[]
+
   // General game settings
   allowMultipleAttempts: boolean
   maxAttemptsPerUser: number
@@ -813,8 +870,8 @@ export type GameOutcomeType = 'WIN' | 'LOSE' | 'NO_REWARD'
 
 export interface GameOutcome {
   type: GameOutcomeType
-  // Stars Hexa specific fields
-  hexagonId?: string // For Stars Hexa games - which hexagon was revealed
+  // Hex-grid specific fields
+  hexagonId?: string // Which hexagon was revealed (when applicable)
   // Lucky Wheel specific field
   segmentId?: string // For wheel games - ID of the winning segment
   // Common metrics

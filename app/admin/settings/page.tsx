@@ -171,7 +171,6 @@ export default function SettingsPage() {
 
   const tabs = [
     { id: 'general', name: 'General', icon: '🔧' },
-    { id: 'games', name: 'Game Settings', icon: '🎮' },
     { id: 'security', name: 'Security', icon: '🔒' },
     { id: 'notifications', name: 'Notifications', icon: '📧' },
     { id: 'appearance', name: 'Appearance', icon: '🎨' }
@@ -327,74 +326,6 @@ export default function SettingsPage() {
                   </div>
                 )}
 
-                {/* Game Settings */}
-                {activeTab === 'games' && (
-                  <div>
-                    <h2 className="text-lg font-semibold text-gray-900 mb-6">Game Settings</h2>
-                    <div className="space-y-6">
-                      <div className="max-w-xs">
-                        <NumberInput
-                          label="Default Max Attempts per User"
-                          min={1}
-                          max={10}
-                          value={settings.defaultMaxAttempts}
-                          onChange={(e) => handleInputChange('defaultMaxAttempts', parseInt(e.target.value))}
-                        />
-                      </div>
-
-                      <div className="max-w-xs">
-                        <NumberInput
-                          label="Default Max Flips per Attempt"
-                          min={1}
-                          max={7}
-                          value={settings.defaultMaxFlips}
-                          onChange={(e) => handleInputChange('defaultMaxFlips', parseInt(e.target.value))}
-                        />
-                      </div>
-
-                      <div className="space-y-4">
-                        <div className="flex items-center">
-                          <input
-                            type="checkbox"
-                            id="requireRegistration"
-                            checked={settings.requireRegistration}
-                            onChange={(e) => handleInputChange('requireRegistration', e.target.checked)}
-                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                          />
-                          <label htmlFor="requireRegistration" className="ml-2 text-sm text-gray-700">
-                            Require user registration to play games
-                          </label>
-                        </div>
-
-                        <div className="flex items-center">
-                          <input
-                            type="checkbox"
-                            id="allowMultipleAttempts"
-                            checked={settings.allowMultipleAttempts}
-                            onChange={(e) => handleInputChange('allowMultipleAttempts', e.target.checked)}
-                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                          />
-                          <label htmlFor="allowMultipleAttempts" className="ml-2 text-sm text-gray-700">
-                            Allow multiple attempts per user
-                          </label>
-                        </div>
-
-                        <div className="flex items-center">
-                          <input
-                            type="checkbox"
-                            id="showResults"
-                            checked={settings.showResults}
-                            onChange={(e) => handleInputChange('showResults', e.target.checked)}
-                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                          />
-                          <label htmlFor="showResults" className="ml-2 text-sm text-gray-700">
-                            Show results to players after game completion
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
 
                 {/* Security Settings */}
                 {activeTab === 'security' && (
