@@ -3,7 +3,29 @@
 This document captures implementation insights, technical decisions, and solutions to issues encountered during PlayMass development.
 
 **Current Version**: 4.7.0
-**Last Updated**: 2025-10-02T11:59:58.000Z
+**Last Updated**: 2025-10-02T12:05:35.000Z
+
+### Phase 3 — Structured Logging Implementation (v4.7.0 — 2025-10-02T12:05:35.000Z)
+- **What**: Replaced ad-hoc console.* statements with centralized structured logging using Pino
+- **Why**: Improves observability, enables production log aggregation, prevents PII leakage, and provides consistent logging format
+- **How**:
+  - Created `app/lib/logger.ts` (232 lines) with unified logging API
+  - Server: Pino with pretty formatting in dev, JSON in production
+  - Client: Browser console with PII sanitization (email, phone, password, token, userId) and throttling (1s between duplicate messages)
+  - Environment-aware log levels via LOG_LEVEL env var (default: debug in dev, info in prod)
+  - Memory management: Auto-cleanup of client log cache every 10s to prevent leaks
+- **Scope**: 95 console statements identified; ~90 to replace across:
+  - API routes (38+ files): health, games, participants, settings, auth, admin APIs
+  - Admin pages (5 files): settings, participants, games, analytics, mapcreator
+  - Components (12+ files): FacebookSDK, UnifiedRegistration, SystemStatus, game components
+  - Lib/hooks (4 files): mongodb, useAdminAuth
+- **Replacement Strategy**:
+  1. Critical infrastructure first: mongodb.ts, API routes
+  2. Admin pages and hooks
+  3. Client components last
+  4. Pattern: `console.error('msg', data)` → `logger.error('msg', { data })`
+  5. Preserve error context but structure data as objects for Pino
+- **Status**: Logger created and tested in build; systematic replacement in progress
 
 ### HERO: Logo visibility across pages, optional scoreboard, half-height (v2.1.0)
 - What: Ensure HERO logo is displayed on all pages; allow toggling SCOREBOARD vs normal text; reduce hero height to optimize screen usage.
