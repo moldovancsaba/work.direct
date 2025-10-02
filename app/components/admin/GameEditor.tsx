@@ -6,7 +6,9 @@ import Link from 'next/link'
 import GeneralCustomizationForm from './GeneralCustomizationForm'
 import PlatformSettingsForm from './PlatformSettingsForm'
 import QuizzzCustomizationForm from './QuizzzCustomizationForm'
-import { GameType, QuizzConfiguration, QuizzzConfiguration } from '../../types'
+import PageEditor from './PageEditor'
+import { GameType, QuizzzConfiguration, PageDef } from '../../types'
+import { v4 as uuidv4 } from 'uuid'
 
 interface HexagonCard {
   id: string
@@ -36,6 +38,33 @@ interface GameEditorProps {
 //       in create or edit mode.
 // Why: Ensures consistent admin UX and satisfies the requirement for a single
 //       layout (use edit layout) while reusing existing components.
+
+// Create default Pages for new games: Landing and Game
+// What: Ensure required base pages exist so the editor shows tabs immediately.
+// Why: Product requirement — every game has Landing and Game pages by default.
+const makeDefaultPages = (): PageDef[] => [
+  {
+    id: uuidv4(),
+    name: 'Landing',
+    isActive: true,
+    layout: '',
+    boxes: [
+      { id: uuidv4(), name: 'HERO', block: 'HERO', columns: 1, items: [] },
+      { id: uuidv4(), name: 'MAIN', block: 'MAIN', columns: 1, items: [] }
+    ]
+  },
+  {
+    id: uuidv4(),
+    name: 'Game',
+    isActive: true,
+    layout: '',
+    boxes: [
+      { id: uuidv4(), name: 'HERO', block: 'HERO', columns: 1, items: [] },
+      { id: uuidv4(), name: 'MAIN', block: 'MAIN', columns: 1, items: [] }
+    ]
+  }
+]
+
 export default function GameEditor({ mode, gameId, initialGameType, hideTypeSelect = false }: GameEditorProps) {
   const router = useRouter()
 
@@ -61,20 +90,6 @@ const [gameType, setGameType] = useState<GameType>(initialGameType || 'QUIZZZ')
   // Common configuration
   const [maxRounds, setMaxRounds] = useState(3)
 
-  // QUIZZ configuration (legacy; QUIZZZ will supersede)
-  const [quizzConfig, setQuizzConfig] = useState<Partial<QuizzConfiguration>>({
-    mapType: 'hex',
-    mapName: '',
-    selectedMaps: [],
-    activeCoords: [],
-    mapTag: 'water',
-    rounds: 5,
-    targetCorrect: 3,
-    questions: [],
-    theme: 'default',
-    overlayBg: 'rgba(0,0,0,0.6)',
-    texts: { submitAnswer: 'Submit', correctFeedback: 'Correct!', wrongFeedback: 'Try again' }
-  })
 
 // QUIZZZ configuration (new board-quiz)
   const [quizzzConfig, setQuizzzConfig] = useState<Partial<QuizzzConfiguration>>({
@@ -96,6 +111,36 @@ const [gameType, setGameType] = useState<GameType>(initialGameType || 'QUIZZZ')
 // Platform Settings (DB-driven defaults; no baked-in strings)
 const [platformTexts, setPlatformTexts] = useState<Record<string, string>>({})
 const [platformStyles, setPlatformStyles] = useState<Record<string, any>>({})
+// Pages Editor State — initialize with default pages in create mode
+const [pages, setPages] = useState<PageDef[]>(mode === 'create' ? makeDefaultPages() : [])
+
+// Scrub legacy pages on first mount in create mode
+useEffect(() => {
+  if (mode !== 'create') return
+  let did = false
+  setPages(prev => {
+    if (!Array.isArray(prev)) return prev
+    const legacy = new Set(['WELCOME','RULES','RESULT'])
+    const keep = new Set(['LANDING','GAME'])
+    const filtered = prev.filter(p => keep.has(String(p.name || '').toUpperCase()) || !legacy.has(String(p.name || '').toUpperCase()))
+    // Deduplicate by normalized name (prefer first occurrence)
+    const byName = new Map<string, PageDef>()
+    for (const p of filtered) {
+      const key = String(p.name || '').toUpperCase()
+      if (!byName.has(key)) byName.set(key, p)
+    }
+    const landing = byName.get('LANDING') || makeDefaultPages()[0]
+    const game = byName.get('GAME') || makeDefaultPages()[1]
+    const rest = Array.from(byName.values()).filter(p => {
+      const n = String(p.name || '').toUpperCase()
+      return n !== 'LANDING' && n !== 'GAME'
+    })
+    const next = [landing, game, ...rest]
+    did = true
+    return next
+  })
+  // run once - empty deps array is intentional for one-time initialization
+}, [])
 
 // Load PlayMass defaults from DB for create mode (and whenever gameType changes)
 useEffect(() => {
@@ -117,54 +162,8 @@ useEffect(() => {
   return () => controller.abort()
 }, [mode, gameType])
 
-  // Stars Hexa configuration (edit layout form parity)
-  const [maxFlipsPerRound, setMaxFlipsPerRound] = useState(3)
-  const [theme, setTheme] = useState<'default' | 'colorful' | 'minimal'>('default')
-  const [winEmoji, setWinEmoji] = useState('⭐️')
-  const [loseEmoji, setLoseEmoji] = useState('🍄')
 
-  // Find Red (Get Shorty) configuration
-  const [findRedConfig, setFindRedConfig] = useState<any>({
-    packSize: 6,
-    redsPerPack: 2,
-    selectionsPerRound: 1,
-    targetReds: 3,
-    totalRounds: 5,
-    theme: 'default',
-    texts: { shortyLabel: 'Shorty' },
-    colors: {
-      background: '#0B1220',
-      winForeground: '#FF1A1A',
-      neutralForeground: '#A0AEC0',
-      cardBack: '#1F2937',
-      cardBorder: '#374151'
-    },
-    defaultRewardId: ''
-  })
 
-  const [hexagons, setHexagons] = useState<HexagonCard[]>([
-    { id: '1', text: 'Card 1', hasHiddenStar: false },
-    { id: '2', text: 'Card 2', hasHiddenStar: false },
-    { id: '3', text: 'Card 3', hasHiddenStar: true },
-    { id: '4', text: 'Card 4', hasHiddenStar: false },
-    { id: '5', text: 'Card 5', hasHiddenStar: true },
-    { id: '6', text: 'Card 6', hasHiddenStar: false },
-    { id: '7', text: 'Card 7', hasHiddenStar: false }
-  ])
-
-// Stars Hexa customization state (texts/colors/settings)
-  const [starsHexaTexts, setStarsHexaTexts] = useState<any>({})
-  const [starsHexaColors, setStarsHexaColors] = useState<any>({ palette: {} })
-
-  // Penalty customization
-  const [penaltyTexts, setPenaltyTexts] = useState<any>({})
-  const [penaltyColors, setPenaltyColors] = useState<any>({})
-  const [penaltyGameSettings, setPenaltyGameSettings] = useState({
-    totalPlayers: 11,
-    penaltyShots: 5,
-    successfulShots: 7,
-    missedShots: 4
-  })
 
   const [rewards, setRewards] = useState<RewardConfig[]>([])
 
@@ -226,11 +225,9 @@ useEffect(() => {
           setGameType(game.type)
 // Platform configuration (derive from legacy if missing)
           const plat = game.configuration?.platform || {}
-          const stars = game.configuration?.starsHexa || {}
-          const penalty = game.configuration?.penaltyShootout || {}
           const derivedTexts: Record<string, any> = {
-            TEXT_10: plat.texts?.TEXT_10 || stars.texts?.welcomeTitle || game.title || 'Welcome',
-            TEXT_20: plat.texts?.TEXT_20 || (stars.texts?.rulesTitle || penalty.texts?.gameRulesTitle) || 'Game Rules',
+            TEXT_10: plat.texts?.TEXT_10 || game.title || 'Welcome',
+            TEXT_20: plat.texts?.TEXT_20 || 'Game Rules',
             TEXT_30: plat.texts?.TEXT_30 || game.title || 'Game',
             TEXT_40: plat.texts?.TEXT_40 || 'Results',
             TEXT_11: plat.texts?.TEXT_11 || game.description || '',
@@ -240,16 +237,16 @@ useEffect(() => {
             TEXT_15: plat.texts?.TEXT_15 || 'your@email.com',
             TEXT_16: plat.texts?.TEXT_16 || 'Your Phone',
             TEXT_17: plat.texts?.TEXT_17 || '+1 (555) 123-4567',
-            TEXT_18: plat.texts?.TEXT_18 || penalty.texts?.startPlayingButton || 'Start',
+            TEXT_18: plat.texts?.TEXT_18 || 'Start',
             TEXT_19: plat.texts?.TEXT_19 || 'Try Without Registration',
             // Registration helpers
             TEXT_26: plat.texts?.TEXT_26 || 'Please provide either email or phone number',
             TEXT_27: plat.texts?.TEXT_27 || 'Want to try without registration?',
             // Rules
-            TEXT_21: plat.texts?.TEXT_21 || (stars.texts?.rulesTitle || penalty.texts?.gameRulesTitle) || 'Game Rules',
-            TEXT_22: plat.texts?.TEXT_22 || (stars.texts?.rulesBody || penalty.texts?.gameRulesText) || '',
-            TEXT_23: plat.texts?.TEXT_23 || (penalty.texts?.winConditionsTitle || 'Win Conditions'),
-            TEXT_24: plat.texts?.TEXT_24 || (penalty.texts?.winConditionsText || ''),
+            TEXT_21: plat.texts?.TEXT_21 || 'Game Rules',
+            TEXT_22: plat.texts?.TEXT_22 || '',
+            TEXT_23: plat.texts?.TEXT_23 || 'Win Conditions',
+            TEXT_24: plat.texts?.TEXT_24 || '',
             TEXT_25: plat.texts?.TEXT_25 || 'Play',
             // Result
             TEXT_41: plat.texts?.TEXT_41 || 'Thanks for participating!',
@@ -287,49 +284,9 @@ useEffect(() => {
           }
           // Normalize to standardized editor keys with fallbacks while preserving any other existing keys
           setPlatformTexts({ ...(plat.texts || {}), ...derivedTexts })
-          setPlatformStyles(plat.styles || {})
-// Stars Hexa
-          if (game.type === 'FIND_RED' && game.configuration?.findRed) {
-            const cfg = game.configuration.findRed
-            setFindRedConfig({
-              packSize: cfg.packSize || 6,
-              redsPerPack: cfg.redsPerPack || 2,
-              selectionsPerRound: cfg.selectionsPerRound || 1,
-              targetReds: cfg.targetReds || 3,
-              totalRounds: cfg.totalRounds || 5,
-              theme: cfg.theme || 'default',
-              texts: { shortyLabel: cfg.texts?.shortyLabel || 'Shorty' },
-              colors: {
-                background: cfg.colors?.background || '#0B1220',
-                winForeground: cfg.colors?.winForeground || '#FF1A1A',
-                neutralForeground: cfg.colors?.neutralForeground || '#A0AEC0',
-                cardBack: cfg.colors?.cardBack || '#1F2937',
-                cardBorder: cfg.colors?.cardBorder || '#374151'
-              },
-              defaultRewardId: cfg.defaultRewardId || ''
-            })
-          }
-
-          if (game.type === 'QUIZZ' && game.configuration?.quizz) {
-            const q = game.configuration.quizz
-            setQuizzConfig({
-              mapType: q.mapType || 'hex',
-              mapName: q.mapName || '',
-              selectedMaps: Array.isArray(q.selectedMaps) && q.selectedMaps.length > 0
-                ? q.selectedMaps
-                : (q.mapName ? [{ type: (q.mapType || 'hex'), name: q.mapName }] : []),
-              randomizeSelectedMaps: !!q.randomizeSelectedMaps,
-              activeCoords: Array.isArray(q.activeCoords) ? q.activeCoords : [],
-              mapTag: q.mapTag || 'water',
-              rounds: Number(q.rounds || 5),
-              targetCorrect: Number(q.targetCorrect || 3),
-              questions: Array.isArray(q.questions) ? q.questions : [],
-              theme: q.theme || 'default',
-              overlayBg: q.overlayBg || 'rgba(0,0,0,0.6)',
-              texts: q.texts || { submitAnswer: 'Submit', correctFeedback: 'Correct!', wrongFeedback: 'Try again' },
-              cardCoverImages: Array.isArray(q.cardCoverImages) ? q.cardCoverImages : []
-            })
-          }
+setPlatformStyles(plat.styles || {})
+          // Load pages editor data
+          setPages(Array.isArray(game.configuration?.pages) ? game.configuration.pages : [])
 
           if (game.type === 'QUIZZZ' && game.configuration?.quizzz) {
             const qz = game.configuration.quizzz
@@ -366,34 +323,7 @@ useEffect(() => {
             } as any
           }
 
-          if (game.type === 'STARS_HEXA' && game.configuration?.starsHexa) {
-            setMaxFlipsPerRound(game.configuration.starsHexa.maxFlipsPerAttempt || 3)
-            setTheme(game.configuration.starsHexa.theme || 'default')
-            if (Array.isArray(game.configuration.starsHexa.hexagons)) {
-              setHexagons(game.configuration.starsHexa.hexagons.map((hex: any, idx: number) => ({
-                id: hex.id || String(idx + 1),
-                text: hex.text || `Card ${idx + 1}`,
-                hasHiddenStar: !!hex.hasHiddenStar,
-                color: hex.color
-              })))
-            }
-            setStarsHexaTexts(game.configuration.starsHexa.texts || {})
-            setStarsHexaColors(game.configuration.starsHexa.colors || { palette: {} })
-            setWinEmoji(game.configuration.starsHexa.emojis?.win || '⭐️')
-            setLoseEmoji(game.configuration.starsHexa.emojis?.lose || '🍄')
-          }
-          // Penalty
-          if (game.type === 'PENALTY_SHOOTOUT' && game.configuration?.penaltyShootout) {
-            setPenaltyTexts(game.configuration.penaltyShootout.texts || {})
-            setPenaltyColors(game.configuration.penaltyShootout.colors || {})
-            const savedSettings = game.configuration.penaltyShootout.gameSettings || {}
-            setPenaltyGameSettings({
-              totalPlayers: savedSettings.totalPlayers || 11,
-              penaltyShots: savedSettings.penaltyShots || 5,
-              successfulShots: savedSettings.successfulShots || 7,
-              missedShots: (savedSettings.totalPlayers || 11) - (savedSettings.successfulShots || 7)
-            })
-          }
+// Legacy hex editor branch removed
           // Rewards
           if (Array.isArray(game.rewards)) {
             setRewards(game.rewards.map((r: any) => ({
@@ -414,11 +344,6 @@ useEffect(() => {
     }
   }, [mode, gameId])
 
-  const starsCount = hexagons.filter(h => h.hasHiddenStar).length
-
-  const updateHexagon = (index: number, field: keyof HexagonCard, value: any) => {
-    setHexagons(prev => prev.map((hex, i) => i === index ? { ...hex, [field]: value } : hex))
-  }
 
   const payloadRef = { current: {} as any }
 
@@ -468,20 +393,12 @@ useEffect(() => {
         styles: platformStyles
       }
 
-      if (gameType === 'STARS_HEXA') {
-        const starCount = hexagons.filter(h => h.hasHiddenStar).length
-        if (starCount === 0) throw new Error('At least one hexagon must have a hidden star')
-        if (hexagons.some(h => !h.text.trim())) throw new Error('All hexagon cards must have text')
-        payload.configuration.starsHexa = {
-          hexagons: hexagons.map((hex, index) => ({ ...hex, position: index })),
-          maxFlipsPerAttempt: maxFlipsPerRound,
-          theme,
-          totalStars: starCount,
-          texts: starsHexaTexts,
-          colors: starsHexaColors,
-          emojis: { win: winEmoji, lose: loseEmoji }
-        }
-      } else if (gameType === 'QUIZZZ') {
+      // Attach pages editor configuration
+      if (Array.isArray(pages)) {
+        (payload.configuration as any).pages = pages
+      }
+
+      if (gameType === 'QUIZZZ') {
         // Validate logical constraints for QUIZZZ
         const qc = (quizzzConfig || {}) as any
         const numberOfCards = Number(qc.numberOfCards || 1)
@@ -505,84 +422,6 @@ useEffect(() => {
           cardColors: qc.cardColors || {},
           overlayBg: qc.overlayBg || '#00000044'
         } as any
-      } else if (gameType === 'FIND_RED') {
-        // Validate relationships
-        const p = { ...findRedConfig }
-        p.packSize = Number(p.packSize || 6)
-        p.redsPerPack = Number(p.redsPerPack || 2)
-        p.selectionsPerRound = Number(p.selectionsPerRound || 1)
-        p.targetReds = Number(p.targetReds || 3)
-        p.totalRounds = Number(p.totalRounds || 5)
-        if (p.redsPerPack > p.packSize) throw new Error('Reds per pack cannot exceed Cards per Round')
-        if (p.selectionsPerRound < 1 || p.selectionsPerRound > p.packSize) throw new Error('Selections per round must be between 1 and Cards per Round')
-        if (p.targetReds < 1) throw new Error('Target Reds must be at least 1')
-        if (p.totalRounds < 1) throw new Error('Total Rounds must be at least 1')
-        if (p.targetReds > p.totalRounds) throw new Error('Target Reds cannot exceed Total Rounds')
-
-        payload.configuration.findRed = {
-          packSize: p.packSize,
-          redsPerPack: p.redsPerPack,
-          selectionsPerRound: p.selectionsPerRound,
-          targetReds: p.targetReds,
-          totalRounds: p.totalRounds,
-          theme: p.theme || 'default',
-          texts: { shortyLabel: p.texts?.shortyLabel || 'Shorty' },
-          colors: {
-            background: p.colors?.background,
-            winForeground: p.colors?.winForeground,
-            neutralForeground: p.colors?.neutralForeground,
-            cardBack: p.colors?.cardBack,
-            cardBorder: p.colors?.cardBorder
-          },
-          defaultRewardId: p.defaultRewardId || ''
-        }
-      } else if (gameType === 'PENALTY_SHOOTOUT') {
-        // Generate players for a valid penalty configuration (11 players, 7 goals)
-        const playerNumbers = Array.from({ length: 21 }, (_, i) => i + 2) // 2..22
-        const shuffledNumbers = playerNumbers.sort(() => Math.random() - 0.5).slice(0, 11)
-        const goalPositions = Array.from({ length: 11 }, (_, i) => i).sort(() => Math.random() - 0.5).slice(0, 7)
-        const players = Array.from({ length: 11 }, (_, index) => ({
-          id: `player-${index + 1}`,
-          playerNumber: shuffledNumbers[index],
-          hasGoal: goalPositions.includes(index),
-          isRevealed: false,
-          position: index,
-          color: '#c00000',
-          backgroundColor: '#ffffff'
-        }))
-        payload.configuration.penaltyShootout = {
-          players,
-          totalGoals: 7,
-          playersToSelect: 5,
-          theme: 'football',
-          texts: penaltyTexts,
-          colors: penaltyColors,
-          gameSettings: penaltyGameSettings
-        }
-      } else if (gameType === 'QUIZZ') {
-        const q = quizzConfig || {}
-        const qs = Array.isArray(q.questions) ? q.questions : []
-        {
-          const out: any = {
-            mapType: (q as any).mapType || 'hex',
-            selectedMaps: Array.isArray((q as any).selectedMaps) ? (q as any).selectedMaps : [],
-            randomizeSelectedMaps: !!(q as any).randomizeSelectedMaps,
-            activeCoords: Array.isArray(q.activeCoords || []) ? (q.activeCoords as any) : [],
-            rounds: Number(q.rounds || 5),
-            targetCorrect: Number(q.targetCorrect || 3),
-            questions: qs,
-            theme: (q as any).theme || 'default',
-            overlayBg: (q as any).overlayBg || 'rgba(0,0,0,0.6)',
-            texts: q.texts || { submitAnswer: 'Submit', correctFeedback: 'Correct!', wrongFeedback: 'Try again' },
-            cardCoverImages: Array.isArray((q as any).cardCoverImages) ? (q as any).cardCoverImages : []
-          }
-          // Legacy fallback: if no selected maps provided, keep existing mapName/mapTag (for backward compatibility)
-          if (!Array.isArray((q as any).selectedMaps) || (q as any).selectedMaps.length === 0) {
-            if (q.mapName) out.mapName = q.mapName
-            if ((q as any).mapTag) out.mapTag = (q as any).mapTag
-          }
-          payload.configuration.quizz = out
-        }
       }
 
       if (mode === 'edit' && gameId) {
@@ -619,7 +458,7 @@ useEffect(() => {
     }
   }
 
-  const gameTypeName = gameType === 'STARS_HEXA' ? 'Hexa' : gameType === 'PENALTY_SHOOTOUT' ? 'Penalty Shootout' : 'Game' // UI label only; keep internal id 'STARS_HEXA'
+  const gameTypeName = 'Game'
 
   if (loading) {
     return (
@@ -635,12 +474,12 @@ useEffect(() => {
   const ActionBar = () => (
     <div className="w-full flex items-center justify-center gap-4 py-3">
       <Link href="/admin/games" className="px-6 py-2 rounded-lg border border-gray-300 bg-white text-gray-800 hover:bg-gray-50">Cancel</Link>
-      <button type="submit" disabled={saving || !title.trim() || (gameType === 'STARS_HEXA' && starsCount === 0)}
+      <button type="submit" disabled={saving || !title.trim()}
         className="px-8 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
         {saving ? (mode === 'create' ? 'Creating...' : 'Saving...') : (mode === 'create' ? 'Create Game' : 'Update Game')}
       </button>
     </div>
-  )
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6 enforce-text-black">
@@ -692,261 +531,127 @@ useEffect(() => {
             <div className="lg:col-span-2">
               <div className="space-y-8">
 
-                {/* Segment 1 — Basic Info (no header) */}
-                <div className="relative">
-                  <div className="grid grid-cols-1 gap-4">
-                    {/* Left: Basic Information */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 h-full">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                        {/* Row 1: Status checkbox (left) + Game Title (right) */}
+                {/* Page Editor */}
+                <PageEditor pages={pages} onChange={setPages} />
+
+                {/* STYLE — merged HERO and MAIN styling */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                  <div className="mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">STYLE</h3>
+                    <p className="text-sm text-gray-600">Global visual settings merged from Hero and Main.</p>
+                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* HERO styles */}
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-medium text-gray-800">Hero</h4>
+                      <div>
+                        <label className="block text-sm mb-1">HERO_LOGO_URL</label>
+                        <input value={platformTexts.HERO_LOGO_URL || ''} onChange={e => setPlatformTexts({ ...platformTexts, HERO_LOGO_URL: e.target.value })} className="w-full px-3 py-2 border rounded" />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Active</label>
-                          <label className="inline-flex items-center gap-2 text-black">
-                            <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
-                            <span>active</span>
-                          </label>
+                          <label className="block text-sm mb-1">HERO_LOGO_WIDTH</label>
+                          <input value={platformTexts.HERO_LOGO_WIDTH || ''} onChange={e => setPlatformTexts({ ...platformTexts, HERO_LOGO_WIDTH: e.target.value })} className="w-full px-3 py-2 border rounded" />
                         </div>
                         <div>
-<label className="block text-sm font-medium text-gray-700 mb-2">Game Title *</label>
-                          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)}
-                            className="w-full px-4 py-3 bg-white text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500 caret-black" style={{ backgroundColor: '#ffffff', color: '#000000', caretColor: '#000000' }} placeholder={`My Awesome ${gameTypeName} Game`} required />
+                          <label className="block text-sm mb-1">HERO_LOGO_HEIGHT</label>
+                          <input value={platformTexts.HERO_LOGO_HEIGHT || ''} onChange={e => setPlatformTexts({ ...platformTexts, HERO_LOGO_HEIGHT: e.target.value })} className="w-full px-3 py-2 border rounded" />
                         </div>
-                        {/* Row 2: Description spanning full width */}
-                        <div className="md:col-span-2">
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3}
-                            className="w-full px-4 py-3 bg-white text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500 caret-black" style={{ backgroundColor: '#ffffff', color: '#000000', caretColor: '#000000' }} placeholder="Describe your game..." />
+                      </div>
+                      <div>
+                        <label className="block text-sm mb-1">HERO_BACKGROUND (CSS)</label>
+                        <input value={platformStyles?.hero?.background || ''} onChange={e => setPlatformStyles({ ...platformStyles, hero: { ...(platformStyles.hero || {}), background: e.target.value } })} className="w-full px-3 py-2 border rounded" />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-sm mb-1">Hero Font URL</label>
+                          <input value={platformStyles?.hero?.fontUrl || ''} onChange={e => setPlatformStyles({ ...platformStyles, hero: { ...(platformStyles.hero || {}), fontUrl: e.target.value } })} className="w-full px-3 py-2 border rounded" />
                         </div>
-                        {/* Row 3: Game Type selector (create mode only) */}
-{mode === 'create' && !hideTypeSelect && (
-                          <div className="md:col-span-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Game Type</label>
-                            {loadingTypes ? (
-                              <div className="text-sm text-gray-600">Loading types…</div>
-                            ) : availableTypes.length > 0 ? (
-                              <select value={gameType} onChange={(e) => setGameType(e.target.value as GameType)}
-                                className="w-full px-4 py-3 bg-white text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" style={{ backgroundColor: '#ffffff', color: '#000000' }}>
-                                {availableTypes.filter(t => t.enabled !== false).map((t) => (
-                                  <option key={t.code} value={t.code} className="bg-white text-black">{t.name}</option>
-                                ))}
-                              </select>
-                            ) : (
-                              <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded p-3">
-                                No game types configured in DB. Please add types via API: POST /api/admin/game-types
-                              </div>
-                            )}
-                          </div>
-                        )}
+                        <div>
+                          <label className="block text-sm mb-1">Hero Font Style</label>
+                          <input value={platformStyles?.hero?.fontStyle || ''} onChange={e => setPlatformStyles({ ...platformStyles, hero: { ...(platformStyles.hero || {}), fontStyle: e.target.value } })} className="w-full px-3 py-2 border rounded" />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-sm mb-1">Hero Title Class</label>
+                          <input value={platformStyles?.hero?.titleClass || ''} onChange={e => setPlatformStyles({ ...platformStyles, hero: { ...(platformStyles.hero || {}), titleClass: e.target.value } })} className="w-full px-3 py-2 border rounded" />
+                        </div>
+                        <div>
+                          <label className="block text-sm mb-1">Hero Title Color</label>
+                          <input value={platformStyles?.hero?.fontColor || ''} onChange={e => setPlatformStyles({ ...platformStyles, hero: { ...(platformStyles.hero || {}), fontColor: e.target.value } })} className="w-full px-3 py-2 border rounded" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* MAIN styles */}
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-medium text-gray-800">Main</h4>
+                      <div>
+                        <label className="block text-sm mb-1">MAIN_BACKGROUND (CSS)</label>
+                        <input value={platformStyles?.main?.background || ''} onChange={e => setPlatformStyles({ ...platformStyles, main: { ...(platformStyles.main || {}), background: e.target.value } })} className="w-full px-3 py-2 border rounded" />
+                      </div>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div>
+                          <label className="block text-sm mb-1">H1 Class</label>
+                          <input value={platformStyles?.main?.h1Class || ''} onChange={e => setPlatformStyles({ ...platformStyles, main: { ...(platformStyles.main || {}), h1Class: e.target.value } })} className="w-full px-3 py-2 border rounded" />
+                        </div>
+                        <div>
+                          <label className="block text-sm mb-1">H2 Class</label>
+                          <input value={platformStyles?.main?.h2Class || ''} onChange={e => setPlatformStyles({ ...platformStyles, main: { ...(platformStyles.main || {}), h2Class: e.target.value } })} className="w-full px-3 py-2 border rounded" />
+                        </div>
+                        <div>
+                          <label className="block text-sm mb-1">P Class</label>
+                          <input value={platformStyles?.main?.pClass || ''} onChange={e => setPlatformStyles({ ...platformStyles, main: { ...(platformStyles.main || {}), pClass: e.target.value } })} className="w-full px-3 py-2 border rounded" />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm mb-1">Input Class</label>
+                        <input value={platformStyles?.main?.inputClass || ''} onChange={e => setPlatformStyles({ ...platformStyles, main: { ...(platformStyles.main || {}), inputClass: e.target.value } })} className="w-full px-3 py-2 border rounded" />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-sm mb-1">Primary Button Class</label>
+                          <input value={platformStyles?.main?.buttonPrimaryClass || ''} onChange={e => setPlatformStyles({ ...platformStyles, main: { ...(platformStyles.main || {}), buttonPrimaryClass: e.target.value } })} className="w-full px-3 py-2 border rounded" />
+                        </div>
+                        <div>
+                          <label className="block text-sm mb-1">Secondary Button Class</label>
+                          <input value={platformStyles?.main?.buttonSecondaryClass || ''} onChange={e => setPlatformStyles({ ...platformStyles, main: { ...(platformStyles.main || {}), buttonSecondaryClass: e.target.value } })} className="w-full px-3 py-2 border rounded" />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div>
+                          <label className="block text-sm mb-1">H1 Font URL</label>
+                          <input value={platformStyles?.main?.h1FontUrl || ''} onChange={e => setPlatformStyles({ ...platformStyles, main: { ...(platformStyles.main || {}), h1FontUrl: e.target.value } })} className="w-full px-3 py-2 border rounded" />
+                        </div>
+                        <div>
+                          <label className="block text-sm mb-1">H2 Font URL</label>
+                          <input value={platformStyles?.main?.h2FontUrl || ''} onChange={e => setPlatformStyles({ ...platformStyles, main: { ...(platformStyles.main || {}), h2FontUrl: e.target.value } })} className="w-full px-3 py-2 border rounded" />
+                        </div>
+                        <div>
+                          <label className="block text-sm mb-1">P Font URL</label>
+                          <input value={platformStyles?.main?.pFontUrl || ''} onChange={e => setPlatformStyles({ ...platformStyles, main: { ...(platformStyles.main || {}), pFontUrl: e.target.value } })} className="w-full px-3 py-2 border rounded" />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div>
+                          <label className="block text-sm mb-1">H1 Font Style</label>
+                          <input value={platformStyles?.main?.h1FontStyle || ''} onChange={e => setPlatformStyles({ ...platformStyles, main: { ...(platformStyles.main || {}), h1FontStyle: e.target.value } })} className="w-full px-3 py-2 border rounded" />
+                        </div>
+                        <div>
+                          <label className="block text-sm mb-1">H2 Font Style</label>
+                          <input value={platformStyles?.main?.h2FontStyle || ''} onChange={e => setPlatformStyles({ ...platformStyles, main: { ...(platformStyles.main || {}), h2FontStyle: e.target.value } })} className="w-full px-3 py-2 border rounded" />
+                        </div>
+                        <div>
+                          <label className="block text-sm mb-1">P Font Style</label>
+                          <input value={platformStyles?.main?.pFontStyle || ''} onChange={e => setPlatformStyles({ ...platformStyles, main: { ...(platformStyles.main || {}), pFontStyle: e.target.value } })} className="w-full px-3 py-2 border rounded" />
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Segment 2 — HERO BLOCK */}
-                <div className="relative">
-                  <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-gray-200 px-3 py-2 rounded-t-lg">
-                    <h3 className="text-xs font-semibold tracking-wide text-gray-700">HERO BLOCK</h3>
-                  </div>
-                  <div className="grid grid-cols-1 gap-4">
-                    {/* Left: Hero Block Settings */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-0 h-full">
-                      <PlatformSettingsForm
-                        texts={platformTexts}
-                        styles={platformStyles}
-                        onTextsChange={setPlatformTexts}
-                        onStylesChange={setPlatformStyles}
-                        mode={mode}
-                        saving={saving}
-                        modeSections="text"
-                        section="hero"
-                        hideInlineActions={true}
-                        hideSectionTitles={true}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Segment 3 — MAIN BLOCK */}
-                <div className="relative">
-                  <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-gray-200 px-3 py-2 rounded-t-lg">
-                    <h3 className="text-xs font-semibold tracking-wide text-gray-700">MAIN BLOCK</h3>
-                  </div>
-                  <div className="grid grid-cols-1 gap-4">
-                    {/* Left: Main Block Settings */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-0 h-full">
-                      <PlatformSettingsForm
-                        texts={platformTexts}
-                        styles={platformStyles}
-                        onTextsChange={setPlatformTexts}
-                        onStylesChange={setPlatformStyles}
-                        mode={mode}
-                        saving={saving}
-                        modeSections="text"
-                        section="main"
-                        hideInlineActions={true}
-                        hideSectionTitles={true}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Segment 4 — LANDING */}
-                <div className="relative">
-                  <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-gray-200 px-3 py-2 rounded-t-lg">
-                    <h3 className="text-xs font-semibold tracking-wide text-gray-700">LANDING</h3>
-                  </div>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {/* Left: Landing Page settings */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-0 h-full">
-                      <PlatformSettingsForm
-                        texts={platformTexts}
-                        styles={platformStyles}
-                        onTextsChange={setPlatformTexts}
-                        onStylesChange={setPlatformStyles}
-                        mode={mode}
-                        saving={saving}
-                        modeSections="text"
-                        section="landing"
-                        hideInlineActions={true}
-                        hideSectionTitles={true}
-                      />
-                    </div>
-                    {/* Right: Landing Page Buttons */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-0 h-full">
-                      <PlatformSettingsForm
-                        texts={platformTexts}
-                        styles={platformStyles}
-                        onTextsChange={setPlatformTexts}
-                        onStylesChange={setPlatformStyles}
-                        mode={mode}
-                        saving={saving}
-                        modeSections="buttons"
-                        section="landing"
-                        hideInlineActions={true}
-                        hideSectionTitles={true}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Segment 5 — WELCOME */}
-                <div className="relative">
-                  <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-gray-200 px-3 py-2 rounded-t-lg">
-                    <h3 className="text-xs font-semibold tracking-wide text-gray-700">WELCOME</h3>
-                  </div>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {/* Left: Welcome Page settings */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-0 h-full">
-                      <PlatformSettingsForm
-                        texts={platformTexts}
-                        styles={platformStyles}
-                        onTextsChange={setPlatformTexts}
-                        onStylesChange={setPlatformStyles}
-                        mode={mode}
-                        saving={saving}
-                        modeSections="text"
-                        section="welcome"
-                        hideInlineActions={true}
-                        hideSectionTitles={true}
-                      />
-                    </div>
-                    {/* Right: Welcome Page Buttons */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-0 h-full">
-                      <PlatformSettingsForm
-                        texts={platformTexts}
-                        styles={platformStyles}
-                        onTextsChange={setPlatformTexts}
-                        onStylesChange={setPlatformStyles}
-                        mode={mode}
-                        saving={saving}
-                        modeSections="buttons"
-                        section="welcome"
-                        hideInlineActions={true}
-                        hideSectionTitles={true}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Segment 6 — RULES */}
-                <div className="relative">
-                  <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-gray-200 px-3 py-2 rounded-t-lg">
-                    <h3 className="text-xs font-semibold tracking-wide text-gray-700">RULES</h3>
-                  </div>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {/* Left: Rules Page settings */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-0 h-full">
-                      <PlatformSettingsForm
-                        texts={platformTexts}
-                        styles={platformStyles}
-                        onTextsChange={setPlatformTexts}
-                        onStylesChange={setPlatformStyles}
-                        mode={mode}
-                        saving={saving}
-                        modeSections="text"
-                        section="rules"
-                        hideInlineActions={true}
-                        hideSectionTitles={true}
-                      />
-                    </div>
-                    {/* Right: Rules Page Buttons */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-0 h-full">
-                      <PlatformSettingsForm
-                        texts={platformTexts}
-                        styles={platformStyles}
-                        onTextsChange={setPlatformTexts}
-                        onStylesChange={setPlatformStyles}
-                        mode={mode}
-                        saving={saving}
-                        modeSections="buttons"
-                        section="rules"
-                        hideInlineActions={true}
-                        hideSectionTitles={true}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Segment 7 — RESULT */}
-                <div className="relative">
-                  <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-gray-200 px-3 py-2 rounded-t-lg">
-                    <h3 className="text-xs font-semibold tracking-wide text-gray-700">RESULT</h3>
-                  </div>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {/* Left: Result Page settings */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-0 h-full">
-                      <PlatformSettingsForm
-                        texts={platformTexts}
-                        styles={platformStyles}
-                        onTextsChange={setPlatformTexts}
-                        onStylesChange={setPlatformStyles}
-                        mode={mode}
-                        saving={saving}
-                        modeSections="text"
-                        section="result"
-                        hideInlineActions={true}
-                        hideSectionTitles={true}
-                      />
-                    </div>
-                    {/* Right: Result Page Buttons */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-0 h-full">
-                      <PlatformSettingsForm
-                        texts={platformTexts}
-                        styles={platformStyles}
-                        onTextsChange={setPlatformTexts}
-                        onStylesChange={setPlatformStyles}
-                        mode={mode}
-                        saving={saving}
-                        modeSections="buttons"
-                        section="result"
-                        hideInlineActions={true}
-                        hideSectionTitles={true}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Segment 8 — LEGAL */}
+                {/* LEGAL */}
                 <div className="relative">
                   <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-gray-200 px-3 py-2 rounded-t-lg">
                     <h3 className="text-xs font-semibold tracking-wide text-gray-700">LEGAL</h3>
@@ -975,7 +680,43 @@ useEffect(() => {
 
             {/* RIGHT COLUMN */}
             <div className="space-y-6">
-              
+              {/* Game General — moved to right column above Edit Game; each field on new lines */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Game General</h2>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Game Title *</label>
+                    <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full px-4 py-3 bg-white text-black border border-gray-300 rounded-lg" placeholder="New Game" required />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Active</label>
+                    <label className="inline-flex items-center gap-2 text-black">
+                      <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
+                      <span>active</span>
+                    </label>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                    <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="w-full px-4 py-3 bg-white text-black border border-gray-300 rounded-lg" placeholder="Describe your game..." />
+                  </div>
+                  {mode === 'create' && !hideTypeSelect && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Game Type</label>
+                      {loadingTypes ? (
+                        <div className="text-sm text-gray-600">Loading types…</div>
+                      ) : availableTypes.length > 0 ? (
+                        <select value={gameType} onChange={(e) => setGameType(e.target.value as GameType)} className="w-full px-4 py-3 bg-white text-black border border-gray-300 rounded-lg">
+                          {availableTypes.filter(t => t.enabled !== false).map((t) => (
+                            <option key={t.code} value={t.code} className="bg-white text-black">{t.name}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded p-3">No game types configured in DB. Please add types via API: POST /api/admin/game-types</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
 
               {/* Edit Game — QUIZZZ simplified editor in the right column */}
               {gameType === 'QUIZZZ' && (

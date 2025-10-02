@@ -1,7 +1,7 @@
 # PlayMass - Interactive Game Platform
 
-Current Version: 4.6.0
-Last Updated: 2025-09-23T12:19:54.000Z
+Current Version: 4.7.0
+Last Updated: 2025-10-02T11:59:58.000Z
 
 ## 🎮 Features
 
@@ -133,7 +133,7 @@ app/
 Only one game type is currently supported: **QUIZZZ (Board Quiz)**.
 
 - QUIZZZ is the canonical pattern for all future games (DB-driven, one-input-per-line, usage toggles, centered CTA grid, legal+typography from DB).
-- All legacy game types (Stars Hexa, Penalty Shootout, Quizz legacy, Wheel of Fortune) have been removed from the admin editor and runtime.
+- All legacy game types have been removed from the admin editor and runtime.
 
 To enable additional game types in the future, add or update entries via the admin API:
 
@@ -186,7 +186,7 @@ npm run lint
 
 ## 🌟 Key Features
 
-- **Real-time Game Play**: Interactive hexagonal star-finding with smooth flip animations
+- **Real-time Game Play**: Interactive board-quiz gameplay with smooth transitions
 - **Anti-cheat Protection**: Session tracking, IP monitoring, and validation
 - **Scalable Architecture**: Designed for high-volume game participation
 - **Responsive Design**: Works on desktop, tablet, and mobile devices

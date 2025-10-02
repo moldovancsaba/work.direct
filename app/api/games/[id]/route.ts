@@ -124,51 +124,11 @@ export async function PUT(
       }, { status: 404 })
     }
     
-    // Validate Stars Hexa configuration if updating hexagon data
-    if (updateData.configuration?.starsHexa?.hexagons) {
-      // Validate hexagon count
-      if (updateData.configuration.starsHexa.hexagons.length !== 7) {
-        return NextResponse.json({
-          success: false,
-          message: 'Stars Hexa games must have exactly 7 hexagons',
-          error: {
-            code: 'VALIDATION_ERROR',
-            message: 'Invalid hexagon count'
-          }
-        }, { status: 400 })
-      }
-      
-      // Validate star count (1-3 stars)
-      const starsCount = updateData.configuration.starsHexa.hexagons.filter(h => h.hasHiddenStar).length
-      if (starsCount < 1 || starsCount > 3) {
-        return NextResponse.json({
-          success: false,
-          message: 'Stars Hexa games must have between 1-3 hidden stars',
-          error: {
-            code: 'VALIDATION_ERROR',
-            message: `Current star count: ${starsCount}. Must be 1-3 stars.`
-          }
-        }, { status: 400 })
-      }
-      
-      // Ensure unique hexagon IDs
-      const hexagonIds = updateData.configuration.starsHexa.hexagons.map(h => h.id)
-      const uniqueHexagonIds = new Set(hexagonIds)
-      if (hexagonIds.length !== uniqueHexagonIds.size) {
-        return NextResponse.json({
-          success: false,
-          message: 'All hexagons must have unique IDs',
-          error: {
-            code: 'VALIDATION_ERROR',
-            message: 'Duplicate hexagon IDs found'
-          }
-        }, { status: 400 })
-      }
-    }
+// Legacy hex-game validation removed — platform supports one active game type (QUIZZZ)
     
     // Prevent certain fields from being updated after game is active
     if (existingGame.status === 'ACTIVE') {
-      const restrictedFields = ['type', 'configuration.starsHexa.hexagons']
+      const restrictedFields = ['type']
       
       // Check if trying to update restricted fields
       if (updateData.type && updateData.type !== existingGame.type) {
@@ -183,19 +143,7 @@ export async function PUT(
       }
       
       // Allow minor configuration updates but prevent major hexagon changes
-      if (updateData.configuration?.starsHexa?.hexagons && 
-          JSON.stringify(updateData.configuration.starsHexa.hexagons) !== 
-          JSON.stringify(existingGame.configuration.starsHexa?.hexagons)) {
-        
-        return NextResponse.json({
-          success: false,
-          message: 'Cannot modify hexagons for active games',
-          error: {
-            code: 'VALIDATION_ERROR',
-            message: 'Stars Hexa configuration cannot be changed once the game is active'
-          }
-        }, { status: 400 })
-      }
+// Legacy hex-game active-game restriction removed
     }
     
     // Merge update data with existing game

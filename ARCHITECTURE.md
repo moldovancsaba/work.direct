@@ -1,7 +1,7 @@
 # ARCHITECTURE.md — PlayMass
 
-Version: 4.6.0
-Last Updated: 2025-09-23T12:19:54.000Z
+Version: 4.7.0
+Last Updated: 2025-10-02T11:59:58.000Z
 
 ## Overview
 PlayMass is a Next.js (App Router) application with MongoDB/Mongoose persistence and a modular game system. This document describes current system components and their roles, dependencies, and status.
@@ -58,7 +58,7 @@ PlayMass is a Next.js (App Router) application with MongoDB/Mongoose persistence
 - Update (v2.2.0): Added public APIs for map retrieval — /api/hexmaps/[name], /api/hexmaps/random, /api/squaremaps/[name], /api/squaremaps/random — used by QUIZZZ runtime to load board coordinates
 - Role: Provide reusable coordinates for grid-based games
 - Dependencies: HexMap and SquareMap models (MongoDB), unified admin creator (/admin/mapcreator), public APIs /api/hexmaps/* and /api/squaremaps/*
-- Status: Active; referenced by QUIZZ (selectedMaps) and future grid-based games
+- Status: Active; referenced by QUIZZZ (selectedMaps) and future grid-based games
 
 ## Configuration
 - Required environment variables:
@@ -115,32 +115,6 @@ Design Element Governance
 Minimal Loading & Error Handling
 - All async map loads show a minimal Loading… state; error overlays are suppressed during load and displayed only for real configuration errors.
 
-## Legacy Deprecation Plan (QUIZZ/StarsHexa Editors)
-
-Objectives
-- Remove legacy ad-hoc editors in favor of the centralized General Platform Editor + small type-specific fragments.
-
-Phases
-1) Freeze (Immediate)
-- No new features to legacy QUIZZ/StarsHexa editors.
-- Maintain runtime only; centralize all platform fields within the General editor.
-
-2) Migration (By 2025-10-12T12:00:00.000Z)
-- Map legacy fields to platform texts/styles (mirror adapters already in place).
-- Replace legacy editor panels with links/blocks that mount the General editor and a type-specific fragment.
-
-3) Removal (Post-Migration)
-- Delete legacy editor components and references.
-- Keep runtime rendering stable; ensure create/edit uses centralized editor only.
-
-4) New Module Template (By 2025-10-15T12:00:00.000Z)
-- Provide a template with config schema, board/cards management, overlay UX, and result mapping.
-- Document do/don’t (no fallbacks, black defaults, minimal Loading, strict coords usage).
-
-Compliance
-- ISO 8601 timestamps with ms (UTC).
-- No tests (MVP policy).
-- Reuse-before-creation enforced across modules.
 
 ## Future Improvements
 - Admin auth hardening (signed cookies/JWT, rate limiting/lockout, audit logs)

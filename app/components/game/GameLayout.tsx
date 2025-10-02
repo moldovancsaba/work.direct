@@ -62,8 +62,8 @@ export interface GameLayoutProps {
  * 3. Status Block: Game progress and statistics (3rd position)
  * 4. Description Block: Rules, instructions, and game state info (4th position)
  * 
- * Matches the layout pattern established by Triple Wheel Fortune and ensures
- * visual consistency across Stars Hexa, Wheel games, and future game types.
+ * Matches the standardized PlayMass game layout and ensures
+ * visual consistency across current and future modules.
  * 
  * Features:
  * - Responsive design with mobile-first approach

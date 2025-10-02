@@ -2,7 +2,7 @@
 // What: Defines minimal, forward-compatible interfaces used by the registry and
 //        config resolver. The shapes are intentionally generic to avoid tight
 //        coupling before full module rollout.
-// Why: We adopt a small, extensible contract now so Stars Hexa can be refactored
+// Why: We adopt a small, extensible contract now so modules can be refactored
 //      incrementally without blocking on full module parity.
 
 import { GameType } from '../../types'

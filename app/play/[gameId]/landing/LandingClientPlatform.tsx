@@ -19,7 +19,7 @@ export default function LandingClientPlatform({ gameId, texts, styles, refCode }
   const title = (typeof texts?.LANDING_TITLE === 'string') ? texts.LANDING_TITLE : ''
   const imageUrl = (typeof texts?.LANDING_IMAGE_URL === 'string') ? texts.LANDING_IMAGE_URL : ''
   const ctaText = texts?.NEXT_WELCOME_TEXT || 'Enter'
-  const action = (typeof texts?.NEXT_WELCOME_ACTION === 'string' && texts.NEXT_WELCOME_ACTION.trim()) ? texts.NEXT_WELCOME_ACTION.trim() : 'GO_TO_WELCOME'
+  const action = (typeof texts?.NEXT_WELCOME_ACTION === 'string' && texts.NEXT_WELCOME_ACTION.trim()) ? texts.NEXT_WELCOME_ACTION.trim() : 'GO_TO_GAME'
 
   const extractBackgroundValue = (css?: string): string | undefined => {
     if (!css) return undefined
@@ -47,9 +47,10 @@ export default function LandingClientPlatform({ gameId, texts, styles, refCode }
 
   const buildHrefForAction = (act: string): string => {
     switch (act) {
-      case 'GO_TO_WELCOME':
+      case 'GO_TO_GAME':
+      case 'GO_TO_WELCOME': // legacy value maps to Game now
       default:
-        return `/play/${gameId}/welcome`
+        return `/play/${gameId}/game`
     }
   }
 

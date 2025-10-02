@@ -13,7 +13,7 @@ import { v4 as uuidv4 } from 'uuid'
  * Game Play API Route Handler
  * 
  * This endpoint handles the actual game play mechanics:
- * - POST: Play the Stars Hexa game and return results
+ * - POST: Play the game and return results
  * 
  * Features:
  * - Hexagon flipping and star discovery logic
@@ -129,7 +129,7 @@ export async function POST(
     }
     
     // No additional server config validation needed here for supported types
-    // (QUIZZ, QUIZZZ, FIND_RED, WHEEL_OF_FORTUNE)
+    // (QUIZZZ only)
     
     
     // Find or create participant
@@ -248,7 +248,7 @@ export async function POST(
         return NextResponse.json({
           success: false,
           message: 'Missing result outcome for quiz game',
-          error: { code: 'VALIDATION_ERROR', message: 'Result payload is required for QUIZZ/QUIZZZ' }
+          error: { code: 'VALIDATION_ERROR', message: 'Result payload is required for QUIZZZ' }
         }, { status: 400 })
       }
       gameOutcome = clientOutcome as GameOutcome
@@ -391,7 +391,7 @@ if (outcome.type === 'WIN' && outcome.rewardIds.length > 0 && isAttemptCompletio
 }
 
 /**
- * Calculate Stars Hexa result for hexagon flip
+ * Calculate hex flip result for hex-based layouts
  * Determines if a star was found and calculates game progress
  */
 function calculateHexaResult(

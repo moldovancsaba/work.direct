@@ -1,7 +1,7 @@
 # ROADMAP.md — PlayMass
 
-Last Updated: 2025-09-23T12:19:54.000Z
-- Forward-looking plan for PlayMass after QUIZZ release.
+Last Updated: 2025-10-01T12:34:48.966Z
+- Forward-looking plan for PlayMass.
 - Priorities and dependencies are explicitly stated to enable safe parallelization.
 
 Q3 2025 — Post-Release Stabilization and Hardening
@@ -28,13 +28,13 @@ Milestone: Developer Tooling — Secure GitHub CLI Authentication & Git Integrat
   - Security hygiene documented; logout/revoke procedure prepared
 - Logged: 2025-09-20 16:35 CET
 
-Milestone: QUIZZ Enhancements & Analytics
+Milestone: QUIZZZ Enhancements & Analytics
 - Priority: HIGH
 - Target: 2025-09-17T18:00:00.000Z
-- Dependencies: QUIZZ release
+- Dependencies: QUIZZZ runtime in place
 - Deliverables:
   - Analytics event hooks for question views/answers and round progression
-  - Admin export of QUIZZ results per game
+  - Admin export of quiz results per game
   - Optional per-question image/icon support (backward compatible)
 
 Milestone: Admin Auth Hardening
@@ -52,12 +52,12 @@ Milestone: Documentation & Governance
 - Dependencies: All previous milestones
 - Deliverables:
   - Update TECH_STACK.md and governance docs (timestamp consistency, versioning automation notes)
-  - Ensure all docs reference the QUIZZ architecture and HexMap public API
+  - Ensure all docs reference the QUIZZZ architecture and HexMap public API
 
 Milestone: QA & Production Readiness
 - Priority: CRITICAL
 - Target: 2025-09-17T19:00:00.000Z
-- Dependencies: QUIZZ release
+- Dependencies: QUIZZZ runtime in place
 - Deliverables:
   - Manual verification checklist executed (tests prohibited)
   - vercel --prod successful deploy and smoke test
@@ -81,8 +81,20 @@ Milestone: Git Push — v4.6.0 to origin/main
   - Verify remote HEAD matches local HEAD
   - Log plan and outcome in ROADMAP.md, TASKLIST.md, and WARP.DEV_AI_CONVERSATION.md
 - Logged: 2025-09-23T12:19:54.000Z
+- Status: Completed — 2025-09-23T12:24:51.000Z
+- Outcome: Pushed to origin/main; Remote HEAD equals Local HEAD (36f03e2)
 
 Q4 2025 — Context-Aware Assistance & Governance Hardening
+
+Milestone: Admin Post-Login Redirect Reliability
+- Priority: HIGH
+- Target: 2025-10-01T13:30:00.000Z
+- Dependencies: Next.js App Router client navigation; Route Handlers cookie API
+- Deliverables:
+  - Set cookie on response in POST /api/admin/login (NextResponse.cookies)
+  - Client success path uses router.replace('/admin') + router.refresh()
+  - Add admin/loading.tsx to prevent blank UI during transitions
+- Logged: 2025-10-01T12:38:34.000Z
 
 Q4 2025 — Centralized Editor and Legacy Deprecation (v3)
 
@@ -95,14 +107,6 @@ Milestone: Centralized Game Editor Core 1.0
   - Game-Type Editor SDK surface documented (props, config typing, UX do/don’t)
   - Minimal Loading patterns standardized for async resources
 
-Milestone: Legacy Deprecation Plan Execution
-- Priority: CRITICAL
-- Target: 2025-10-12T12:00:00.000Z
-- Dependencies: Core Editor 1.0
-- Deliverables:
-  - QUIZZ (legacy) editor screens removed; runtime retained until migration complete
-  - StarsHexa editor tabs replaced by the General Platform Editor + type-specific fragment
-  - Removal PRs staged with toggles; documentation for migration and rollback
 
 Milestone: New Game Module Template
 - Priority: HIGH

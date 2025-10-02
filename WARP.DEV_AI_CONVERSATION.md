@@ -1,10 +1,25 @@
 # WARP.DEV_AI_CONVERSATION.md — Planning Log
 
+2025-10-01T12:38:34.000Z — Plan: Fix admin post-login blank page (redirect reliability)
+- Context: After logging in at /admin/login, UI stays blank until manual refresh.
+- Hypothesis: Race between cookie persistence and client navigation; and Route Handler cookie set via cookies().set may not be attached to response reliably.
+- Approach: (1) Set cookie on NextResponse in POST /api/admin/login; (2) Use router.replace('/admin') + router.refresh() on success; (3) Add app/admin/loading.tsx to avoid blank UI during transitions.
+- Compliance: No tests; timestamps ISO 8601 with milliseconds (UTC); minimal, reversible change.
+
+2025-10-01T12:38:34.000Z — Delivery: Admin post-login redirect reliability improved
+- Changes:
+  • app/api/admin/login/route.ts — set cookie via NextResponse.cookies; ensure DELETE clears cookie on response.
+  • app/admin/login/page.tsx — use startTransition + router.replace('/admin') and router.refresh() after successful login.
+  • app/admin/loading.tsx — added loading fallback to prevent blank UI during route/data transitions.
+- Build: Local production build passed.
+- Notes: Keeps MVP cookie model; future hardening (JWT/signing) remains on ROADMAP.
+
 2025-09-23T12:19:54.000Z — Plan: Bump minor to v4.6.0 and sync docs; push to origin/main (no deploy)
 - Dependencies: GITHUB_TOKEN env var required for push.
 - Scope: Update package.json and docs (README, ROADMAP, TASKLIST, RELEASE_NOTES, ARCHITECTURE, LEARNINGS); log plan in ROADMAP and TASKLIST.
 - Compliance: ISO 8601 UTC with milliseconds timestamps; no tests.
-2025-09-20T13:30:02.000Z — Delivery: v4.0.0 Major — DB-driven font colors; remove baked-in overrides; schema + runtime updates
+
+2025-09-23T12:24:51.000Z — Delivery: Pushed v4.6.0 to origin/main; verified remote HEAD equals local (36f03e2)
 - Changes: Persisted hero/main font colors and button FG fields; applied across Landing/Welcome/Rules/Result; fixed TEXT_26/27 mapping; removed global !important input color; stripped text-* overrides.
 - Dependencies: Build verification OK.
 - Next: Optionally deploy (vercel --prod) after validation.
@@ -26,26 +41,6 @@
 
 2025-09-15T16:28:12.000Z — Delivery: Hexa Creator, hexmaps API/model, geometry refactor, warnings removed
 
-2025-09-15T17:12:04.000Z — Plan: Finalize and release QUIZZ (Hexamap Quiz)
-- Tasks: Version bump (minor), docs sync (README, ROADMAP, TASKLIST, RELEASE_NOTES, ARCHITECTURE, LEARNINGS, WARP.md), commit, push, deploy
-- Compliance: ISO 8601 timestamps with milliseconds (UTC), no tests, reuse-before-creation, no breadcrumbs
-
-2025-09-15T17:30:23.000Z — Fix: Add QUIZZ to Game model enum to unblock admin creation; bump to v1.28.0 and redeploy
-- Added /admin/hexacreator page (infinite honeycomb, axial labels, CRUD)
-- Implemented /api/admin/hexmaps (list/create) and /api/admin/hexmaps/[id] (read/update/delete-soft)
-- Created HexMap model; removed duplicate index definition on name to avoid Mongoose warnings
-- Extracted shared hex geometry and refactored PenaltyHexa to reuse it
-- Fixed App Router param signatures and StarsHexa prop mismatch (onRoundUpdate)
-- Local production build verified; ready to deploy
-- Create shared hex geometry utilities extracted from Penalty (axial→pixel, rotation, vertices, distance)
-- Add HexMap model (unique name, coords[], radius=4, hexCount, tags[], isActive, createdBy)
-- Implement admin API routes: /api/admin/hexmaps (GET, POST), /api/admin/hexmaps/[id] (GET, PUT, DELETE-soft)
-- Build /admin/hexacreator UI with infinite honeycomb (Penalty engine):
-  - All hexes default #44AA44; label each hex with axial q,r
-  - Toggle on click to #44AAAA if within radius≤4; outside ring shown at reduced opacity
-  - Full CRUD: save, load, update, delete; search by name or tag
-- Add Admin nav link “Hexa Creator”; admin-gated via existing useAdminAuth
-- Version bump (patch) and doc sync across README, TASKLIST, ROADMAP, WARP.md, RELEASE_NOTES with ISO 8601 ms timestamps (UTC)
 
 2025-09-15T12:45:05.000Z — Delivery: UI/UX fixes — remove duplicate footers, keep pinned footer with safe bottom padding; increase button height and center text; align Welcome Next button with Facebook button side-by-side; bump to v1.25.0; docs synced; commit and push to main.
 
@@ -66,87 +61,6 @@
 - Docs: Version bumped and timestamps synchronized (ISO 8601 ms, UTC)
 - Build: Production build OK
 
-Timestamp: 2025-09-06T16:58:38.000Z
-Author: Agent Mode (AI)
-Topic: Stars Hexa Game — Modular Refactor & Integration in PlayMass
-
----
-
-Timestamp: 2025-09-10T13:01:23.000Z
-Author: AI Development Team
-Topic: Basic Admin Login (MVP parity with MessMass)
-Plan:
-- Implement cookie-based admin auth using /api/admin/login (POST/DELETE) and /api/admin/auth (GET)
-- Add app/lib/auth.ts (server cookie validator) and app/hooks/useAdminAuth.ts (client gate)
-- Gate admin layout for all routes except /admin/login; guard admin API routes
-- Set ADMIN_PASSWORD in .env.local; document endpoints and cookie behavior in README
-- Update ROADMAP (admin auth hardening), LEARNINGS (MVP rationale), TASKLIST (in progress)
-Notes:
-- Unsigned base64 JSON token appropriate for MVP; future upgrade to signed tokens/JWT required
-
-Objective
-Refactor Stars Hexa into a first-class PlayMass module (no new type, no duplication) and align with Penalty architecture, enabling centralized configuration (Rules, Texts, Colors), standardized 4-page flow, and loyalty/referral readiness.
-
-Scope Summary
-- Game Refactor: STARS_HEXA remains the type, refactor for modular configurability; editable rules/texts/colors/assets via admin tabs.
-- Centralized Management: Registry-based game modules; shared PlayMass defaults; per-game overrides; deterministic deep-merge precedence.
-- Setup Tabs: Rules, Texts, Colors for Stars Hexa; validation; preview.
-- Documentation: Core module docs + module-specific docs; onboarding template.
-- Standardized Pages: Welcome → Rules → Game → Result; mobile-first; referral propagation.
-- Loyalty/Referral: Pseudo-UUID users, ?ref= referral tracking on Result and Welcome; analytics events.
-
-Execution Plan (High-Level)
-1) Core Module System
-   - Create /app/modules/core/{types.ts,registry.ts,config.ts}
-   - Implement registerGameModule(), getGameModule(), resolveConfig(gameId)
-   - Config merge order: module defaults → PlayMass defaults → per-game overrides
-   - Endpoints: /api/config/get, /api/config/update (scope: playmass|game), with schema validation
-
-2) Data Model Updates
-   - Game.configuration.starsHexa: add texts, colors, optional assets[]
-   - SystemSettings: add gameDefaults.{STARS_HEXA, PENALTY_SHOOTOUT}
-   - Enforce hex color and text length validation; preserve backward compatibility
-
-3) Stars Hexa Module Refactor
-   - Add /app/modules/stars-hexa/index.ts exporting GameModule with defaultConfig
-   - Update StarsHexa.tsx to consume config-driven labels/colors/messages without breaking performance
-
-4) Standardized 4-Page Flow
-   - New routes: /play/[gameId]/welcome, /rules, /game (keep existing /result)
-   - Redirect /play/[gameId] → /welcome for backward compatibility
-   - Preserve ?ref= and session through the flow via query/URL state
-
-5) Admin Setup Tabs (Stars Hexa)
-   - Extend /admin/games/[id]/page.tsx with Rules | Texts | Colors tabs
-   - Save per-game config via existing PUT /api/admin/games/[id]
-   - Add validations and live preview
-
-6) PlayMass Defaults UI
-   - Extend /admin/settings/page.tsx with a “Games” tab to maintain defaults per module
-   - Wire to /api/config/update?scope=playmass
-
-7) Documentation
-   - PLAYMASS_CORE.md, GAME_MODULE_TEMPLATE.md, STARS_HEXA.md, PENALTY.md
-   - Update README, TASKLIST, ROADMAP, RELEASE_NOTES, LEARNINGS
-
-8) QA, Versioning, Deploy
-   - Manual verification (tests prohibited)
-   - Version bump per protocol; doc sync; vercel --prod
-
-Acceptance Criteria
-- STARS_HEXA functions as a module without creating a new game type or duplicating systems.
-- All Stars Hexa properties (rules, texts, colors) editable via admin tabs; persisted and reflected in play UI.
-- 4-page standardized flow implemented and responsive.
-- Config precedence working predictably.
-- Documentation added and consistent; timestamps ISO 8601 with milliseconds (UTC).
-
-Notes on Compliance
-- 2025-09-06T18:46:30.000Z — Implemented standardized 4-page flow foundation and unified admin GameEditor usage. Added resolver and defaults for normalized config; introduced backward-compat redirect /play/[gameId] → /welcome preserving ?ref.
-- Reuse Before Creation: Extend existing components (UnifiedRegistration, GameRulesPage, GameStatus, layouts) before adding new ones.
-- Code Comments: Add what/why comments for new code paths.
-- No breadcrumbs; tests prohibited.
-
----
 
 Timestamp: 2025-09-07T17:15:13.000Z
 Author: Agent Mode (AI)
@@ -267,3 +181,157 @@ Notes:
 - Notes: Automated via scripts/versioning/bump-version.mjs (UTC timestamps with ms)
 2025-09-23T09:27:12.616Z — Delivery: Version bump and doc sync to v4.5.2
 - Notes: Automated via scripts/versioning/bump-version.mjs (UTC timestamps with ms)
+2025-09-23T12:54:33.360Z — Delivery: Version bump and doc sync to v4.6.1
+- Notes: Automated via scripts/versioning/bump-version.mjs (UTC timestamps with ms)
+2025-09-24T10:32:26.358Z — Delivery: Version bump and doc sync to v4.6.2
+- Notes: Automated via scripts/versioning/bump-version.mjs (UTC timestamps with ms)
+2025-09-27T13:10:51.061Z — Delivery: Version bump and doc sync to v4.6.3
+- Notes: Automated via scripts/versioning/bump-version.mjs (UTC timestamps with ms)
+2025-09-27T17:20:35.323Z — Delivery: Version bump and doc sync to v4.6.4
+- Notes: Automated via scripts/versioning/bump-version.mjs (UTC timestamps with ms)
+2025-09-27T17:46:40.813Z — Delivery: Version bump and doc sync to v4.6.5
+- Notes: Automated via scripts/versioning/bump-version.mjs (UTC timestamps with ms)
+2025-09-27T18:45:01.634Z — Delivery: Version bump and doc sync to v4.6.7
+- Notes: Automated via scripts/versioning/bump-version.mjs (UTC timestamps with ms)
+2025-09-27T19:02:14.090Z — Delivery: Version bump and doc sync to v4.6.8
+- Notes: Automated via scripts/versioning/bump-version.mjs (UTC timestamps with ms)
+2025-09-27T19:26:00.484Z — Delivery: Version bump and doc sync to v4.6.9
+- Notes: Automated via scripts/versioning/bump-version.mjs (UTC timestamps with ms)
+2025-09-27T21:07:56.223Z — Delivery: Version bump and doc sync to v4.6.10
+- Notes: Automated via scripts/versioning/bump-version.mjs (UTC timestamps with ms)
+2025-09-28T08:04:14.854Z — Delivery: Version bump and doc sync to v4.6.11
+- Notes: Automated via scripts/versioning/bump-version.mjs (UTC timestamps with ms)
+2025-09-28T08:35:14.086Z — Delivery: Version bump and doc sync to v4.6.12
+- Notes: Automated via scripts/versioning/bump-version.mjs (UTC timestamps with ms)
+2025-09-28T10:39:43.903Z — Delivery: Version bump and doc sync to v4.6.13
+- Notes: Automated via scripts/versioning/bump-version.mjs (UTC timestamps with ms)
+2025-09-28T10:40:45.201Z — Delivery: Version bump and doc sync to v4.6.14
+- Notes: Automated via scripts/versioning/bump-version.mjs (UTC timestamps with ms)
+2025-09-28T16:12:12.039Z — Delivery: Version bump and doc sync to v4.6.15
+- Notes: Automated via scripts/versioning/bump-version.mjs (UTC timestamps with ms)
+2025-10-01T11:25:44.131Z — Delivery: Version bump and doc sync to v4.6.16
+- Notes: Automated via scripts/versioning/bump-version.mjs (UTC timestamps with ms)
+2025-10-01T12:34:48.966Z — Delivery: Version bump and doc sync to v4.6.17
+- Notes: Automated via scripts/versioning/bump-version.mjs (UTC timestamps with ms)
+
+---
+
+## Timestamp: 2025-10-02T10:52:09.000Z
+## Author: Agent Mode (AI)
+## Topic: Comprehensive Project Audit & 40-Task Improvement Plan
+
+### Plan: Establish governance, stabilization, and systematic improvement
+
+**Context**:
+- Conducted full project audit of PlayMass v4.6.17
+- Identified critical stabilization needs and 40 improvement opportunities
+- Overall Health Score: 7.2/10 (target: 9.2/10 after improvements)
+
+**Critical Findings**:
+- 🔴 8 duplicate files with " 2" suffix (code bloat)
+- 🔴 49 uncommitted changes (instability risk)
+- 🔴 Console.log statements in production code
+- 🟡 17 outdated dependencies (security patches needed)
+- 🟡 No error boundaries (runtime resilience)
+- 🟡 No rate limiting on auth endpoints
+
+**8-Phase Improvement Plan** (95-155 hours total):
+
+**Phase 0: Governance & Baseline** (0.5-1.5h) - IN PROGRESS
+- Log this plan to WARP.DEV_AI_CONVERSATION.md ✅
+- Update ROADMAP.md with milestones grouped by priority
+- Update TASKLIST.md with all 40 actionable tasks
+- Synchronize all docs to v4.6.17 as baseline
+- Document Node.js version (detected: v22.19.0)
+- Create/update CONTRIBUTING.md with policies
+
+**Phase 1: Immediate Priorities** (4-7h) - Critical Stabilization
+- Remove 8 duplicate " 2" files
+- Remove all console.log from production code
+- Commit or revert 49 uncommitted changes (stabilization branch)
+- Fix ESLint warning in GameEditor.tsx line 143
+- Synchronize version numbers across all docs
+
+**Phase 2: High Priority** (9-14h) - Security & Stability
+- Update outdated dependencies (axios, mongodb, mongoose, typescript, eslint)
+- Remove hardcoded secrets (scan with gitleaks)
+- Implement React Error Boundaries
+- Remove unused/legacy code (StarsHexa, Penalty*, FindRed, Wheel*)
+- Add rate limiting to auth endpoints (5/min/IP)
+
+**Phase 3: Medium Priority** (18-30h) - Code Quality
+- Standardize code comments (what and why)
+- Enable TypeScript strictness
+- Replace console.log with structured logging (Pino)
+- Input validation (Zod schemas for all API endpoints)
+- Refactor large components (GameEditor, QuizzzCustomizationForm)
+- Remove dead code
+
+**Phase 4: Lower Priority** (20-32h) - Features & Enhancements
+- Accessibility improvements (ARIA labels, keyboard nav)
+- Performance monitoring (Web Vitals)
+- Database index optimization
+- Error tracking (Sentry)
+- Caching strategies
+- API compression
+- Automated MongoDB backups
+- API documentation (OpenAPI/Swagger)
+
+**Phase 5: Documentation** (6-10h) - Governance Hardening
+- Auto-sync version script
+- Create CONTRIBUTING.md
+- Add SECURITY.md
+- Document DB schema with Mermaid diagrams
+- Deployment runbook with rollback
+- Troubleshooting guide
+
+**Phase 6: Technical Debt** (14-24h) - Evaluations
+- React 19 evaluation
+- Tailwind CSS v4 upgrade evaluation
+- Next.js 15.5.4 upgrade
+- Bundle size optimization
+- Code splitting
+- Service worker/PWA evaluation
+
+**Phase 7: Process & Automation** (4-7h)
+- Pre-commit hooks (Husky + lint-staged)
+- GitHub Actions CI/CD
+- Automated dependency updates (Dependabot/Renovate)
+- Developer environment documentation
+
+**Phase 8: Release & Versioning** - Per Definition of Done
+- Stabilization on feature branch
+- Version bump workflow (4.6.17 → 4.6.18 → 4.7.0)
+- Post-merge documentation updates
+
+**Dependencies**: None (starting fresh)
+
+**Compliance**:
+- Timestamps: ISO 8601 with milliseconds (UTC)
+- Tests prohibited (MVP policy)
+- Versioning protocol strictly followed
+- Definition of Done enforced for every task
+- Reuse-before-creation principle
+- Mandatory code comments (what and why)
+
+**Deliverables**:
+- AUDIT_REPORT.md (comprehensive findings and metrics)
+- Todo list with 9 tasks (one per phase)
+- Linked ROADMAP.md and TASKLIST.md updates (in progress)
+
+**Next Actions**:
+1. Update ROADMAP.md with forward-looking milestones
+2. Update TASKLIST.md with all 40 tasks
+3. Create .nvmrc and update package.json engines
+4. Create CONTRIBUTING.md with all policies
+5. Begin Phase 1 execution after Phase 0 complete
+
+**Timeline**: 6-12 weeks (phased approach; critical/high priority first)
+
+**Success Metrics**:
+- Overall Health: 7.2/10 → 9.2/10
+- Security: 6.5/10 → 9.0/10
+- Code Quality: 6.8/10 → 9.2/10
+- Documentation: 8.5/10 → 9.5/10
+
+**Report**: See AUDIT_REPORT.md for detailed findings, risk assessment, and KPIs

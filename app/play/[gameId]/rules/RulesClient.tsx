@@ -5,7 +5,7 @@ import GameRulesPage from '../../../components/game/GameRulesPage'
 
 interface RulesClientProps {
   gameId: string
-  gameType: 'STARS_HEXA' | 'PENALTY_SHOOTOUT'
+  gameType: 'QUIZZZ'
   customTexts?: Record<string, string>
   refCode?: string
 }
