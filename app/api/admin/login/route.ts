@@ -9,6 +9,8 @@ import { cookies } from 'next/headers'
 import crypto from 'crypto'
 import { checkAuthRateLimit, getClientIdentifier, createRateLimitResponse } from '../../../lib/rateLimit'
 import { logger } from '../../../lib/logger'
+import { validateBody } from '../../../lib/validation/middleware'
+import { adminLoginSchema } from '../../../lib/validation/schemas'
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || ''
 
@@ -32,14 +34,14 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    const { password } = await request.json()
-
-    if (!password) {
-      return NextResponse.json(
-        { success: false, error: 'Password is required' },
-        { status: 400 }
-      )
+    // What: Validate request body against schema with XSS sanitization
+    // Why: Ensures password field is present and prevents injection attacks
+    const validated = await validateBody(request, adminLoginSchema)
+    if (!validated.success) {
+      return validated.error as any // NextResponse type compatibility
     }
+    
+    const { password } = validated.data
 
     // Brute-force mitigation (constant minimal delay on failure)
     if (password !== ADMIN_PASSWORD) {
