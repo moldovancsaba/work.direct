@@ -2,18 +2,19 @@
 
 This document captures implementation insights, technical decisions, and solutions to issues encountered during PlayMass development.
 
-**Current Version**: 4.7.0
-**Last Updated**: 2025-10-02T14:25:48.000Z
+**Current Version**: 4.7.1
+**Last Updated**: 2025-10-02T14:05:00.000Z
 
-### Phase 3 Task 13 — Structured Logging Implementation COMPLETE ✅ (v4.7.0 — 2025-10-02T14:25:48.000Z)
+### Phase 3 Task 13 — Structured Logging Implementation COMPLETE ✅ (v4.7.1 — 2025-10-02T14:05:00.000Z)
 - **What**: Replaced all ad-hoc console.* statements with centralized structured logging using Pino
 - **Why**: Improves observability, enables production log aggregation, prevents PII leakage, and provides consistent logging format
 - **How**:
   - Created `app/lib/logger.ts` (232 lines) with unified logging API
-  - Server: Pino with pretty formatting in dev, JSON in production  
+  - Server: Pino with JSON output (avoids worker thread issues with pino-pretty in Next.js)
   - Client: Browser console with PII sanitization (email, phone, password, token, accessToken, sessionId, userId) and throttling (1s between duplicate messages)
   - Environment-aware log levels via LOG_LEVEL env var (default: debug in dev, info in prod)
   - Memory management: Auto-cleanup of client log cache every 10s to prevent leaks
+- **Issue Fixed (v4.7.1)**: Removed pino-pretty transport which caused worker thread errors in Next.js dev mode; now uses simple JSON output in all environments
 - **Scope**: 95 console statements identified and replaced across 8 batches:
   - Batch 1: MongoDB & health API (12 statements)
   - Batch 2: Settings, participants, maps APIs (11 statements)
