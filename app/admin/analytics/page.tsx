@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { logger } from '../../lib/logger'
 
 interface AnalyticsData {
   overview: {
@@ -74,7 +75,7 @@ export default function AnalyticsPage() {
       setAnalyticsData(result.data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load analytics data')
-      console.error('Analytics fetch error:', err)
+      logger.error('Analytics fetch error', { error: err, dateRange: period })
     } finally {
       setLoading(false)
     }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { logger } from '../../lib/logger'
 interface GameWithDetails {
   _id: string
   id: string
@@ -54,7 +55,7 @@ export default function AdminGamesPage() {
       }))
       setGames(transformedGames)
     } catch (error) {
-      console.error('Error fetching games:', error)
+      logger.error('Error fetching games', { error })
       setError(error instanceof Error ? error.message : 'Unknown error')
     } finally {
       setLoading(false)
@@ -79,7 +80,7 @@ export default function AdminGamesPage() {
       // Refresh games list
       fetchGames()
     } catch (error) {
-      console.error('Error deleting game:', error)
+      logger.error('Error deleting game', { error, gameId })
       alert(error instanceof Error ? error.message : 'Failed to delete game')
     }
   }
@@ -102,7 +103,7 @@ export default function AdminGamesPage() {
       // Refresh games list
       fetchGames()
     } catch (error) {
-      console.error('Error updating game status:', error)
+      logger.error('Error updating game status', { error, gameId, targetStatus: !isActive })
       alert(error instanceof Error ? error.message : 'Failed to update game status')
     }
   }
