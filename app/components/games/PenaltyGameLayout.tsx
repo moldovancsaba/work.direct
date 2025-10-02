@@ -2,6 +2,7 @@
 
 import React from 'react'
 import PenaltyScoreboard from './PenaltyScoreboard'
+import { logger } from '../../lib/logger'
 
 interface PenaltyGameLayoutProps {
   homeScore: number
@@ -29,7 +30,7 @@ interface PenaltyGameLayoutProps {
  * Total: 2 + 18 + 2 + 78 = 100%
  */
 export default function PenaltyGameLayout({ homeScore, visitorScore, homeScoreCardColor, visitorScoreCardColor, gameContent, scoreboardContent, pageBackground, titleFieldBackground, gameBackground }: PenaltyGameLayoutProps) {
-  console.log('PenaltyGameLayout receiving colors:', {
+  logger.debug('PenaltyGameLayout receiving colors', {
     homeScoreCardColor,
     visitorScoreCardColor
   })

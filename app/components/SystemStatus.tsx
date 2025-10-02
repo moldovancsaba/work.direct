@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { ApiResponse } from '../types'
+import { logger } from '../lib/logger'
 
 interface SystemHealth {
   status: 'healthy' | 'degraded' | 'unhealthy' | 'error'
@@ -73,7 +74,7 @@ export default function SystemStatus() {
         throw new Error(data.message || 'Failed to fetch health status')
       }
     } catch (err) {
-      console.error('Failed to fetch system health:', err)
+      logger.error('Failed to fetch system health', { error: err })
       setError(err instanceof Error ? err.message : 'Unknown error occurred')
       
       // Set a minimal error state to show something to the user

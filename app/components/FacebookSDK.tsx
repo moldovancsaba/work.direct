@@ -4,6 +4,7 @@
 // WHY: Avoid passing event handlers from Server Components and fix prerender errors
 
 import Script from "next/script"
+import { logger } from "@/lib/logger"
 
 export default function FacebookSDK() {
   return (
@@ -28,7 +29,9 @@ export default function FacebookSDK() {
               window.__fbReady = true;
               window.dispatchEvent(new Event('fb-sdk-ready'));
             } catch (e) {
-              console.error('[FB SDK] Init failed:', e);
+              if (typeof window !== 'undefined' && (window as any).logger) {
+                (window as any).logger.error('[FB SDK] Init failed', { error: e });
+              }
               window.__fbReady = false;
               window.__fbError = 'INIT_FAILED';
               window.dispatchEvent(new Event('fb-sdk-error'));
