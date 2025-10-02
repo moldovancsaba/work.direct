@@ -4,6 +4,7 @@ import GameModel from '../../lib/models/Game'
 import ParticipantModel from '../../lib/models/Participant'
 import GameResultModel from '../../lib/models/GameResult'
 import { ApiResponse } from '../../types'
+import { logger } from '../../lib/logger'
 
 /**
  * Analytics API Route Handler
@@ -312,7 +313,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     })
 
   } catch (error) {
-    console.error('Analytics error:', error)
+    logger.error('Analytics error', { error })
     
     return NextResponse.json({
       success: false,

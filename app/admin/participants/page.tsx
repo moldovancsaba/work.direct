@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { logger } from '../../lib/logger'
 
 interface Participant {
   _id: string
@@ -51,7 +52,7 @@ export default function ParticipantsPage() {
         setStats(result.data)
       }
     } catch (err) {
-      console.error('Stats fetch error:', err)
+      logger.error('Stats fetch error', { error: err })
       // Don't set error state for stats, just log it
     }
   }
@@ -92,7 +93,7 @@ export default function ParticipantsPage() {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load participants')
-      console.error('Participants fetch error:', err)
+      logger.error('Participants fetch error', { error: err })
     } finally {
       setLoading(false)
     }
@@ -135,12 +136,12 @@ export default function ParticipantsPage() {
       await fetchParticipants(currentPage, searchTerm)
       
       // Show success message
-      console.log(`Participant "${participantName}" deleted successfully`)
+      logger.info('Participant deleted successfully', { participantId, participantName })
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to delete participant'
       alert(`Error: ${errorMessage}`)
-      console.error('Delete participant error:', err)
+      logger.error('Delete participant error', { error: err, participantId, participantName })
     }
   }
 

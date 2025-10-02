@@ -13,6 +13,7 @@ import HexGridEditor, { type HexCoord } from '@/components/admin/HexGridEditor'
 import SquareGridEditor, { type SquareCoord } from '@/components/admin/SquareGridEditor'
 import HexMapRuntime from '@/components/runtime/HexMapRuntime'
 import SquareMapRuntime from '@/components/runtime/SquareMapRuntime'
+import { logger } from '@/lib/logger'
 
 // NOTE: Admin gating is handled by app/admin/layout.tsx via useAdminAuth.
 // We keep this page as a client component to enable fetch-based admin UI.
@@ -94,7 +95,7 @@ export default function MapCreatorPage() {
         setPageSize(Number(data?.data?.pageSize || 20))
       } catch (e) {
         if (!ctl.signal.aborted) {
-          console.error('Map search error:', e)
+          logger.error('Map search error', { error: e, tab, query })
           if (active) setError('Search errored, please try again')
         }
       } finally {
@@ -163,7 +164,7 @@ export default function MapCreatorPage() {
       // Re-run search and refresh list
       setQuery('')
     } catch (e: any) {
-      console.error('Create map error:', e)
+      logger.error('Create map error', { error: e, tab, mapName: name })
       setError(e?.message || 'Failed to create map')
     } finally {
       setCreating(false)

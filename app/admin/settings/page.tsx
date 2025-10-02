@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useTheme } from '../../contexts/ThemeContext'
 import { Input, Select, Textarea, NumberInput } from '../../components/ui/FormControls'
+import { logger } from '../../lib/logger'
 
 interface Settings {
   siteName: string
@@ -76,7 +77,7 @@ export default function SettingsPage() {
       setSettings(result.data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load settings')
-      console.error('Settings fetch error:', err)
+      logger.error('Settings fetch error', { error: err })
     } finally {
       setLoading(false)
     }
@@ -120,7 +121,7 @@ export default function SettingsPage() {
       setTimeout(() => setSuccessMessage(null), 3000)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save settings')
-      console.error('Settings save error:', err)
+      logger.error('Settings save error', { error: err })
     } finally {
       setSaving(false)
     }
@@ -158,7 +159,7 @@ export default function SettingsPage() {
       setTimeout(() => setSuccessMessage(null), 3000)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to reset settings')
-      console.error('Settings reset error:', err)
+      logger.error('Settings reset error', { error: err })
     } finally {
       setSaving(false)
     }
