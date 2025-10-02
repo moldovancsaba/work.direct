@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { checkDBConnection, connectDB } from '../../lib/mongodb'
 import { ApiResponse } from '../../types'
+import { logger } from '../../lib/logger'
 
 /**
  * Health Check API Endpoint
@@ -79,7 +80,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
       healthData.services.mongoose = false
       healthData.status = 'unhealthy'
       
-      console.error('Health check database error:', dbError)
+      logger.error('Health check database error', { error: dbError })
       
       // Include error details in development mode only
       if (process.env.NODE_ENV === 'development') {
@@ -129,7 +130,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
 
   } catch (error) {
     // Catch any unexpected errors in the health check itself
-    console.error('Health check critical error:', error)
+    logger.error('Health check critical error', { error })
     
     const errorResponse: ApiResponse = {
       success: false,
