@@ -3,6 +3,7 @@ import { connectDB } from '../../lib/mongodb'
 import GameModel from '../../lib/models/Game'
 import { ApiResponse, CreateGameRequest, GameFilters } from '../../types'
 import { v4 as uuidv4 } from 'uuid'
+import { logger } from '../../lib/logger'
 
 /**
  * Games API Route Handler
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     }, { status: 201 })
     
   } catch (error) {
-    console.error('Create game error:', error)
+    logger.error('Create game error', { error })
     
     // Handle validation errors
     if (error instanceof Error && error.name === 'ValidationError') {
@@ -227,7 +228,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     })
     
   } catch (error) {
-    console.error('Get games error:', error)
+    logger.error('Get games error', { error })
     
     // Handle invalid date errors
     if (error instanceof Error && error.message.includes('Invalid Date')) {
