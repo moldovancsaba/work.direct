@@ -240,23 +240,71 @@ export const gameQuerySchema = z.object({
 // ============================================================================
 
 /**
+ * What: Game outcome validation
+ * Why: Validates game result outcomes from client
+ */
+export const gameOutcomeSchema = z.object({
+  type: z.enum(['WIN', 'LOSE', 'NO_REWARD'], { message: 'Invalid outcome type' }),
+  value: z.any().optional(),
+  rewardIds: z.array(z.string().max(100)).optional().default([]),
+  message: z.string().max(500).optional(),
+  // Additional fields for different game types
+  hexagonId: z.string().max(100).optional(),
+  starsFound: z.number().int().min(0).optional(),
+  totalStarsInGame: z.number().int().min(0).optional(),
+  foundAllStars: z.boolean().optional(),
+  score: z.number().int().min(0).optional(),
+  totalRounds: z.number().int().min(1).optional(),
+  correctAnswers: z.number().int().min(0).optional(),
+})
+
+/**
  * What: Game play request validation (critical for anti-cheat)
  * Why: Validates gameplay actions to prevent cheating and data corruption
+ * Supports multiple game types with flexible participant info
  */
 export const gamePlaySchema = z.object({
+  // Participant information (required)
+  // What: Flexible participant validation to support guests, email/phone users, and Facebook users
+  // Why: Guests need uuid-only, regular users need email OR phone, Facebook users have uuid from FB
   participant: z.object({
     name: safeStringSchema.min(1, 'Name required').max(100),
     email: emailSchema.optional(),
     phone: phoneSchema.optional(),
     uuid: uuidSchema.optional(),
-  }).optional(), // May be populated by session middleware
-  sessionId: z.string().max(100).optional(),
-  hexagonId: z.string().max(100, 'Invalid hexagon ID'),
+  }).refine(
+    (p) => p.email || p.phone || p.uuid,
+    'At least one of email, phone, or uuid is required'
+  ),
+  
+  // Session tracking
+  sessionId: z.string().min(1).max(100).optional(),
+  attemptId: z.string().min(1).max(100).optional(),
+  
+  // Referral tracking
+  ref: z.string().max(100).optional(),
+  
+  // Game type identifier
+  gameType: z.string().max(50).optional(),
+  
+  // Game result (for completion-based games like QUIZZZ)
+  result: gameOutcomeSchema.optional(),
+  
+  // Legacy fields for hex-based games (kept for backward compatibility)
+  hexagonId: z.string().max(100).optional(),
   roundIndex: z.number().int().min(0).optional(),
   selectionIndex: z.number().int().min(0).optional(),
   wasRed: z.boolean().optional(),
-  type: z.string().max(50).optional(),
-})
+}).refine(
+  (data) => {
+    // For QUIZZZ and other completion games, result is required
+    if (data.gameType === 'QUIZZZ' && !data.result) {
+      return false
+    }
+    return true
+  },
+  { message: 'Result is required for QUIZZZ games', path: ['result'] }
+)
 
 // ============================================================================
 // MAP SCHEMAS

@@ -9,6 +9,8 @@ import { ApiResponse, PlayGameRequest, PlayGameResponse, GameOutcome, GameOutcom
 import mongoose from 'mongoose'
 import { v4 as uuidv4 } from 'uuid'
 import { logger } from '../../../../lib/logger'
+import { validateBody } from '../../../../lib/validation/middleware'
+import { gamePlaySchema } from '../../../../lib/validation/schemas'
 
 /**
  * Game Play API Route Handler
@@ -47,20 +49,16 @@ export async function POST(
       }, { status: 400 })
     }
     
-    // Parse request body
-    const playRequest: PlayGameRequest & { hexagonId?: string; attemptId?: string; gameType?: string; result?: any } = await request.json()
-    
-    // Validate required fields
-    if (!playRequest.participant?.name) {
-      return NextResponse.json({
-        success: false,
-        message: 'Participant name is required',
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: 'Missing participant information'
-        }
-      }, { status: 400 })
+    // What: Validate and sanitize request body with strict schema
+    // Why: Critical anti-cheat protection - prevents invalid/malicious data from reaching game logic
+    const validated = await validateBody(request, gamePlaySchema, true)
+    if (!validated.success) {
+      return validated.error as NextResponse<ApiResponse<PlayGameResponse>>
     }
+    
+    // What: Use validated, typed, and XSS-sanitized data
+    // Why: All user input is now safe and matches expected structure
+    const playRequest = validated.data as any
     
     // Get client information for anti-cheat tracking
     const clientIP = request.headers.get('x-forwarded-for') || 
@@ -244,8 +242,11 @@ export async function POST(
     const isAttemptCompletion = (game.type === 'QUIZZZ')
 
     if (game.type === 'QUIZZZ') {
-      const clientOutcome = (playRequest as any).result
+      // What: Use validated result from schema validation
+      // Why: Result was already validated by Zod schema with gameOutcomeSchema
+      const clientOutcome = playRequest.result
       if (!clientOutcome || !clientOutcome.type) {
+        logger.warn('Missing QUIZZZ result after validation', { gameId: id })
         return NextResponse.json({
           success: false,
           message: 'Missing result outcome for quiz game',
