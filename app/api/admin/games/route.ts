@@ -7,6 +7,7 @@ import GameResultModel from '../../../lib/models/GameResult'
 import { getAdminUser } from '../../../lib/auth'
 import { REGISTRY } from '../../../modules/registry'
 import { v4 as uuidv4 } from 'uuid'
+import { logger } from '../../../lib/logger'
 
 // GET all games (admin only)
 export async function GET() {
@@ -53,7 +54,7 @@ export async function GET() {
 
     return NextResponse.json({ games: gamesWithStats })
   } catch (error) {
-    console.error('Error fetching games:', error)
+    logger.error('Error fetching games', { error })
     return NextResponse.json(
       { error: 'Failed to fetch games' },
       { status: 500 }
@@ -332,7 +333,7 @@ if (false) {
 
     return NextResponse.json({ game: gameResponse }, { status: 201 })
   } catch (error) {
-    console.error('Error creating game:', error)
+    logger.error('Error creating game', { error })
     
     // Map validation errors to 400 where applicable
     if (error instanceof Error) {

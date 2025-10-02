@@ -6,6 +6,7 @@ import ParticipantModel from '../../../../lib/models/Participant'
 import GameResultModel from '../../../../lib/models/GameResult'
 import mongoose from 'mongoose'
 import { getAdminUser } from '../../../../lib/auth'
+import { logger } from '../../../../lib/logger'
 
 // GET single game (admin only)
 export async function GET(
@@ -22,7 +23,7 @@ export async function GET(
     await connectDB()
     
     const { id } = await params
-    console.log('GET /api/admin/games/[id] - Received ID:', id)
+    logger.debug('GET /api/admin/games/[id] - Received ID', { gameId: id })
     
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
@@ -64,7 +65,7 @@ export async function GET(
 
     return NextResponse.json({ game: gameWithStats })
   } catch (error) {
-    console.error('Error fetching game:', error)
+    logger.error('Error fetching game', { error })
     return NextResponse.json(
       { error: 'Failed to fetch game' },
       { status: 500 }
@@ -97,7 +98,7 @@ export async function PUT(
     
     const body = await request.json()
     
-    console.log('🚀 API PUT /games/[id] - Received body:', JSON.stringify(body, null, 2))
+    logger.debug('API PUT /games/[id] - Received body', { gameId: id, body })
     
     const {
       title,
@@ -109,7 +110,7 @@ export async function PUT(
       isActive
     } = body
     
-    console.log('💾 API - Extracted configuration:', configuration)
+    logger.debug('API - Extracted configuration', { gameId: id, configuration })
 
     // Check if game exists
     const existingGame = await GameModel.findById(id)
@@ -161,7 +162,7 @@ export async function PUT(
       updateData.status = isActive ? 'ACTIVE' : 'DRAFT'
     }
 
-    console.log('📋 API - Final updateData before DB:', JSON.stringify(updateData, null, 2))
+    logger.debug('API - Final updateData before DB', { gameId: id, updateData })
     
     // Update the game
     const updatedGame = await GameModel.findByIdAndUpdate(
@@ -170,7 +171,7 @@ export async function PUT(
       { new: true }
     )
     
-    console.log('✅ API - Game updated successfully:', updatedGame?.configuration?.penaltyShootout)
+    logger.info('API - Game updated successfully', { gameId: id, hasPenaltyConfig: !!updatedGame?.configuration?.penaltyShootout })
 
     // Handle rewards update if provided
     if (rewards !== undefined) {
@@ -231,7 +232,7 @@ export async function PUT(
 
     return NextResponse.json({ game: gameResponse })
   } catch (error) {
-    console.error('Error updating game:', error)
+    logger.error('Error updating game', { error })
     
     // Return detailed error message if it's a validation error
     if (error instanceof Error) {
@@ -300,7 +301,7 @@ export async function DELETE(
       gameId: id 
     })
   } catch (error) {
-    console.error('Error deleting game:', error)
+    logger.error('Error deleting game', { error })
     return NextResponse.json(
       { error: 'Failed to delete game' },
       { status: 500 }
