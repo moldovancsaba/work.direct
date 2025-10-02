@@ -1,5 +1,6 @@
 import { MongoClient, MongoClientOptions } from 'mongodb'
 import mongoose from 'mongoose'
+import { logger } from './logger'
 
 // Ensure MONGODB_URI environment variable is present
 // This is required for both MongoDB native client and Mongoose ODM connections
@@ -67,7 +68,7 @@ let isConnected = false
 export const connectDB = async (): Promise<void> => {
   // Check if already connected
   if (isConnected && mongoose.connection.readyState === 1) {
-    console.log('MongoDB is already connected')
+    logger.debug('MongoDB is already connected')
     return
   }
 
@@ -78,7 +79,7 @@ export const connectDB = async (): Promise<void> => {
         mongoose.connection.once('connected', resolve)
       })
       isConnected = true
-      console.log('MongoDB connection established (was connecting)')
+      logger.info('MongoDB connection established (was connecting)')
       return
     }
 
@@ -116,22 +117,19 @@ export const connectDB = async (): Promise<void> => {
     }
 
     isConnected = true
-    console.log('MongoDB connected successfully via Mongoose')
-    
-    // Log connection details for debugging in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`Connected to database: ${db.connection.db?.databaseName}`)
-      console.log(`Connection ready state: ${db.connection.readyState}`)
-    }
+    logger.info('MongoDB connected successfully via Mongoose', {
+      database: db.connection.db?.databaseName,
+      readyState: db.connection.readyState
+    })
   } catch (error) {
-    console.error('MongoDB connection failed:', error)
+    logger.error('MongoDB connection failed', { error })
     isConnected = false
     // Reset connection state on error
     if (mongoose.connection.readyState !== 0) {
       try {
         await mongoose.disconnect()
       } catch (disconnectError) {
-        console.error('Failed to disconnect after connection error:', disconnectError)
+        logger.error('Failed to disconnect after connection error', { error: disconnectError })
       }
     }
     throw error
@@ -148,9 +146,9 @@ export const disconnectDB = async (): Promise<void> => {
   try {
     await mongoose.disconnect()
     isConnected = false
-    console.log('MongoDB disconnected successfully')
+    logger.info('MongoDB disconnected successfully')
   } catch (error) {
-    console.error('MongoDB disconnection failed:', error)
+    logger.error('MongoDB disconnection failed', { error })
     throw error
   }
 }
@@ -212,7 +210,7 @@ export const checkDBConnection = async (): Promise<{
       status.status = 'disconnected'
     }
   } catch (error) {
-    console.error('Database health check failed:', error)
+    logger.error('Database health check failed', { error })
     status.status = 'error'
   }
 
