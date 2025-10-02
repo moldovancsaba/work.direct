@@ -6,6 +6,7 @@ import { NextResponse } from 'next/server'
 import { getAdminUser } from '@/lib/auth'
 import { connectDB } from '@/lib/mongodb'
 import SquareMapModel from '@/lib/models/SquareMap'
+import { logger } from '@/lib/logger'
 
 function toPublic(doc: any) {
   if (!doc) return null
@@ -40,7 +41,7 @@ export async function GET(request: Request) {
     if (!doc) return NextResponse.json({ error: 'Not found' }, { status: 404 })
     return NextResponse.json({ data: toPublic(doc) })
   } catch (error) {
-    console.error('GET /api/admin/squaremaps/[id] error:', error)
+    logger.error('GET /api/admin/squaremaps/[id] error', { error })
     return NextResponse.json({ error: 'Failed to fetch square map' }, { status: 500 })
   }
 }
@@ -70,7 +71,7 @@ export async function PUT(request: Request) {
     if (!updated) return NextResponse.json({ error: 'Not found' }, { status: 404 })
     return NextResponse.json({ data: toPublic(updated) })
   } catch (error: any) {
-    console.error('PUT /api/admin/squaremaps/[id] error:', error)
+    logger.error('PUT /api/admin/squaremaps/[id] error', { error })
     const message = error?.message || 'Failed to update square map'
     const isValidation = /required|min|max|unique|Radius|Coordinates|Chebyshev/i.test(message)
     return NextResponse.json({ error: message }, { status: isValidation ? 400 : 500 })
@@ -91,7 +92,7 @@ export async function DELETE(request: Request) {
     if (!updated) return NextResponse.json({ error: 'Not found' }, { status: 404 })
     return NextResponse.json({ data: toPublic(updated) })
   } catch (error) {
-    console.error('DELETE /api/admin/squaremaps/[id] error:', error)
+    logger.error('DELETE /api/admin/squaremaps/[id] error', { error })
     return NextResponse.json({ error: 'Failed to delete square map' }, { status: 500 })
   }
 }
