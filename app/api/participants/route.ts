@@ -4,6 +4,8 @@ import ParticipantModel from '../../lib/models/Participant'
 import { ApiResponse } from '../../types'
 import { v4 as uuidv4 } from 'uuid'
 import { logger } from '../../lib/logger'
+import { validateBody, validateQuery } from '../../lib/validation/middleware'
+import { participantCreateSchema, participantQuerySchema, participantDeleteSchema } from '../../lib/validation/schemas'
 
 /**
  * Participants API Route Handler
@@ -20,32 +22,31 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     // Connect to database
     await connectDB()
     
-    // Parse request body
-    const participantData = await request.json()
+    // What: Parse and validate participant registration data
+    // Why: Prevents invalid/malicious data from reaching database
+    const body = await request.json()
+    const validated = participantCreateSchema.safeParse(body)
     
-    // Validate required fields
-    if (!participantData.name) {
+    if (!validated.success) {
+      logger.warn('Participant registration validation failed', {
+        errors: validated.error.issues,
+      })
       return NextResponse.json({
         success: false,
-        message: 'Participant name is required',
+        message: 'Validation failed',
         error: {
           code: 'VALIDATION_ERROR',
-          message: 'Missing required participant information'
+          message: validated.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
         }
-      }, { status: 400 })
+      }, { status: 400 }) as NextResponse<ApiResponse>
     }
     
-    // Validate contact information (at least email or phone required)
-    if (!participantData.email && !participantData.phone) {
-      return NextResponse.json({
-        success: false,
-        message: 'Either email or phone number is required',
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: 'Contact information is required for participant registration'
-        }
-      }, { status: 400 })
-    }
+    const participantData = validated.data
+    
+    // What: Extract optional fields not in core schema (groupIds, metadata)
+    // Why: These fields are optional admin features that can bypass validation
+    const groupIds = Array.isArray(body.groupIds) ? body.groupIds : []
+    const metadata = typeof body.metadata === 'object' ? body.metadata : {}
     
     // Check if participant already exists
     const existingParticipant = await (ParticipantModel as any).findByContact(
@@ -82,11 +83,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       phone: participantData.phone || undefined,
       uuid: uuid,
       referrerUuid: participantData.referrerUuid || undefined,
-      groupIds: participantData.groupIds || [],
+      groupIds,
       gameResults: [],
       totalGamesPlayed: 0,
       totalRewardsEarned: 0,
-      metadata: { ...(participantData.metadata || {}), ...(loginProvider ? { loginProvider } : {}) },
+      metadata: { ...metadata, ...(loginProvider ? { loginProvider } : {}) },
       isActive: true
     })
     
@@ -142,18 +143,18 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     // Connect to database
     await connectDB()
     
-    // Parse query parameters
-    const { searchParams } = new URL(request.url)
+    // What: Validate query parameters
+    // Why: Ensures pagination params are valid numbers, prevents injection
+    const validated = validateQuery(request, participantQuerySchema)
+    if (!validated.success) {
+      return validated.error as NextResponse<ApiResponse>
+    }
     
-    // Pagination parameters
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 100) // Cap at 100
+    const { page, limit, search: searchText, activeOnly } = validated.data
     const skip = (page - 1) * limit
     
-    // Filter parameters
-    const activeOnly = searchParams.get('activeOnly') !== 'false' // Default to true
-    const groupId = searchParams.get('groupId')
-    const searchText = searchParams.get('search')
+    // Extract optional groupId (not in main schema)
+    const groupId = request.nextUrl.searchParams.get('groupId')
     
     // Build query
     const query: any = {}
@@ -246,21 +247,14 @@ export async function DELETE(request: NextRequest): Promise<NextResponse<ApiResp
     // Connect to database
     await connectDB()
     
-    // Parse query parameters to get participant ID
-    const { searchParams } = new URL(request.url)
-    const participantId = searchParams.get('id')
-    
-    // Validate participant ID
-    if (!participantId) {
-      return NextResponse.json({
-        success: false,
-        message: 'Participant ID is required',
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: 'Missing participant ID parameter'
-        }
-      }, { status: 400 })
+    // What: Validate participant ID format
+    // Why: Ensures valid MongoDB ObjectId before querying database
+    const validated = validateQuery(request, participantDeleteSchema)
+    if (!validated.success) {
+      return validated.error as NextResponse<ApiResponse>
     }
+    
+    const { id: participantId } = validated.data
     
     // Find and delete the participant
     const deletedParticipant = await ParticipantModel.findByIdAndDelete(participantId)
