@@ -15,6 +15,7 @@
 
 import { useEffect } from 'react'
 import Link from 'next/link'
+import { logger } from './lib/logger'
 
 interface GlobalErrorProps {
   error: Error & { digest?: string }
@@ -26,11 +27,9 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
   // What: Track errors for debugging and monitoring
   // Why: Errors need to be logged for investigation, but not exposed to users
   useEffect(() => {
-    // Only log in development or send to error tracking service
-    // Note: Console logging here is acceptable for error boundary debugging
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Global error caught:', error)
-    }
+    // Log to structured logger for all environments
+    // In production, this will send JSON logs for monitoring
+    logger.error('Global error caught', { error, digest: error.digest })
     // TODO: In Phase 4, send to Sentry or error tracking service
   }, [error])
 

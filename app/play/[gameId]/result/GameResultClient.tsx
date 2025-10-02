@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Game } from '../../../types'
 import SimpleGameLayout from '../../../components/game/SimpleGameLayout'
+import { logger } from '../../../lib/logger'
 
 interface GameResultData {
   won: boolean
@@ -93,14 +94,14 @@ text: `Check out this board-quiz game!`,
         alert('Game link copied to clipboard! Share it with your friends.')
       }
     } catch (error) {
-      console.error('Error sharing game:', error)
+      logger.error('Error sharing game', { error, gameId })
       // Fallback: just copy the game URL without referral
       const fallbackUrl = `${window.location.origin}/play/${gameId}`
       try {
         await navigator.clipboard.writeText(fallbackUrl)
         alert('Game link copied to clipboard!')
       } catch (clipboardError) {
-        console.error('Clipboard error:', clipboardError)
+        logger.error('Clipboard error', { error: clipboardError, gameId })
         alert('Unable to copy link. Please share manually: ' + fallbackUrl)
       }
     }

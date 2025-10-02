@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { logger } from '../../lib/logger'
 
 export interface ParticipantData {
   name: string
@@ -219,7 +220,7 @@ export default function UnifiedRegistration({
       await onRegister(participant)
     } catch (err) {
       // Error handling is managed by parent component
-      console.error('Registration error:', err)
+      logger.error('Registration error', { error: err, participantName: participant.name })
     } finally {
       setIsSubmitting(false)
     }

@@ -6,6 +6,7 @@ import UnifiedRegistration from '../../../components/game/UnifiedRegistration'
 import FooterLinks from '../../../components/play/FooterLinks'
 import TypedText from '../../../components/play/TypedText'
 import { resolveTextType, classFor } from '../../../components/play/TypedText'
+import { logger } from '../../../lib/logger'
 
 interface WelcomeClientPlatformProps {
   gameId: string
@@ -171,7 +172,7 @@ export default function WelcomeClientPlatform({ gameId, texts, styles, refCode }
       }, { scope: 'public_profile,email', return_scopes: true })
     } catch (e) {
       setFbLoading(false)
-      console.error('FB.login initiation error:', e)
+      logger.error('FB.login initiation error', { error: e, gameId })
       setFbError('Unable to initiate Facebook login. Please check SDK readiness and App ID.')
     }
   }

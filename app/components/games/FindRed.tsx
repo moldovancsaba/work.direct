@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { logger } from '../../lib/logger'
 
 /**
  * FindRed (Get Shorty) Component
@@ -118,7 +119,7 @@ export default function FindRed({
         })
       } catch (e) {
         // Non-blocking
-        console.warn('FindRed play record failed', e)
+        logger.warn('FindRed play record failed', { error: e, gameId, roundIndex })
       }
     }
 

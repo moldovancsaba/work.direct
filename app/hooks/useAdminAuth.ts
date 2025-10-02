@@ -7,6 +7,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { logger } from '../lib/logger'
 
 interface AdminUser {
   id: string
@@ -46,7 +47,7 @@ export function useAdminAuth() {
         }
       } catch (err) {
         if (!aborted) {
-          console.error('Auth check failed:', err)
+          logger.error('Auth check failed', { error: err })
           setError('Authentication failed')
           setUser(null)
           router.push('/admin/login')
@@ -70,7 +71,7 @@ export function useAdminAuth() {
         credentials: 'include'
       })
     } catch (err) {
-      console.error('Logout failed:', err)
+      logger.error('Logout failed', { error: err })
     }
     setUser(null)
     router.push('/admin/login')

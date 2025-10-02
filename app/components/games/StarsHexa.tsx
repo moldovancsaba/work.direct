@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback, useReducer, useMemo } from 'r
 import { useRouter, useParams } from 'next/navigation'
 import { HexagonCard, GameOutcome } from '../../types'
 import { axialToPixel, rotatePoint, hexVertices, SQRT3 } from '../../lib/hex/geometry'
+import { logger } from '../../lib/logger'
 
 interface StarsHexaProps {
   hexagons: HexagonCard[]
@@ -340,7 +341,7 @@ export default function StarsHexa({
           // In registered mode, use API result if available
           if (onResult) onResult(result)
         }).catch(error => {
-          console.warn('Network error:', error)
+          logger.warn('Network error', { error, hexagonId, gameId })
         })
       }
     }, 0) // Run immediately but non-blocking

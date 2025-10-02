@@ -2,6 +2,7 @@ import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import GameResultClient from './GameResultClient'
 import { resolvePlayConfig } from '../../../lib/resolvers/playConfigResolver'
+import { logger } from '../../../lib/logger'
 
 // Fetch game data for metadata generation
 // This runs on the server side for proper OpenGraph/Twitter meta tags
@@ -21,7 +22,7 @@ async function fetchGameData(gameId: string) {
     const data = await response.json()
     return data.success ? data.data : null
   } catch (error) {
-    console.error('Failed to fetch game data for metadata:', error)
+    logger.error('Failed to fetch game data for metadata', { error, gameId })
     return null
   }
 }
