@@ -3,6 +3,7 @@ import { connectDB } from '../../../lib/mongodb'
 import GameModel from '../../../lib/models/Game'
 import { ApiResponse, UpdateGameRequest } from '../../../types'
 import mongoose from 'mongoose'
+import { logger } from '../../../lib/logger'
 
 /**
  * Individual Game API Route Handler
@@ -60,7 +61,7 @@ export async function GET(
     if (!game.isPublic && requestingUser !== game.createdBy) {
       // This could be enhanced with proper authentication/authorization
       // For now, we'll allow access but include a warning in the response
-      console.warn(`Unauthorized access attempt to private game ${id} by ${requestingUser}`)
+      logger.warn('Unauthorized access attempt to private game', { gameId: id, requestingUser })
     }
     
     // Return game details
@@ -71,7 +72,7 @@ export async function GET(
     })
     
   } catch (error) {
-    console.error('Get game error:', error)
+    logger.error('Get game error', { error })
     
     return NextResponse.json({
       success: false,
@@ -174,7 +175,7 @@ export async function PUT(
     })
     
   } catch (error) {
-    console.error('Update game error:', error)
+    logger.error('Update game error', { error })
     
     // Handle validation errors
     if (error instanceof Error && error.name === 'ValidationError') {
@@ -267,7 +268,7 @@ export async function PATCH(
     })
     
   } catch (error) {
-    console.error('Patch game error:', error)
+    logger.error('Patch game error', { error })
     
     return NextResponse.json({
       success: false,
@@ -366,7 +367,7 @@ export async function DELETE(
     }
     
   } catch (error) {
-    console.error('Delete game error:', error)
+    logger.error('Delete game error', { error })
     
     return NextResponse.json({
       success: false,

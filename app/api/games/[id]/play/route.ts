@@ -8,6 +8,7 @@ import RewardClaimModel from '../../../../lib/models/RewardClaim'
 import { ApiResponse, PlayGameRequest, PlayGameResponse, GameOutcome, GameOutcomeType } from '../../../../types'
 import mongoose from 'mongoose'
 import { v4 as uuidv4 } from 'uuid'
+import { logger } from '../../../../lib/logger'
 
 /**
  * Game Play API Route Handler
@@ -343,7 +344,7 @@ if (outcome.type === 'WIN' && outcome.rewardIds.length > 0 && isAttemptCompletio
             rewards.push(reward)
           }
         } catch (rewardError) {
-          console.error('Reward distribution error:', rewardError)
+          logger.error('Reward distribution error', { error: rewardError, rewardId })
           // Continue processing - don't fail the entire game for reward issues
         }
       }
@@ -377,7 +378,7 @@ if (outcome.type === 'WIN' && outcome.rewardIds.length > 0 && isAttemptCompletio
     })
     
   } catch (error) {
-    console.error('Play game error:', error)
+    logger.error('Play game error', { error })
     
     return NextResponse.json({
       success: false,
@@ -440,7 +441,7 @@ function calculateHexaResult(
     }
     
   } catch (error) {
-    console.error('Hexa calculation error:', error)
+    logger.error('Hexa calculation error', { error, hexagonId: flippedHexagon?.id })
     return {
       type: 'NO_REWARD',
       hexagonId: flippedHexagon.id,
@@ -501,7 +502,7 @@ function calculatePenaltyResult(
     }
     
   } catch (error) {
-    console.error('Penalty calculation error:', error)
+    logger.error('Penalty calculation error', { error, playerId: selectedPlayer?.id })
     return {
       type: 'NO_REWARD',
       hexagonId: selectedPlayer.id,
@@ -526,12 +527,12 @@ async function validateGameResult(gameResult: any): Promise<boolean> {
     
     // Relaxed timing check: do not reject; optionally log
     if (playTime < 200) {
-      console.warn(`Fast game result: ${gameResult._id}, time: ${playTime}ms`)
+      logger.warn('Fast game result', { resultId: gameResult._id, playTime })
     }
     
     // Reject if result was generated too slowly (more than 10 minutes)
     if (playTime > 10 * 60 * 1000) {
-      console.warn(`Suspiciously slow game result: ${gameResult._id}, time: ${playTime}ms`)
+      logger.warn('Suspiciously slow game result', { resultId: gameResult._id, playTime })
       return false
     }
     
@@ -543,7 +544,7 @@ async function validateGameResult(gameResult: any): Promise<boolean> {
     return true
     
   } catch (error) {
-    console.error('Validation error:', error)
+    logger.error('Validation error', { error })
     return false
   }
 }
