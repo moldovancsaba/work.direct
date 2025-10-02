@@ -35,24 +35,15 @@ const logLevel = process.env.LOG_LEVEL || (isDev ? 'debug' : 'info')
  * What: Create Pino logger instance for server-side logging
  * Why: Pino is fast, structured, and supports multiple transports
  * 
- * Development: Pretty-printed human-readable format
+ * Development: Simple JSON output (avoids worker thread issues in Next.js)
  * Production: JSON format for log aggregation services
  */
 const serverLogger = isServer
   ? pino({
       level: logLevel,
-      // What: Pretty formatting in development for readability
-      // Why: Makes logs easier to read during development
-      transport: isDev
-        ? {
-            target: 'pino-pretty',
-            options: {
-              colorize: true,
-              translateTime: 'SYS:standard',
-              ignore: 'pid,hostname',
-            },
-          }
-        : undefined,
+      // What: Use simple JSON logging in all environments
+      // Why: Avoids worker thread issues with pino-pretty in Next.js dev mode
+      // Note: Logs are still structured and readable in dev console
       // What: Base configuration for all logs
       // Why: Consistent metadata across all log entries
       base: {
