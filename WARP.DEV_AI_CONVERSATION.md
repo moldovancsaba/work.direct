@@ -335,3 +335,6 @@ Notes:
 - Documentation: 8.5/10 → 9.5/10
 
 **Report**: See AUDIT_REPORT.md for detailed findings, risk assessment, and KPIs
+
+2025-10-02T13:08:57.317Z — Delivery: Version bump and doc sync to v4.7.1
+- Notes: Automated via scripts/versioning/bump-version.mjs (UTC timestamps with ms)

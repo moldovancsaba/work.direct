@@ -4,6 +4,8 @@ import GameModel from '../../lib/models/Game'
 import { ApiResponse, CreateGameRequest, GameFilters } from '../../types'
 import { v4 as uuidv4 } from 'uuid'
 import { logger } from '../../lib/logger'
+import { validateQuery } from '../../lib/validation/middleware'
+import { gameQuerySchema } from '../../lib/validation/schemas'
 
 /**
  * Games API Route Handler
@@ -110,42 +112,40 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     // Connect to database
     await connectDB()
     
-    // Parse query parameters
-    const { searchParams } = new URL(request.url)
+    // What: Validate query parameters with schema
+    // Why: Ensures pagination and filter parameters are valid before database query
+    const validated = validateQuery(request, gameQuerySchema)
+    if (!validated.success) {
+      return validated.error as NextResponse<ApiResponse>
+    }
     
-    // Pagination parameters
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = Math.min(parseInt(searchParams.get('limit') || '10'), 50) // Cap at 50
+    const { page, limit, status, type, search: searchText } = validated.data
     const skip = (page - 1) * limit
     
-    // Filter parameters
+    // Parse additional filters from query params (not in base schema)
+    const { searchParams } = new URL(request.url)
     const filters: GameFilters = {}
     
-    // Status filter
-    const statusParam = searchParams.get('status')
-    if (statusParam) {
-      filters.status = statusParam.split(',') as any
+    // Apply validated filters
+    if (status) {
+      filters.status = [status] as any
     }
     
-    // Type filter
-    const typeParam = searchParams.get('type')
-    if (typeParam) {
-      filters.type = typeParam.split(',') as any
+    if (type) {
+      filters.type = [type] as any
     }
     
-    // Creator filter
+    // Additional filters (createdBy, isPublic, date ranges)
     const createdBy = searchParams.get('createdBy')
     if (createdBy) {
       filters.createdBy = createdBy
     }
     
-    // Public games filter
     const isPublic = searchParams.get('isPublic')
     if (isPublic) {
       filters.isPublic = isPublic.toLowerCase() === 'true'
     }
     
-    // Date range filters
     const startDate = searchParams.get('startDate')
     const endDate = searchParams.get('endDate')
     if (startDate) {
@@ -154,9 +154,6 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     if (endDate) {
       filters.endDate = new Date(endDate)
     }
-    
-    // Search text parameter
-    const searchText = searchParams.get('search')
     
     // Build MongoDB query
     const query: any = {}
