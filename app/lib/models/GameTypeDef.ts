@@ -5,7 +5,7 @@
 import mongoose, { Schema, Model } from 'mongoose'
 
 export interface GameTypeDef {
-  code: string // e.g. 'STARS_HEXA', 'PENALTY_SHOOTOUT', 'FIND_RED', 'WHEEL_OF_FORTUNE', 'QUIZZ', 'QUIZZZ'
+code: string // e.g. 'QUIZZZ'
   name: string // human-readable label shown in Admin
   enabled: boolean
   order: number

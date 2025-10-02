@@ -1,9 +1,13 @@
 {
   "name": "playmass",
-  "version": "4.6.0",
+  "version": "4.6.17",
   "private": true,
   "description": "Interactive game platform for creating and distributing Hexa games to target groups with rewards management",
   "author": "Narimato",
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=9.0.0"
+  },
   "scripts": {
     "predev": "node scripts/versioning/bump-version.mjs --type patch --reason \"Automatic predev patch bump\"",
     "dev": "next dev",

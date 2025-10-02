@@ -42,17 +42,16 @@ export async function POST(request: NextRequest) {
 
     const encodedToken = Buffer.from(JSON.stringify(tokenData)).toString('base64')
 
-    // Set secure httpOnly cookie
-    const cookieStore = await cookies()
-    cookieStore.set('admin-session', encodedToken, {
+    // Set secure httpOnly cookie on the response (WHY: In Route Handlers, setting via NextResponse ensures the cookie is actually sent with the response)
+    const res = NextResponse.json({ success: true, token: encodedToken, message: 'Login successful' })
+    res.cookies.set('admin-session', encodedToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60, // seconds
       path: '/'
     })
-
-    return NextResponse.json({ success: true, token: encodedToken, message: 'Login successful' })
+    return res
   } catch (error) {
     console.error('Admin login error:', error)
     return NextResponse.json(
@@ -64,9 +63,15 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE() {
   try {
-    const cookieStore = await cookies()
-    cookieStore.delete('admin-session')
-    return NextResponse.json({ success: true, message: 'Logged out successfully' })
+    // Prefer mutating the outgoing response cookie to guarantee deletion
+    const res = NextResponse.json({ success: true, message: 'Logged out successfully' })
+    res.cookies.set('admin-session', '', { path: '/', maxAge: 0 })
+    try {
+      // Also attempt server-side deletion for completeness (WHY: When executed on the server without an outgoing response, delete is a no-op for the client)
+      const cookieStore = await cookies()
+      cookieStore.delete('admin-session')
+    } catch {}
+    return res
   } catch (error) {
     console.error('Admin logout error:', error)
     return NextResponse.json(

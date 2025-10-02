@@ -2,7 +2,7 @@ import mongoose, { Schema, Model } from 'mongoose'
 import { Game, GameType, GameStatus, HexagonCard, PenaltyCard, ShareLink } from '../../types'
 
 // HexagonCard subdocument schema
-// This defines the structure for individual hexagon cards in Stars Hexa games
+// This defines the structure for individual hexagon cards
 const hexagonCardSchema = new Schema<HexagonCard>({
   id: {
     type: String,
@@ -158,8 +158,8 @@ const gameSchema = new Schema<Game>({
     type: String,
     required: [true, 'Game type is required'],
     enum: {
-      values: ['STARS_HEXA', 'PENALTY_SHOOTOUT', 'FIND_RED', 'WHEEL_OF_FORTUNE', 'QUIZZ', 'QUIZZZ'] as GameType[],
-      message: 'Game type must be: STARS_HEXA, PENALTY_SHOOTOUT, FIND_RED, WHEEL_OF_FORTUNE, QUIZZ, QUIZZZ'
+      values: ['QUIZZZ'] as GameType[],
+      message: 'Game type must be QUIZZZ'
     }
   },
   
@@ -464,7 +464,45 @@ const gameSchema = new Schema<Game>({
       allowImmediateReplay: { type: Boolean, default: false }
     },
 
-    // Stars Hexa specific configuration
+// Structured Pages Editor — persisted page/box/content model
+    pages: {
+      type: [new Schema({
+        id: { type: String, required: true },
+        name: { type: String, required: true, trim: true, maxlength: 100 },
+        isActive: { type: Boolean, default: true },
+        layout: { type: String, default: '' },
+        boxes: [new Schema({
+          id: { type: String, required: true },
+          name: { type: String, default: '', trim: true, maxlength: 100 },
+          block: { type: String, enum: ['HERO','MAIN'], default: 'MAIN' },
+          columns: { type: Number, enum: [1,2,3], default: 1 },
+          items: [new Schema({
+            id: { type: String, required: true },
+            kind: { type: String, enum: ['TEXT','BUTTON','INPUT'], required: true },
+            // TEXT
+            name: { type: String, default: '', trim: true, maxlength: 200 },
+            text: { type: String, default: '' },
+style: { type: String, enum: ['HERO','H1','H2','P'], default: 'P' },
+                // BUTTON
+                mode: { type: String, enum: ['PREDEFINED','URL'], default: 'URL' },
+                action: { type: String, enum: ['GOTO_PAGE','INVITE_FRIEND','PLAY_AS_GUEST','START_GAME','REGISTER','RESTART_GAME','FB_LOGIN'], default: undefined },
+                targetPageName: { type: String, default: '' },
+                url: { type: String, default: '' },
+                backgroundCss: { type: String, default: '' },
+                fontColor: { type: String, default: '' },
+                command: { type: String, default: '' },
+                // INPUT
+                field: { type: String, enum: ['NAME','EMAIL','PHONE','CUSTOM'], default: undefined },
+                label: { type: String, default: '' },
+                placeholder: { type: String, default: '' },
+                required: { type: Boolean, default: false }
+          }, { _id: false })]
+        }, { _id: false })]
+      }, { _id: false })],
+      default: []
+    },
+
+    // Hex-grid specific configuration
     starsHexa: {
       hexagons: {
         type: [hexagonCardSchema]
@@ -507,7 +545,7 @@ const gameSchema = new Schema<Game>({
           text: { type: String, match: [/^#[0-9A-Fa-f]{6}$/, 'Color must be a valid hex color'], default: '#FFFFFF' }
         },
         // Hex grid specific styling for the main block (accepts any CSS-safe string for backgrounds)
-        // WHAT: Allow admin to customize the Stars Hexa visuals without hardcoding, including gradients.
+        // WHAT: Allow admin to customize hex visuals without hardcoding, including gradients.
         // WHY: Product requirement to brand the active/inactive faces and edges per game.
         hexGrid: {
           activeHexBg: { type: String, default: '' },
@@ -517,7 +555,7 @@ const gameSchema = new Schema<Game>({
           edgeStrokeColor: { type: String, default: '' }
         }
       },
-      // Emoji customization for Stars Hexa
+      // Emoji customization for hex-grid games
       emojis: {
         win: { type: String, default: '⭐️' },
         lose: { type: String, default: '🍄' }
@@ -922,105 +960,10 @@ gameSchema.pre('save', function(next) {
     ;(this as any).generateShareLink()
   }
   
-  // Validate Find Red configuration for FIND_RED games
-  if (this.type === 'FIND_RED') {
-    const cfg = this.configuration.findRed as any
-    if (!cfg) {
-      return next(new Error('Find Red configuration is required'))
-    }
-    // Reds per pack and selections constraints
-    if (typeof cfg.packSize !== 'number' || cfg.packSize < 3 || cfg.packSize > 32) {
-      return next(new Error('Find Red packSize must be between 3 and 32'))
-    }
-    if (typeof cfg.redsPerPack !== 'number' || cfg.redsPerPack < 1 || cfg.redsPerPack > cfg.packSize) {
-      return next(new Error('Find Red redsPerPack must be between 1 and packSize'))
-    }
-    if (typeof cfg.selectionsPerRound !== 'number' || cfg.selectionsPerRound < 1 || cfg.selectionsPerRound > cfg.packSize) {
-      return next(new Error('Find Red selectionsPerRound must be between 1 and packSize'))
-    }
-    if (typeof cfg.targetReds !== 'number' || cfg.targetReds < 1) {
-      return next(new Error('Find Red targetReds must be at least 1'))
-    }
-    if (typeof cfg.totalRounds !== 'number' || cfg.totalRounds < 1) {
-      return next(new Error('Find Red totalRounds must be at least 1'))
-    }
-    if (cfg.targetReds > cfg.totalRounds) {
-      return next(new Error('Find Red targetReds must be less than or equal to totalRounds'))
-    }
-    // Backfill defaults for texts/colors in case admin omitted them
-    const ensure = (this.configuration as any)
-    ensure.findRed = ensure.findRed || {}
-    ensure.findRed.texts = {
-      shortyLabel: cfg?.texts?.shortyLabel || 'Shorty'
-    }
-    ensure.findRed.colors = {
-      background: cfg?.colors?.background || '#0B1220',
-      winForeground: cfg?.colors?.winForeground || '#FF1A1A',
-      neutralForeground: cfg?.colors?.neutralForeground || '#A0AEC0',
-      cardBack: cfg?.colors?.cardBack || '#1F2937',
-      cardBorder: cfg?.colors?.cardBorder || '#374151'
-    }
-  }
 
-  // Validate Wheel of Fortune configuration
-  if (this.type === 'WHEEL_OF_FORTUNE') {
-    const cfg = (this.configuration as any).wheelOfFortune
-    if (!cfg || !Array.isArray(cfg.segments) || cfg.segments.length < 2) {
-      return next(new Error('Wheel of Fortune must have at least 2 segments'))
-    }
-    // Normalize probabilities: if all zeros or undefined, spread evenly
-    const probs = cfg.segments.map((s: any) => Number(s.probability || 0))
-    const sum = probs.reduce((a: number, b: number) => a + b, 0)
-    if (sum <= 0) {
-      const even = Math.round((100 / cfg.segments.length) * 1000) / 1000
-      cfg.segments = cfg.segments.map((s: any) => ({ ...s, probability: even }))
-      ;(this.configuration as any).wheelOfFortune = cfg
-    }
-  }
 
-  // Validate Stars Hexa configuration for Stars Hexa games
-  if (this.type === 'STARS_HEXA') {
-    if (!this.configuration.starsHexa || !this.configuration.starsHexa.hexagons || this.configuration.starsHexa.hexagons.length !== 7) {
-      return next(new Error('Stars Hexa games must have exactly 7 hexagons'))
-    }
-    
-    const starsCount = this.configuration.starsHexa.hexagons.filter(h => h.hasHiddenStar).length
-    if (starsCount < 1 || starsCount > 3) {
-      return next(new Error('Stars Hexa games must have between 1-3 hidden stars'))
-    }
-    
-    // Validate maxFlipsPerAttempt
-    if (this.configuration.starsHexa.maxFlipsPerAttempt && (this.configuration.starsHexa.maxFlipsPerAttempt < 3 || this.configuration.starsHexa.maxFlipsPerAttempt > 7)) {
-      return next(new Error('Stars Hexa maxFlipsPerAttempt must be between 3-7'))
-    }
-    
-    // Ensure totalStars matches actual hidden stars
-    if (!this.configuration.starsHexa.totalStars || this.configuration.starsHexa.totalStars !== starsCount) {
-      this.configuration.starsHexa.totalStars = starsCount
-    }
-  }
+// Legacy hex-game validation removed — single-game system
   
-  // Validate Penalty Shootout configuration for Penalty Shootout games
-  if (this.type === 'PENALTY_SHOOTOUT') {
-    if (!this.configuration.penaltyShootout || !this.configuration.penaltyShootout.players || this.configuration.penaltyShootout.players.length !== 11) {
-      return next(new Error('Penalty Shootout games must have exactly 11 players'))
-    }
-    
-    const goalsCount = this.configuration.penaltyShootout.players.filter(p => p.hasGoal).length
-    if (goalsCount !== 7) {
-      return next(new Error('Penalty Shootout games must have exactly 7 goals and 4 misses'))
-    }
-    
-    // Validate playersToSelect
-    if (this.configuration.penaltyShootout.playersToSelect && this.configuration.penaltyShootout.playersToSelect !== 5) {
-      return next(new Error('Penalty Shootout games must allow selecting exactly 5 players'))
-    }
-    
-    // Ensure totalGoals matches actual goals
-    if (!this.configuration.penaltyShootout.totalGoals || this.configuration.penaltyShootout.totalGoals !== goalsCount) {
-      this.configuration.penaltyShootout.totalGoals = goalsCount
-    }
-  }
   
   next()
 })

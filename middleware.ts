@@ -26,13 +26,16 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Case B: /play/:gameId/welcome?ref=landing => redirect to landing
+  // Case B: /play/:gameId/welcome => redirect to landing (always)
   if (step === 'welcome') {
-    const ref = searchParams.get('ref')
-    if (ref === 'landing') {
-      const url = new URL(`${origin}/play/${gameId}/landing`)
-      return NextResponse.redirect(url)
-    }
+    const url = new URL(`${origin}/play/${gameId}/landing`)
+    return NextResponse.redirect(url)
+  }
+
+  // Case C: /play/:gameId/rules => redirect to game (always)
+  if (step === 'rules') {
+    const url = new URL(`${origin}/play/${gameId}/game`)
+    return NextResponse.redirect(url)
   }
 
   // Otherwise allow request to continue

@@ -53,7 +53,10 @@ export default function GameClientClean({ game, cfg }: GameClientProps) {
           if (ref) params.set('ref', ref)
           params.set('starsFound', String(r.correct))
           params.set('totalStars', String(r.rounds))
-          window.location.href = `/play/${cfg.meta.gameId}/result?${params.toString()}`
+          const pages = Array.isArray(game.configuration?.pages) ? (game.configuration.pages as any[]) : []
+          const hasResult = pages.some(p => typeof p?.name === 'string' && p.name.trim().toUpperCase() === 'RESULT')
+          const target = hasResult ? 'result' : 'landing'
+          window.location.href = `/play/${cfg.meta.gameId}/${target}?${params.toString()}`
         }
       }}
     />

@@ -133,14 +133,7 @@ export async function PUT(
       // Process configuration based on game type for consistency
       let processedConfiguration = { ...configuration }
       
-      // For STARS_HEXA games, ensure totalStars is set correctly
-      if (type === 'STARS_HEXA' && configuration.starsHexa) {
-        const starsCount = configuration.starsHexa.hexagons?.filter((h: any) => h.hasHiddenStar).length || 0
-        processedConfiguration.starsHexa = {
-          ...configuration.starsHexa,
-          totalStars: starsCount
-        }
-      }
+      // Legacy game-specific adjustments removed — single-game system
       
       // Ensure maxAttemptsPerUser is preserved or set
       if (maxAttemptsPerUser !== undefined) {

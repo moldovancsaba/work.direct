@@ -157,7 +157,7 @@ const def: any = {
     }
 
 if (false) {
-      // WHAT/WHY: Safe access to defaults similar to FIND_RED case above.
+      // WHAT/WHY: Safe access to defaults (defensive coding).
 const def: any = {
         segments: [],
         spins: 8,
@@ -221,7 +221,7 @@ if (false) {
       }
     }
 
-    // QUIZZ defaults and validation
+    // QUIZZZ defaults and validation
 if (false) {
       const cfg = processedConfiguration.quizz || {}
       const rounds = Number(cfg.rounds ?? 5)

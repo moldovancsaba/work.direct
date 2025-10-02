@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { connectDB } from '../../lib/mongodb'
-import SystemSettingsModel, { SystemSettings } from '../../lib/models/SystemSettings 2'
+import SystemSettingsModel, { SystemSettings } from '../../lib/models/SystemSettings'
 import { ApiResponse } from '../../types'
 
 /**

@@ -1,5 +1,5 @@
 // Purpose: In-memory module registry for PlayMass game modules.
-// What: Allows modules (e.g., STARS_HEXA, PENALTY_SHOOTOUT) to register
+// What: Allows modules to register
 //       default configuration and (optionally) UI renderers.
 // Why: Establishes a plug-in architecture so games can be added/refactored
 //      without touching the core play flow logic.
