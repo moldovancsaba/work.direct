@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { connectDB } from '../../lib/mongodb'
 import SystemSettingsModel, { SystemSettings } from '../../lib/models/SystemSettings'
 import { ApiResponse } from '../../types'
+import { logger } from '../../lib/logger'
 
 /**
  * Settings API Route Handler
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     })
 
   } catch (error) {
-    console.error('Get settings error:', error)
+    logger.error('Get settings error', { error })
     
     return NextResponse.json({
       success: false,
@@ -130,7 +131,7 @@ export async function PUT(request: NextRequest): Promise<NextResponse<ApiRespons
     })
 
   } catch (error) {
-    console.error('Update settings error:', error)
+    logger.error('Update settings error', { error })
     
     // Handle validation errors from the model
     if (error instanceof Error && error.message.includes('Settings validation failed')) {
@@ -187,7 +188,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     })
 
   } catch (error) {
-    console.error('Reset settings error:', error)
+    logger.error('Reset settings error', { error })
     
     return NextResponse.json({
       success: false,

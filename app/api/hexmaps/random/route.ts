@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { connectDB } from '@/lib/mongodb'
 import HexMapModel from '@/lib/models/HexMap'
+import { logger } from '@/lib/logger'
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest) {
     if (!map) return NextResponse.json({ error: 'No maps available' }, { status: 404 })
     return NextResponse.json({ success: true, data: { name: map.name, coords: map.coords, radius: map.radius, backgroundImageUrl: map.backgroundImageUrl || null } })
   } catch (err) {
-    console.error('GET /api/hexmaps/random error', err)
+    logger.error('GET /api/hexmaps/random error', { error: err })
     return NextResponse.json({ error: 'Failed to fetch random map' }, { status: 500 })
   }
 }

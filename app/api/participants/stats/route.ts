@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { connectDB } from '../../../lib/mongodb'
 import ParticipantModel from '../../../lib/models/Participant'
 import { ApiResponse } from '../../../types'
+import { logger } from '../../../lib/logger'
 
 /**
  * Participants Stats API Route Handler
@@ -24,7 +25,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     })
     
   } catch (error) {
-    console.error('Get participant stats error:', error)
+    logger.error('Get participant stats error', { error })
     
     return NextResponse.json({
       success: false,
