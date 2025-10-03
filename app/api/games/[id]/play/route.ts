@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { logger } from '../../../../lib/logger'
 import { validateBody } from '../../../../lib/validation/middleware'
 import { gamePlaySchema } from '../../../../lib/validation/schemas'
+import { checkGameplayRateLimit, getClientIdentifier, createRateLimitResponse } from '../../../../lib/rateLimit'
 
 /**
  * Game Play API Route Handler
@@ -31,6 +32,31 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<ApiResponse<PlayGameResponse>>> {
   try {
+    // What: Rate limiting check for gameplay endpoint
+    // Why: Prevents spam and cheating attempts (20 requests/minute per IP)
+    const clientId = getClientIdentifier(request.headers)
+    const rateLimitResult = await checkGameplayRateLimit(clientId)
+    
+    if (!rateLimitResult.success) {
+      logger.warn('Game play rate limit exceeded', {
+        ip: clientId,
+        endpoint: request.nextUrl.pathname,
+        retryAfter: rateLimitResult.retryAfter
+      })
+      
+      return NextResponse.json(
+        createRateLimitResponse(rateLimitResult.retryAfter || 60),
+        { 
+          status: 429,
+          headers: {
+            'Retry-After': String(rateLimitResult.retryAfter || 60),
+            'X-RateLimit-Limit': '20',
+            'X-RateLimit-Remaining': '0'
+          }
+        }
+      ) as NextResponse<ApiResponse<PlayGameResponse>>
+    }
+    
     // Connect to database
     await connectDB()
     
