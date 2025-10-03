@@ -23,14 +23,36 @@ const authLimiter = new RateLimiterMemory({
 })
 
 /**
- * General API Rate Limiter (for future use)
- * What: Limits general API calls to 100 per minute per IP
- * Why: Prevents API abuse and ensures fair resource distribution
+ * Gameplay Rate Limiter
+ * What: Limits gameplay actions to 20 per minute per IP
+ * Why: Prevents spam and cheating while allowing normal gameplay
  */
-const apiLimiter = new RateLimiterMemory({
-  points: 100,
-  duration: 60,
+const gameplayLimiter = new RateLimiterMemory({
+  points: 20, // 20 requests
+  duration: 60, // Per 60 seconds (1 minute)
+  blockDuration: 60 * 5, // Block for 5 minutes after exceeding limit
+})
+
+/**
+ * Public API Rate Limiter
+ * What: Limits public API calls to 60 per minute per IP
+ * Why: Prevents API abuse while allowing reasonable browsing
+ */
+const publicLimiter = new RateLimiterMemory({
+  points: 60, // 60 requests
+  duration: 60, // Per 60 seconds (1 minute)
   blockDuration: 60, // Block for 1 minute
+})
+
+/**
+ * Admin Operations Rate Limiter
+ * What: Limits admin operations to 30 per minute per IP
+ * Why: Protects admin endpoints from abuse while allowing normal admin work
+ */
+const adminLimiter = new RateLimiterMemory({
+  points: 30, // 30 requests
+  duration: 60, // Per 60 seconds (1 minute)
+  blockDuration: 60 * 10, // Block for 10 minutes after exceeding limit
 })
 
 /**
@@ -71,22 +93,84 @@ export async function checkAuthRateLimit(identifier: string): Promise<{
 }
 
 /**
- * Rate limit check for general API endpoints
+ * Rate limit check for gameplay endpoints
  * 
- * What: Checks if an IP has exceeded rate limits for API calls
- * Why: Protects general API endpoints from abuse
+ * What: Checks if an IP has exceeded rate limits for game play actions
+ * Why: Protects game endpoints from spam while allowing normal gameplay
  * 
  * @param identifier - Typically the IP address or user identifier
  * @returns Object with success status and optional retry info
  */
-export async function checkApiRateLimit(identifier: string): Promise<{
+export async function checkGameplayRateLimit(identifier: string): Promise<{
   success: boolean
   remainingPoints?: number
   msBeforeNext?: number
   retryAfter?: number
 }> {
   try {
-    const rateLimitRes = await apiLimiter.consume(identifier, 1)
+    const rateLimitRes = await gameplayLimiter.consume(identifier, 1)
+    
+    return {
+      success: true,
+      remainingPoints: rateLimitRes.remainingPoints,
+      msBeforeNext: rateLimitRes.msBeforeNext,
+    }
+  } catch (rateLimiterRes: any) {
+    return {
+      success: false,
+      retryAfter: Math.round(rateLimiterRes.msBeforeNext / 1000) || 60,
+    }
+  }
+}
+
+/**
+ * Rate limit check for public API endpoints
+ * 
+ * What: Checks if an IP has exceeded rate limits for public API calls
+ * Why: Protects public endpoints from abuse
+ * 
+ * @param identifier - Typically the IP address or user identifier
+ * @returns Object with success status and optional retry info
+ */
+export async function checkPublicRateLimit(identifier: string): Promise<{
+  success: boolean
+  remainingPoints?: number
+  msBeforeNext?: number
+  retryAfter?: number
+}> {
+  try {
+    const rateLimitRes = await publicLimiter.consume(identifier, 1)
+    
+    return {
+      success: true,
+      remainingPoints: rateLimitRes.remainingPoints,
+      msBeforeNext: rateLimitRes.msBeforeNext,
+    }
+  } catch (rateLimiterRes: any) {
+    return {
+      success: false,
+      retryAfter: Math.round(rateLimiterRes.msBeforeNext / 1000) || 60,
+    }
+  }
+}
+
+/**
+ * Rate limit check for admin operation endpoints
+ * 
+ * What: Checks if an IP has exceeded rate limits for admin operations
+ * Why: Protects admin endpoints from abuse
+ * 
+ * @param identifier - Typically the IP address or user identifier
+ * @returns Object with success status and optional retry info
+ */
+export async function checkAdminRateLimit(identifier: string): Promise<{
+  success: boolean
+  remainingPoints?: number
+  msBeforeNext?: number
+  retryAfter?: number
+}> {
+  try {
+    const rateLimitRes = await adminLimiter.consume(identifier, 1)
     
     return {
       success: true,

@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { logger } from '../../lib/logger'
 import { validateQuery } from '../../lib/validation/middleware'
 import { gameQuerySchema } from '../../lib/validation/schemas'
+import { checkPublicRateLimit, getClientIdentifier, createRateLimitResponse } from '../../lib/rateLimit'
 
 /**
  * Games API Route Handler
@@ -109,6 +110,23 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 
 export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse>> {
   try {
+    // What: Rate limiting check for public games list endpoint
+    // Why: Prevents API abuse (60 requests/minute per IP)
+    const clientId = getClientIdentifier(request.headers)
+    const rateLimitResult = await checkPublicRateLimit(clientId)
+    
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        createRateLimitResponse(rateLimitResult.retryAfter || 60),
+        { 
+          status: 429,
+          headers: {
+            'Retry-After': String(rateLimitResult.retryAfter || 60)
+          }
+        }
+      )
+    }
+    
     // Connect to database
     await connectDB()
     

@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { connectDB } from '../../lib/mongodb'
 import ParticipantModel from '../../lib/models/Participant'
 import { ApiResponse } from '../../types'
-import { v4 as uuidv4 } from 'uuid'
 import { logger } from '../../lib/logger'
 import { validateBody, validateQuery } from '../../lib/validation/middleware'
 import { participantCreateSchema, participantQuerySchema, participantDeleteSchema } from '../../lib/validation/schemas'
+import { checkGameplayRateLimit, getClientIdentifier, createRateLimitResponse } from '../../lib/rateLimit'
+import { v4 as uuidv4 } from 'uuid'
 
 /**
  * Participants API Route Handler
@@ -19,6 +20,29 @@ import { participantCreateSchema, participantQuerySchema, participantDeleteSchem
 
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse>> {
   try {
+    // What: Rate limiting check for participant registration
+    // Why: Prevents spam registrations (20 requests/minute per IP)
+    const clientId = getClientIdentifier(request.headers)
+    const rateLimitResult = await checkGameplayRateLimit(clientId)
+    
+    if (!rateLimitResult.success) {
+      logger.warn('Participant registration rate limit exceeded', {
+        ip: clientId,
+        endpoint: request.nextUrl.pathname,
+        retryAfter: rateLimitResult.retryAfter
+      })
+      
+      return NextResponse.json(
+        createRateLimitResponse(rateLimitResult.retryAfter || 60),
+        { 
+          status: 429,
+          headers: {
+            'Retry-After': String(rateLimitResult.retryAfter || 60)
+          }
+        }
+      )
+    }
+    
     // Connect to database
     await connectDB()
     

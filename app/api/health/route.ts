@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { checkDBConnection, connectDB } from '../../lib/mongodb'
 import { ApiResponse } from '../../types'
 import { logger } from '../../lib/logger'
+import { checkPublicRateLimit, getClientIdentifier, createRateLimitResponse } from '../../lib/rateLimit'
 
 /**
  * Health Check API Endpoint
@@ -20,6 +21,23 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
   const startTime = Date.now()
   
   try {
+    // What: Rate limiting check for health endpoint
+    // Why: Prevents DDoS via health checks (60 requests/minute per IP)
+    const clientId = getClientIdentifier(request.headers)
+    const rateLimitResult = await checkPublicRateLimit(clientId)
+    
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        createRateLimitResponse(rateLimitResult.retryAfter || 60),
+        { 
+          status: 429,
+          headers: {
+            'Retry-After': String(rateLimitResult.retryAfter || 60)
+          }
+        }
+      )
+    }
+    
     // Initialize response structure with basic system information
     const healthData = {
       status: 'healthy',
