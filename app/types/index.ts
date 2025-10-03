@@ -200,7 +200,9 @@ export interface GameDescriptionProps {
 // Game Types and Interfaces
 // These define the structure for different game types and their configurations
 
-export type GameType = 'QUIZZZ';
+// WHAT: Union type defining all supported game types in PlayMass
+// WHY: Type safety for game creation, editing, and runtime rendering
+export type GameType = 'QUIZZZ' | 'WHACKPOP';
 
 // Lucky Wheel segment type used by the wheel component
 // What: Defines a segment with label and probability for spin logic
@@ -237,6 +239,50 @@ export interface QuizzzConfiguration {
     wrongAnswerEmoji?: string
   }
   overlayBg?: string // default '#00000044'
+}
+
+// WHACKPOP Configuration (Whack-a-Mole style pop-up game)
+// WHAT: Configuration for grid-based target-clicking game with progressive difficulty
+// WHY: Enables Admin UI customization, DB persistence, and consistent gameplay across sessions
+export interface WhackPopConfiguration {
+  // Map integration (reuses existing hex/square map system)
+  mapType: GridMapType // 'hex' | 'square'
+  selectedMaps?: { type: GridMapType; name: string }[] // Preferred: selected map list (reuses QUIZZZ pattern)
+  mapName?: string // Legacy fallback map name
+  
+  // Core gameplay timing
+  gameDuration: number // Total game time in seconds (30-180)
+  rounds: number // Number of difficulty tiers (1-5)
+  targetScore: number // Score threshold to win (>= 0)
+  
+  // Spawn mechanics (dynamic difficulty progression)
+  initialSpawnInterval: number // Milliseconds between spawns at start (500-3000)
+  minSpawnInterval: number // Minimum interval at max difficulty (200-1000)
+  simultaneousTargets: number // Max targets visible at once (1-5)
+  
+  // Target visibility timing
+  initialDisplayDuration: number // Milliseconds target stays visible initially (500-3000)
+  minDisplayDuration: number // Minimum duration at max difficulty (200-1000)
+  
+  // Scoring system
+  hitPoints: number // Base points per successful hit (1-1000)
+  missPenalty: number // Points deducted on miss/timeout (0-500)
+  comboMultiplier: number // Multiplier increase per consecutive hit (1.0-5.0)
+  
+  // Theming and visual assets
+  theme: 'classic' | 'neon' | 'arcade' | 'pixel' // Visual theme preset
+  targetImages?: string[] // CDN/relative URLs for target images (preferred)
+  targetEmoji?: string[] // Fallback emoji list if no images provided
+  hitEffect: 'burst' | 'sparkle' | 'shockwave' | 'confetti' // Hit animation effect
+  
+  // Color customization (inline theming)
+  colors?: {
+    background?: string // Game board background color
+    inactiveCell?: string // Empty cell color
+    activeTarget?: string // Active target highlight color
+    hitFeedback?: string // Hit animation color
+    missFeedback?: string // Miss animation color
+  }
 }
 
 export interface WheelSegment {
@@ -785,6 +831,11 @@ export interface GameConfiguration {
 
   // Quizz configuration (hexamap-based quiz)
   quizz?: QuizzConfiguration
+  
+  // WhackPop configuration (whack-a-mole style pop-up game)
+  // WHAT: Optional WHACKPOP game configuration
+  // WHY: Enables WHACKPOP game type with map-based target spawning and scoring
+  whackPop?: WhackPopConfiguration
 
   // Structured pages editor configuration
   pages?: PageDef[]

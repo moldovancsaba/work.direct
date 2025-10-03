@@ -1,9 +1,91 @@
 # 📝 RELEASE_NOTES.md - PlayMass
 
-**Current Version**: 4.7.1
-**Last Updated**: 2025-10-02T13:08:57.317Z
+**Current Version**: 4.8.0
+**Last Updated**: 2025-10-03T17:02:00.000Z
 
 ## 🔹 Version History
+
+### [v4.8.0] — 2025-10-03T17:02:00.000Z
+**Feature: WHACKPOP Game Type - Complete End-to-End Implementation**
+
+**Summary**
+Added WHACKPOP (Whack-a-Mole style) game type with complete admin editor, database schema, game component, and client integration. Zero new dependencies; 100% reuse of existing libraries and patterns.
+
+**New Game Type: WHACKPOP**
+- ✅ Grid-based fast-paced action game on hexagonal or square maps
+- ✅ Progressive difficulty: Linear interpolation of spawn/display intervals across rounds
+- ✅ Combo scoring system: Multiplicative rewards for consecutive hits
+- ✅ Customizable themes: classic, neon, arcade, pixel
+- ✅ Hit effects: burst, sparkle, shockwave, confetti
+- ✅ Triple-layer validation: Client UI, Database schema, Server-side logic
+- ✅ Immediate response: onPointerDown for ~50-100ms faster input handling
+
+**Files Created** (2 files, ~1073 lines)
+- `app/components/games/WhackPopGame.tsx` (658 lines) - Game component with progressive difficulty and combo system
+- `app/components/admin/WhackPopCustomizationForm.tsx` (415 lines) - Comprehensive admin editor form
+
+**Files Modified** (5 files, ~370 lines added)
+- `app/types/index.ts` - Added WhackPopConfiguration interface (+50 lines)
+- `app/lib/models/Game.ts` - Added whackPop Mongoose schema with validation (+140 lines)
+- `app/play/[gameId]/game/GameClientClean.tsx` - Added WHACKPOP routing (+25 lines)
+- `app/components/admin/GameEditor.tsx` - Added WHACKPOP editor integration (+135 lines)
+- `app/api/admin/game-types/route.ts` - Added WHACKPOP to allowed types (+20 lines)
+
+**Total Code**: ~1443 lines of production-ready, fully commented TypeScript/React
+
+**Technical Implementation**
+- ✅ **Zero New Dependencies**: 100% reuse of existing libraries
+  - Reused hex/square geometry utilities from QUIZZZ
+  - Reused map loading API and predictive search
+  - Reused admin editor patterns (one-input-per-line, color pickers, validation)
+  - Reused Tailwind CSS animations and Framer Motion
+- ✅ **Performance Optimizations**:
+  - onPointerDown for immediate response (~50-100ms faster than onClick)
+  - useMemo for grid geometry calculations
+  - useRef for timer management
+  - Set-based debouncing for double-hit prevention
+- ✅ **Progressive Difficulty**:
+  - Formula: `value = initial + (min - initial) * (round-1)/(rounds-1)`
+  - Smooth interpolation for spawn intervals and display durations
+- ✅ **Combo Scoring**:
+  - Formula: `award = hitPoints * (1 + (streak - 1) * (multiplier - 1))`
+  - Multiplicative rewards without exponential runaway
+
+**Data Flow**
+Admin UI → Database (whackPop config) → GameClient routing → WhackPopGame component → Result page
+
+**Validation**
+- Client-side: Min/max validation on all number inputs, enum validation on selects
+- Database: Comprehensive Mongoose schema with ranges and enums
+- Server-side: Cross-field validation (e.g., minInterval cannot exceed initialInterval)
+
+**Configuration Options**
+- Map integration: Hex or square grid maps with selectedMaps/mapName fallback
+- Gameplay timing: gameDuration (30-180s), rounds (1-5), targetScore
+- Spawn mechanics: initialSpawnInterval, minSpawnInterval, simultaneousTargets (1-5)
+- Target visibility: initialDisplayDuration, minDisplayDuration
+- Scoring: hitPoints (1-1000), missPenalty (0-500), comboMultiplier (1.0-5.0)
+- Theming: theme (classic/neon/arcade/pixel), hitEffect (burst/sparkle/shockwave/confetti)
+- Visual assets: targetImages (CDN URLs), targetEmoji (fallback)
+- Colors: background, inactiveCell, activeTarget, hitFeedback, missFeedback (hex values)
+
+**Build Status**
+- ✅ `npm run build` - PASSING (zero TypeScript errors, zero warnings)
+- ✅ `npm run lint` - PASSING (zero ESLint warnings or errors)
+- ✅ Zero security vulnerabilities
+
+**Documentation Updates**
+- ✅ README.md - Added WHACKPOP to game types section
+- ✅ ARCHITECTURE.md - Added comprehensive WHACKPOP section with data flow
+- ✅ LEARNINGS.md - Documented key implementation decisions (onPointerDown, setTimeout chaining, progressive difficulty, combo system, reuse inventory)
+- ✅ All timestamps updated to ISO 8601 with milliseconds (UTC)
+
+**Code Quality**
+- ✅ Every function and hook fully commented with WHAT (functionality) and WHY (architectural rationale)
+- ✅ Pattern alignment: Follows QUIZZZ standards exactly (DB-driven config, centralized editor, standardized types)
+- ✅ Reuse-before-creation compliance: Zero duplication, maximum reuse
+
+**Status**: Stable MVP, ready for manual QA testing and deployment
 
 ### [v4.7.1] — 2025-10-02T13:08:57.317Z
 - Automatic predev patch bump

@@ -158,8 +158,8 @@ const gameSchema = new Schema<Game>({
     type: String,
     required: [true, 'Game type is required'],
     enum: {
-      values: ['QUIZZZ'] as GameType[],
-      message: 'Game type must be QUIZZZ'
+      values: ['QUIZZZ', 'WHACKPOP'] as GameType[],
+      message: 'Game type must be one of: QUIZZZ, WHACKPOP'
     }
   },
   
@@ -420,6 +420,148 @@ const gameSchema = new Schema<Game>({
       cardCoverFill: { type: Boolean, default: true },
       cardColors: { type: Schema.Types.Mixed, default: {} },
       overlayBg: { type: String, default: '#00000044' }
+    },
+
+    // WHAT: WhackPop (Whack-a-Mole style) game configuration
+    // WHY: Persists grid-based target-clicking game settings with progressive difficulty
+    whackPop: {
+      // Map integration (reuses existing hex/square map system)
+      mapType: { 
+        type: String, 
+        enum: ['hex', 'square'], 
+        default: 'hex' 
+      },
+      mapName: { 
+        type: String, 
+        default: '' 
+      },
+      selectedMaps: { 
+        type: [{ type: new Schema({ type: { type: String }, name: { type: String } }, { _id: false }) }], 
+        default: [] 
+      },
+      
+      // Core gameplay timing
+      gameDuration: { 
+        type: Number, 
+        min: [30, 'Game duration must be at least 30 seconds'], 
+        max: [180, 'Game duration cannot exceed 180 seconds'], 
+        default: 60 
+      },
+      rounds: { 
+        type: Number, 
+        min: [1, 'Must have at least 1 round'], 
+        max: [5, 'Cannot exceed 5 rounds'], 
+        default: 3 
+      },
+      targetScore: { 
+        type: Number, 
+        min: [0, 'Target score cannot be negative'], 
+        max: [1000000, 'Target score too high'], 
+        default: 1000 
+      },
+      
+      // Spawn mechanics (dynamic difficulty progression)
+      initialSpawnInterval: { 
+        type: Number, 
+        min: [200, 'Initial spawn interval must be at least 200ms'], 
+        max: [5000, 'Initial spawn interval cannot exceed 5000ms'], 
+        default: 1200 
+      },
+      minSpawnInterval: { 
+        type: Number, 
+        min: [100, 'Min spawn interval must be at least 100ms'], 
+        max: [3000, 'Min spawn interval cannot exceed 3000ms'], 
+        default: 400 
+      },
+      simultaneousTargets: { 
+        type: Number, 
+        min: [1, 'Must have at least 1 simultaneous target'], 
+        max: [5, 'Cannot exceed 5 simultaneous targets'], 
+        default: 3 
+      },
+      
+      // Target visibility timing
+      initialDisplayDuration: { 
+        type: Number, 
+        min: [200, 'Initial display duration must be at least 200ms'], 
+        max: [5000, 'Initial display duration cannot exceed 5000ms'], 
+        default: 1000 
+      },
+      minDisplayDuration: { 
+        type: Number, 
+        min: [100, 'Min display duration must be at least 100ms'], 
+        max: [3000, 'Min display duration cannot exceed 3000ms'], 
+        default: 400 
+      },
+      
+      // Scoring system
+      hitPoints: { 
+        type: Number, 
+        min: [1, 'Hit points must be at least 1'], 
+        max: [1000, 'Hit points cannot exceed 1000'], 
+        default: 100 
+      },
+      missPenalty: { 
+        type: Number, 
+        min: [0, 'Miss penalty cannot be negative'], 
+        max: [500, 'Miss penalty cannot exceed 500'], 
+        default: 0 
+      },
+      comboMultiplier: { 
+        type: Number, 
+        min: [1.0, 'Combo multiplier must be at least 1.0'], 
+        max: [5.0, 'Combo multiplier cannot exceed 5.0'], 
+        default: 1.25 
+      },
+      
+      // Theming and visual assets
+      theme: { 
+        type: String, 
+        enum: ['classic', 'neon', 'arcade', 'pixel'], 
+        default: 'arcade' 
+      },
+      targetImages: { 
+        type: [String], 
+        default: [] 
+      },
+      targetEmoji: { 
+        type: [String], 
+        default: ['🎯', '🟢', '💥'] 
+      },
+      hitEffect: { 
+        type: String, 
+        enum: ['burst', 'sparkle', 'shockwave', 'confetti'], 
+        default: 'burst' 
+      },
+      
+      // Color customization (inline theming)
+      colors: {
+        background: { 
+          type: String, 
+          default: '#0B0F19',
+          match: [/^#[0-9A-Fa-f]{6}$/, 'Background must be a valid hex color']
+        },
+        inactiveCell: { 
+          type: String, 
+          default: '#1F2937',
+          match: [/^#[0-9A-Fa-f]{6}$/, 'Inactive cell color must be a valid hex color']
+        },
+        activeTarget: { 
+          type: String, 
+          default: '#22C55E',
+          match: [/^#[0-9A-Fa-f]{6}$/, 'Active target color must be a valid hex color']
+        },
+        hitFeedback: { 
+          type: String, 
+          default: '#F59E0B',
+          match: [/^#[0-9A-Fa-f]{6}$/, 'Hit feedback color must be a valid hex color']
+        },
+        missFeedback: { 
+          type: String, 
+          default: '#EF4444',
+          match: [/^#[0-9A-Fa-f]{6}$/, 'Miss feedback color must be a valid hex color']
+        }
+      }
     },
 
     findRed: {

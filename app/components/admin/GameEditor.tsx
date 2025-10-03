@@ -6,8 +6,9 @@ import Link from 'next/link'
 import GeneralCustomizationForm from './GeneralCustomizationForm'
 import PlatformSettingsForm from './PlatformSettingsForm'
 import QuizzzCustomizationForm from './QuizzzCustomizationForm'
+import WhackPopCustomizationForm from './WhackPopCustomizationForm'
 import PageEditor from './PageEditor'
-import { GameType, QuizzzConfiguration, PageDef } from '../../types'
+import { GameType, QuizzzConfiguration, WhackPopConfiguration, PageDef } from '../../types'
 import { v4 as uuidv4 } from 'uuid'
 
 interface HexagonCard {
@@ -106,6 +107,37 @@ const [gameType, setGameType] = useState<GameType>(initialGameType || 'QUIZZZ')
     cardCoverFill: true,
     cardColors: {},
     overlayBg: '#00000044'
+  })
+
+// WHACKPOP configuration
+// WHAT: State for WHACKPOP game settings (Whack-a-Mole style)
+// WHY: Separate config following QUIZZZ pattern for maintainability
+  const [whackPopConfig, setWhackPopConfig] = useState<Partial<WhackPopConfiguration>>({
+    mapType: 'hex',
+    mapName: '',
+    selectedMaps: [],
+    gameDuration: 60,
+    rounds: 3,
+    targetScore: 1000,
+    initialSpawnInterval: 1200,
+    minSpawnInterval: 400,
+    simultaneousTargets: 3,
+    initialDisplayDuration: 1000,
+    minDisplayDuration: 400,
+    hitPoints: 100,
+    missPenalty: 0,
+    comboMultiplier: 1.25,
+    theme: 'arcade',
+    targetEmoji: ['🎯', '🟢', '💥'],
+    targetImages: [],
+    hitEffect: 'burst',
+    colors: {
+      background: '#0B0F19',
+      inactiveCell: '#1F2937',
+      activeTarget: '#22C55E',
+      hitFeedback: '#F59E0B',
+      missFeedback: '#EF4444'
+    }
   })
 
 // Platform Settings (DB-driven defaults; no baked-in strings)
@@ -323,6 +355,67 @@ setPlatformStyles(plat.styles || {})
             } as any
           }
 
+          // WHAT: Load WHACKPOP configuration if game type is WHACKPOP
+          // WHY: Populate editor form with existing game data for editing
+          if (game.type === 'WHACKPOP' && game.configuration?.whackPop) {
+            const wp = game.configuration.whackPop
+            setWhackPopConfig({
+              mapType: wp.mapType || 'hex',
+              mapName: wp.mapName || '',
+              selectedMaps: Array.isArray(wp.selectedMaps) ? wp.selectedMaps : [],
+              gameDuration: Number(wp.gameDuration || 60),
+              rounds: Number(wp.rounds || 3),
+              targetScore: Number(wp.targetScore || 1000),
+              initialSpawnInterval: Number(wp.initialSpawnInterval || 1200),
+              minSpawnInterval: Number(wp.minSpawnInterval || 400),
+              simultaneousTargets: Number(wp.simultaneousTargets || 3),
+              initialDisplayDuration: Number(wp.initialDisplayDuration || 1000),
+              minDisplayDuration: Number(wp.minDisplayDuration || 400),
+              hitPoints: Number(wp.hitPoints || 100),
+              missPenalty: Number(wp.missPenalty || 0),
+              comboMultiplier: Number(wp.comboMultiplier || 1.25),
+              theme: wp.theme || 'arcade',
+              targetEmoji: Array.isArray(wp.targetEmoji) ? wp.targetEmoji : ['🎯', '🟢', '💥'],
+              targetImages: Array.isArray(wp.targetImages) ? wp.targetImages : [],
+              hitEffect: wp.hitEffect || 'burst',
+              colors: wp.colors || {
+                background: '#0B0F19',
+                inactiveCell: '#1F2937',
+                activeTarget: '#22C55E',
+                hitFeedback: '#F59E0B',
+                missFeedback: '#EF4444'
+              }
+            })
+            // Keep payloadRef in sync for submit
+            ;(payloadRef.current as any).whackPop = {
+              mapType: wp.mapType || 'hex',
+              mapName: wp.mapName || '',
+              selectedMaps: Array.isArray(wp.selectedMaps) ? wp.selectedMaps : [],
+              gameDuration: Number(wp.gameDuration || 60),
+              rounds: Number(wp.rounds || 3),
+              targetScore: Number(wp.targetScore || 1000),
+              initialSpawnInterval: Number(wp.initialSpawnInterval || 1200),
+              minSpawnInterval: Number(wp.minSpawnInterval || 400),
+              simultaneousTargets: Number(wp.simultaneousTargets || 3),
+              initialDisplayDuration: Number(wp.initialDisplayDuration || 1000),
+              minDisplayDuration: Number(wp.minDisplayDuration || 400),
+              hitPoints: Number(wp.hitPoints || 100),
+              missPenalty: Number(wp.missPenalty || 0),
+              comboMultiplier: Number(wp.comboMultiplier || 1.25),
+              theme: wp.theme || 'arcade',
+              targetEmoji: Array.isArray(wp.targetEmoji) ? wp.targetEmoji : ['🎯', '🟢', '💥'],
+              targetImages: Array.isArray(wp.targetImages) ? wp.targetImages : [],
+              hitEffect: wp.hitEffect || 'burst',
+              colors: wp.colors || {
+                background: '#0B0F19',
+                inactiveCell: '#1F2937',
+                activeTarget: '#22C55E',
+                hitFeedback: '#F59E0B',
+                missFeedback: '#EF4444'
+              }
+            } as any
+          }
+
 // Legacy hex editor branch removed
           // Rewards
           if (Array.isArray(game.rewards)) {
@@ -421,6 +514,57 @@ setPlatformStyles(plat.styles || {})
           cardCoverFill: qc.cardCoverFill !== false,
           cardColors: qc.cardColors || {},
           overlayBg: qc.overlayBg || '#00000044'
+        } as any
+      }
+
+      // WHAT: Build payload for WHACKPOP game type
+      // WHY: Persist WHACKPOP configuration to database with validation
+      if (gameType === 'WHACKPOP') {
+        const wc = (whackPopConfig || {}) as any
+        const gameDuration = Number(wc.gameDuration || 60)
+        const rounds = Number(wc.rounds || 3)
+        const targetScore = Number(wc.targetScore || 1000)
+        const initialSpawnInterval = Number(wc.initialSpawnInterval || 1200)
+        const minSpawnInterval = Number(wc.minSpawnInterval || 400)
+        const simultaneousTargets = Number(wc.simultaneousTargets || 3)
+        const initialDisplayDuration = Number(wc.initialDisplayDuration || 1000)
+        const minDisplayDuration = Number(wc.minDisplayDuration || 400)
+        const hitPoints = Number(wc.hitPoints || 100)
+        const missPenalty = Number(wc.missPenalty || 0)
+        const comboMultiplier = Number(wc.comboMultiplier || 1.25)
+        
+        // Validate constraints
+        if (gameDuration < 30 || gameDuration > 180) throw new Error('Game duration must be between 30 and 180 seconds')
+        if (rounds < 1 || rounds > 5) throw new Error('Rounds must be between 1 and 5')
+        if (minSpawnInterval > initialSpawnInterval) throw new Error('Min spawn interval cannot exceed initial spawn interval')
+        if (minDisplayDuration > initialDisplayDuration) throw new Error('Min display duration cannot exceed initial display duration')
+        
+        payload.configuration.whackPop = {
+          mapType: wc.mapType || 'hex',
+          mapName: wc.mapName || '',
+          selectedMaps: Array.isArray(wc.selectedMaps) ? wc.selectedMaps : [],
+          gameDuration,
+          rounds,
+          targetScore,
+          initialSpawnInterval,
+          minSpawnInterval,
+          simultaneousTargets,
+          initialDisplayDuration,
+          minDisplayDuration,
+          hitPoints,
+          missPenalty,
+          comboMultiplier,
+          theme: wc.theme || 'arcade',
+          targetEmoji: Array.isArray(wc.targetEmoji) && wc.targetEmoji.length > 0 ? wc.targetEmoji : ['🎯', '🟢', '💥'],
+          targetImages: Array.isArray(wc.targetImages) ? wc.targetImages : [],
+          hitEffect: wc.hitEffect || 'burst',
+          colors: wc.colors || {
+            background: '#0B0F19',
+            inactiveCell: '#1F2937',
+            activeTarget: '#22C55E',
+            hitFeedback: '#F59E0B',
+            missFeedback: '#EF4444'
+          }
         } as any
       }
 
@@ -727,6 +871,22 @@ setPlatformStyles(plat.styles || {})
                     onChange={(cfg) => {
                       setQuizzzConfig(cfg)
                       ;(payloadRef.current as any).quizzz = cfg
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Edit Game — WHACKPOP editor in the right column */}
+              {/* WHAT: WHACKPOP game customization form section */}
+              {/* WHY: Provides comprehensive UI for WhackPop settings following QUIZZZ pattern */}
+              {gameType === 'WHACKPOP' && (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Edit Game</h2>
+                  <WhackPopCustomizationForm
+                    config={whackPopConfig as WhackPopConfiguration}
+                    onChange={(cfg) => {
+                      setWhackPopConfig(cfg)
+                      ;(payloadRef.current as any).whackPop = cfg
                     }}
                   />
                 </div>
