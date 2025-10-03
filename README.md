@@ -1,11 +1,12 @@
 # PlayMass - Interactive Game Platform
 
-Current Version: 4.7.1
-Last Updated: 2025-10-03T09:27:00.000Z
+Current Version: 4.8.0
+Last Updated: 2025-10-03T17:02:00.000Z
 
 ## 🎮 Features
 
-- **Board Quiz (QUIZZZ)**: Single standardized game type with DB-driven configuration (maps, questions, styles, legal, CTAs)
+- **Board Quiz (QUIZZZ)**: Standardized board-based quiz game with DB-driven configuration (maps, questions, styles, legal, CTAs)
+- **WHACKPOP**: Grid-based Whack-a-Mole game on map cells with progressive difficulty, combo scoring system, and customizable theming
 - **Rewards Management**: Complete reward system with points, coupons, physical prizes, and custom rewards
 - **Participant Management**: Track players across sessions
 - **Analytics & Tracking**: Attempt-level session analytics with validated results
@@ -140,10 +141,23 @@ app/
 
 ## 🎲 Game Types
 
-Only one game type is currently supported: **QUIZZZ (Board Quiz)**.
+Two game types are currently supported:
 
-- QUIZZZ is the canonical pattern for all future games (DB-driven, one-input-per-line, usage toggles, centered CTA grid, legal+typography from DB).
-- All legacy game types have been removed from the admin editor and runtime.
+### QUIZZZ (Board Quiz)
+- Board-based quiz game on hexagonal or square grid maps
+- Multiple questions with answer validation
+- Customizable card styling and backgrounds
+- DB-driven configuration for all content and styling
+
+### WHACKPOP (Whack-a-Mole)
+- Grid-based fast-paced action game
+- Progressive difficulty across multiple rounds
+- Combo scoring system with multipliers
+- Customizable themes: classic, neon, arcade, pixel
+- Hit effects: burst, sparkle, shockwave, confetti
+- Configurable spawn rates and target visibility timing
+
+Both types follow the standardized QUIZZZ pattern: DB-driven, one-input-per-line admin editor, usage toggles, centered CTA grid, and legal+typography from DB.
 
 To enable additional game types in the future, add or update entries via the admin API:
 

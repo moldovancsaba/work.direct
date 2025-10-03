@@ -1,7 +1,7 @@
 # ARCHITECTURE.md — PlayMass
 
-Version: 4.7.1
-Last Updated: 2025-10-03T09:27:00.000Z
+Version: 4.8.0
+Last Updated: 2025-10-03T17:02:00.000Z
 
 ## Overview
 PlayMass is a Next.js (App Router) application with MongoDB/Mongoose persistence and a modular game system. This document describes current system components and their roles, dependencies, and status.
@@ -147,15 +147,38 @@ PlayMass is a Next.js (App Router) application with MongoDB/Mongoose persistence
 - Update (v2.2.0): QUIZZZ module uses configuration.quizzz for board/covers/styles; answered-state visuals and background precedence logic implemented
 
 ### Game Types (Admin)
-- Update: Only QUIZZZ (Board Quiz) is supported for creation and editing. All other types are removed from editor UI.
-- Role: Provide a single, standardized game template with a centralized platform configuration.
-- Status: Active; QUIZZZ only.
+- Update (v4.8.0): Two game types are supported for creation and editing:
+  1. **QUIZZZ (Board Quiz)**: Board-based quiz game with question validation
+  2. **WHACKPOP (Whack-a-Mole)**: Grid-based fast-paced action game with progressive difficulty
+- Role: Provide standardized game templates with centralized platform configuration.
+- Status: Active; both types follow the QUIZZZ editor pattern.
 
 ### Map System
-- Update (v2.2.0): Added public APIs for map retrieval — /api/hexmaps/[name], /api/hexmaps/random, /api/squaremaps/[name], /api/squaremaps/random — used by QUIZZZ runtime to load board coordinates
+- Update (v4.8.0): Public APIs used by both QUIZZZ and WHACKPOP — /api/hexmaps/[name], /api/hexmaps/random, /api/squaremaps/[name], /api/squaremaps/random
 - Role: Provide reusable coordinates for grid-based games
 - Dependencies: HexMap and SquareMap models (MongoDB), unified admin creator (/admin/mapcreator), public APIs /api/hexmaps/* and /api/squaremaps/*
-- Status: Active; referenced by QUIZZZ (selectedMaps) and future grid-based games
+- Status: Active; shared geometry utilities reused across game types
+
+### WHACKPOP Game Type (v4.8.0)
+- **Component**: `app/components/games/WhackPopGame.tsx` (658 lines)
+- **Admin Editor**: `app/components/admin/WhackPopCustomizationForm.tsx` (415 lines)
+- **Database Schema**: `app/lib/models/Game.ts` (whackPop sub-schema)
+- **Type System**: `app/types/index.ts` (WhackPopConfiguration interface)
+- **Role**: Whack-a-Mole style action game with progressive difficulty and combo scoring
+- **Dependencies Reused** (Zero New Dependencies):
+  - Hex/square geometry utilities from QUIZZZ (axialToPixel, hexVertices, cellToPixel, squareVertices)
+  - Map loading API (selectedMaps/mapName pattern)
+  - Admin editor patterns (one-input-per-line, color pickers, validation)
+  - Tailwind CSS animations and Framer Motion
+- **Key Features**:
+  - Progressive difficulty: Linear interpolation of spawn/display intervals across rounds
+  - Combo scoring: Multiplicative rewards for consecutive hits
+  - Customizable themes: classic, neon, arcade, pixel
+  - Hit effects: burst, sparkle, shockwave, confetti
+  - Triple-layer validation: Client UI, Database schema, Server-side logic
+- **Data Flow**: Admin UI → Database (whackPop config) → GameClient routing → WhackPopGame component → Result page
+- **Performance**: onPointerDown for immediate response (~50-100ms faster than onClick), useMemo for grid geometry, useRef for timer management
+- **Status**: Stable MVP, no new dependencies, fully commented code
 
 ## Configuration
 - Required environment variables:

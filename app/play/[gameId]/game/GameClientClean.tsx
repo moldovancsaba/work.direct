@@ -3,6 +3,7 @@
 import { useMemo } from 'react'
 import GameLayout from '../../../components/game/GameLayout'
 import QuizzzGame from '../../../components/games/QuizzzGame'
+import WhackPopGame from '../../../components/games/WhackPopGame'
 import { GameOutcome } from '../../../types'
 
 interface GameClientProps {
@@ -28,39 +29,88 @@ export default function GameClientClean({ game, cfg }: GameClientProps) {
     try { return (globalThis as any).crypto?.randomUUID?.() || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2,10)}` } catch { return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2,10)}` }
   }, [])
 
-  const content = (
-    <QuizzzGame
-      config={game.configuration?.quizzz}
-      platformMainBackgroundCss={game.configuration?.platform?.styles?.main?.background}
-      onResult={async (r) => {
-        const result: GameOutcome = {
-          type: r.won ? 'WIN' : 'LOSE',
-          starsFound: r.correct,
-          totalStarsInGame: r.rounds,
-          foundAllStars: r.won,
-          value: `${r.correct}/${r.rounds}`,
-          rewardIds: [],
-          message: r.won ? 'You won the quiz!' : 'Quiz over'
-        }
-        try {
-          await fetch(`/api/games/${cfg.meta.gameId}/play`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ participant, sessionId: attemptId, attemptId, gameType: 'QUIZZZ', result, ref })
-          }).catch(()=>{})
-        } finally {
-          const params = new URLSearchParams({ won: r.won ? 'true' : 'false' })
-          if (isTrial) params.set('trial', 'true')
-          if (ref) params.set('ref', ref)
-          params.set('starsFound', String(r.correct))
-          params.set('totalStars', String(r.rounds))
-          const pages = Array.isArray(game.configuration?.pages) ? (game.configuration.pages as any[]) : []
-          const hasResult = pages.some(p => typeof p?.name === 'string' && p.name.trim().toUpperCase() === 'RESULT')
-          const target = hasResult ? 'result' : 'landing'
-          window.location.href = `/play/${cfg.meta.gameId}/${target}?${params.toString()}`
-        }
-      }}
-    />
-  )
+  // WHAT: Render game component based on game type
+  // WHY: Support multiple game types (QUIZZZ, WHACKPOP) with shared result handling
+  const content = useMemo(() => {
+    if (game.type === 'WHACKPOP') {
+      // WHAT: WhackPop game with score-based results
+      // WHY: Grid-based target-clicking game requires different result structure
+      return (
+        <WhackPopGame
+          config={game.configuration?.whackPop}
+          platformMainBackgroundCss={game.configuration?.platform?.styles?.main?.background}
+          gameId={cfg.meta.gameId}
+          isTrialMode={isTrial}
+          onResult={async (r) => {
+            const result: GameOutcome = {
+              type: r.won ? 'WIN' : 'LOSE',
+              starsFound: r.hits,
+              totalStarsInGame: r.hits + r.misses,
+              foundAllStars: r.won,
+              value: `${r.score}`,
+              rewardIds: [],
+              message: r.won ? `Great! Score: ${r.score}` : `Score: ${r.score}`
+            }
+            try {
+              await fetch(`/api/games/${cfg.meta.gameId}/play`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ participant, sessionId: attemptId, attemptId, gameType: 'WHACKPOP', result, ref })
+              }).catch(()=>{})
+            } finally {
+              const params = new URLSearchParams({ 
+                won: r.won ? 'true' : 'false',
+                score: String(r.score),
+                hits: String(r.hits),
+                misses: String(r.misses)
+              })
+              if (isTrial) params.set('trial', 'true')
+              if (ref) params.set('ref', ref)
+              const pages = Array.isArray(game.configuration?.pages) ? (game.configuration.pages as any[]) : []
+              const hasResult = pages.some(p => typeof p?.name === 'string' && p.name.trim().toUpperCase() === 'RESULT')
+              const target = hasResult ? 'result' : 'landing'
+              window.location.href = `/play/${cfg.meta.gameId}/${target}?${params.toString()}`
+            }
+          }}
+        />
+      )
+    }
+    
+    // WHAT: Default to QUIZZZ game
+    // WHY: QUIZZZ is the primary/default game type
+    return (
+      <QuizzzGame
+        config={game.configuration?.quizzz}
+        platformMainBackgroundCss={game.configuration?.platform?.styles?.main?.background}
+        onResult={async (r) => {
+          const result: GameOutcome = {
+            type: r.won ? 'WIN' : 'LOSE',
+            starsFound: r.correct,
+            totalStarsInGame: r.rounds,
+            foundAllStars: r.won,
+            value: `${r.correct}/${r.rounds}`,
+            rewardIds: [],
+            message: r.won ? 'You won the quiz!' : 'Quiz over'
+          }
+          try {
+            await fetch(`/api/games/${cfg.meta.gameId}/play`, {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ participant, sessionId: attemptId, attemptId, gameType: 'QUIZZZ', result, ref })
+            }).catch(()=>{})
+          } finally {
+            const params = new URLSearchParams({ won: r.won ? 'true' : 'false' })
+            if (isTrial) params.set('trial', 'true')
+            if (ref) params.set('ref', ref)
+            params.set('starsFound', String(r.correct))
+            params.set('totalStars', String(r.rounds))
+            const pages = Array.isArray(game.configuration?.pages) ? (game.configuration.pages as any[]) : []
+            const hasResult = pages.some(p => typeof p?.name === 'string' && p.name.trim().toUpperCase() === 'RESULT')
+            const target = hasResult ? 'result' : 'landing'
+            window.location.href = `/play/${cfg.meta.gameId}/${target}?${params.toString()}`
+          }
+        }}
+      />
+    )
+  }, [game, cfg.meta.gameId, isTrial, participant, attemptId, ref])
 
   const platformStyles = game.configuration?.platform?.styles || {}
   const headerSubtitle = game.description || ''
