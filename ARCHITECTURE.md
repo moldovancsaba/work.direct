@@ -1,7 +1,7 @@
 # ARCHITECTURE.md — PlayMass
 
-Version: 4.7.0
-Last Updated: 2025-10-02T11:59:58.000Z
+Version: 4.7.1
+Last Updated: 2025-10-03T09:27:00.000Z
 
 ## Overview
 PlayMass is a Next.js (App Router) application with MongoDB/Mongoose persistence and a modular game system. This document describes current system components and their roles, dependencies, and status.
@@ -33,6 +33,103 @@ PlayMass is a Next.js (App Router) application with MongoDB/Mongoose persistence
 - Role: Data persistence for games, participants, rewards, results
 - Dependencies: MongoDB, Mongoose
 - Status: Active
+
+### Security Layer (Phase 3 — v4.7.1)
+
+#### Structured Logging
+- **Role**: Centralized logging with PII sanitization for security monitoring
+- **Dependencies**: Pino (server), browser console (client)
+- **Location**: `app/lib/logger.ts` (232 lines)
+- **Status**: Active (90 console statements replaced)
+- **Features**:
+  - Server: JSON output for production log aggregation (Datadog, CloudWatch, Splunk)
+  - Client: Browser console with PII sanitization and message throttling
+  - PII Redaction: Automatically sanitizes email, phone, password, token, accessToken, sessionId, userId
+  - Environment-aware: Debug level in dev, info in production
+  - Memory management: Auto-cleanup of client log cache every 10s
+- **Usage**:
+  ```typescript
+  import { logger } from './lib/logger'
+  logger.debug('User action', { userId, action })
+  logger.warn('Validation failed', { errors })
+  logger.error('Database error', { error })
+  ```
+
+#### Input Validation & XSS Protection
+- **Role**: Schema-based validation with XSS sanitization on all API endpoints
+- **Dependencies**: Zod 4.1.11 (validation), xss 1.0.15 (sanitization)
+- **Locations**: 
+  - `app/lib/validation/schemas.ts` (400+ lines) - Zod schemas for all API types
+  - `app/lib/validation/middleware.ts` (340 lines) - Validation helpers
+- **Status**: Active (6 critical endpoints validated)
+- **Features**:
+  - Schema-derived TypeScript types (single source of truth)
+  - XSS sanitization: Removes `<script>`, `<iframe>`, `javascript:` patterns
+  - Structured error responses (400 with clear validation messages)
+  - Automatic logging of validation failures
+- **Validated Endpoints**:
+  - `/api/admin/login` (POST) - Admin authentication
+  - `/api/participants` (POST/GET/DELETE) - Participant management
+  - `/api/games/[id]/play` (POST) - Game play (anti-cheat)
+  - `/api/games` (GET) - Game listing
+  - `/api/admin/games/[id]` (PUT) - Admin game updates
+  - `/api/settings` (PUT) - System settings
+- **Usage**:
+  ```typescript
+  import { validateBody } from './lib/validation/middleware'
+  import { participantCreateSchema } from './lib/validation/schemas'
+  
+  const validated = await validateBody(request, participantCreateSchema, true)
+  if (!validated.success) {
+    return validated.error // Automatically formatted 400 response
+  }
+  const { name, email } = validated.data // Type-safe, XSS-sanitized
+  ```
+
+#### Rate Limiting & DDoS Protection
+- **Role**: Prevent brute force, spam, and DDoS attacks across all API endpoints
+- **Dependencies**: rate-limiter-flexible 8.0.1 (RateLimiterMemory)
+- **Location**: `app/lib/ratelimit.ts` (enhanced existing implementation)
+- **Status**: Active (5 critical endpoints protected)
+- **Rate Limit Tiers**:
+  - **Auth**: 5 requests/minute, 15-minute block (brute force protection)
+  - **Admin**: 30 requests/minute, 10-minute block (admin operations)
+  - **Gameplay**: 20 requests/minute, 5-minute block (spam prevention)
+  - **Public**: 60 requests/minute, 1-minute block (DDoS mitigation)
+- **Protected Endpoints**:
+  - `/api/admin/login` (POST) - Auth tier
+  - `/api/games/[id]/play` (POST) - Gameplay tier
+  - `/api/participants` (POST) - Gameplay tier
+  - `/api/games` (GET) - Public tier
+  - `/api/health` (GET) - Public tier
+- **Features**:
+  - Per-IP tracking (supports x-forwarded-for, x-real-ip, cf-connecting-ip)
+  - Token bucket algorithm with automatic cleanup
+  - Standard HTTP 429 responses with Retry-After headers
+  - All violations logged with structured data
+- **Usage**:
+  ```typescript
+  import { checkGameplayRateLimit, getClientIdentifier, createRateLimitResponse } from './lib/rateLimit'
+  
+  const clientId = getClientIdentifier(request.headers)
+  const rateLimitResult = await checkGameplayRateLimit(clientId)
+  
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      createRateLimitResponse(rateLimitResult.retryAfter || 60),
+      { status: 429, headers: { 'Retry-After': String(rateLimitResult.retryAfter) } }
+    )
+  }
+  ```
+
+#### Anti-Cheat Protection (Multi-Layer)
+- **Layers**:
+  1. **Rate Limiting**: 20 game plays per minute per IP
+  2. **Input Validation**: Game outcomes validated against Zod schemas
+  3. **Session Tracking**: Idempotency via sessionId and attemptId
+  4. **IP Monitoring**: Per-IP attempt tracking and duplicate detection
+- **Status**: Active on `/api/games/[id]/play`
+- **Trust Boundaries**: Client provides outcome, server validates structure and applies business rules
 
 ### Editor Standard — QUIZZZ (Default)
 - Role: QUIZZZ editor is the canonical pattern all future games must follow
@@ -117,6 +214,19 @@ Minimal Loading & Error Handling
 
 
 ## Future Improvements
-- Admin auth hardening (signed cookies/JWT, rate limiting/lockout, audit logs)
+- Admin auth hardening (signed cookies/JWT, session management, audit logs)
+- Additional endpoint rate limiting (Facebook auth, admin maps, remaining admin operations)
+- CSRF protection for state-changing requests
+- Security headers (CSP, HSTS, X-Frame-Options)
+- Error monitoring and alerting (Sentry integration)
 - Centralize config resolution for admin settings
+
+## Security Posture (Phase 3 Complete)
+- ✅ Structured logging with PII sanitization
+- ✅ Input validation with XSS protection on critical endpoints
+- ✅ Rate limiting on all critical API routes
+- ✅ Multi-layer anti-cheat protection
+- ⏳ Admin authentication hardening (next phase)
+- ⏳ CSRF protection (next phase)
+- ⏳ Security headers (next phase)
 
