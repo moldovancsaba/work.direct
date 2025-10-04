@@ -1,9 +1,17 @@
 # 📝 RELEASE_NOTES.md - PlayMass
 
-**Current Version**: 4.8.0
-**Last Updated**: 2025-10-03T17:02:00.000Z
+**Current Version**: 4.8.2
+**Last Updated**: 2025-10-04T10:04:31.548Z
 
 ## 🔹 Version History
+
+### [v4.8.2] — 2025-10-04T10:04:31.548Z
+- Automatic predev patch bump
+
+
+### [v4.8.1] — 2025-10-03T18:02:03.018Z
+- Automatic predev patch bump
+
 
 ### [v4.8.0] — 2025-10-03T17:02:00.000Z
 **Feature: WHACKPOP Game Type - Complete End-to-End Implementation**
