@@ -1,7 +1,7 @@
 # PlayMass - Interactive Game Platform
 
-Current Version: 4.8.0
-Last Updated: 2025-10-03T17:02:00.000Z
+Current Version: 4.8.2
+Last Updated: 2025-10-04T10:04:31.548Z
 
 ## 🎮 Features
 

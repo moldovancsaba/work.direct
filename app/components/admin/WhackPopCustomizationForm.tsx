@@ -3,8 +3,8 @@
 // WHAT: WhackPop game customization form component for admin editor
 // WHY: Provides comprehensive UI for configuring WHACKPOP game settings following QUIZZZ editor standards
 
-import { useState } from 'react'
-import type { WhackPopConfiguration } from '../../types'
+import { useState, useEffect, useRef } from 'react'
+import type { WhackPopConfiguration, GridMapType } from '../../types'
 
 interface Props {
   config: WhackPopConfiguration
@@ -24,6 +24,62 @@ export default function WhackPopCustomizationForm({ config, onChange }: Props) {
     })
   }
 
+  // WHAT: Map search state for predictive map selection
+  // WHY: Allows admins to find and select maps easily like in QUIZZZ
+  const [searchTerm, setSearchTerm] = useState<string>('')
+  const [isSearching, setIsSearching] = useState<boolean>(false)
+  const [results, setResults] = useState<Array<{ type: GridMapType; name: string; tags?: string[] }>>([])
+  const abortRef = useRef<AbortController | null>(null)
+
+  // WHAT: Debounced search across admin map lists
+  // WHY: Searches both hex and square maps with 200ms debounce to avoid excessive API calls
+  useEffect(() => {
+    if (!searchTerm) { setResults([]); return }
+    if (abortRef.current) abortRef.current.abort()
+    const ac = new AbortController()
+    abortRef.current = ac
+
+    const doSearch = async () => {
+      try {
+        setIsSearching(true)
+        const q = searchTerm.trim()
+        const all: Array<{ type: GridMapType; name: string; tags?: string[] }> = []
+        const types: GridMapType[] = ['hex', 'square']
+        await Promise.all(types.map(async (t) => {
+          const base = t === 'hex' ? '/api/admin/hexmaps' : '/api/admin/squaremaps'
+          const url = `${base}?search=${encodeURIComponent(q)}&limit=20`
+          const res = await fetch(url, { signal: ac.signal })
+          if (!res.ok) return
+          const data = await res.json()
+          const items = Array.isArray(data?.data?.items) ? data.data.items : []
+          items.forEach((it: any) => {
+            if (typeof it?.name === 'string' && it.name.trim()) {
+              all.push({ type: t, name: it.name, tags: it.tags })
+            }
+          })
+        }))
+        setResults(all)
+      } catch (_) {
+        if (!ac.signal.aborted) setResults([])
+      } finally { setIsSearching(false) }
+    }
+
+    const id = setTimeout(doSearch, 200)
+    return () => { clearTimeout(id); ac.abort() }
+  }, [searchTerm])
+
+  // WHAT: Select a map from search results
+  // WHY: Updates config with selected map and clears search
+  const selectMap = (map: { type: GridMapType; name: string }) => {
+    updateConfig({
+      mapType: map.type,
+      mapName: map.name,
+      selectedMaps: [{ type: map.type, name: map.name }]
+    })
+    setSearchTerm('')
+    setResults([])
+  }
+
   return (
     <div className="space-y-6">
       {/* Map Selection */}
@@ -31,29 +87,75 @@ export default function WhackPopCustomizationForm({ config, onChange }: Props) {
         <h3 className="text-md font-semibold text-gray-800">Grid Map</h3>
         <p className="text-sm text-gray-600">Select a hex or square map for target spawning. Use the Map Creator to create custom maps.</p>
         
-        <div>
-          <label className="block text-sm font-medium mb-2">Map Type</label>
-          <select
-            value={config.mapType || 'hex'}
-            onChange={(e) => updateConfig({ mapType: e.target.value as 'hex' | 'square' })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white"
-          >
-            <option value="hex">Hexagonal</option>
-            <option value="square">Square</option>
-          </select>
-        </div>
+        {/* Current Selection Display */}
+        {config.mapName && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-blue-900">Selected Map</p>
+                <p className="text-sm text-blue-800">
+                  {config.mapName} ({config.mapType === 'hex' ? 'Hexagonal' : 'Square'})
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => updateConfig({ mapName: '', selectedMaps: [] })}
+                className="text-sm text-red-600 hover:text-red-800 font-medium"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+        )}
 
-        <div>
-          <label className="block text-sm font-medium mb-2">Map Name (optional)</label>
+        {/* Map Search Input */}
+        <div className="relative">
+          <label className="block text-sm font-medium mb-2">Search Maps</label>
           <input
             type="text"
-            value={config.mapName || ''}
-            onChange={(e) => updateConfig({ mapName: e.target.value })}
-            placeholder="Enter map name or leave blank"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Type to search maps..."
             className="w-full px-3 py-2 border border-gray-300 rounded-lg"
           />
-          <p className="text-xs text-gray-500 mt-1">Legacy: Use selectedMaps array (not yet implemented in UI)</p>
+          {isSearching && (
+            <div className="absolute right-3 top-9 text-gray-400">
+              <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
+            </div>
+          )}
         </div>
+
+        {/* Search Results Dropdown */}
+        {results.length > 0 && (
+          <div className="border border-gray-300 rounded-lg max-h-60 overflow-y-auto bg-white shadow-lg">
+            {results.map((map, idx) => (
+              <button
+                key={`${map.type}-${map.name}-${idx}`}
+                type="button"
+                onClick={() => selectMap(map)}
+                className="w-full px-4 py-2 text-left hover:bg-blue-50 border-b border-gray-100 last:border-b-0"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{map.name}</p>
+                    {map.tags && map.tags.length > 0 && (
+                      <p className="text-xs text-gray-500">
+                        Tags: {map.tags.join(', ')}
+                      </p>
+                    )}
+                  </div>
+                  <span className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded">
+                    {map.type === 'hex' ? 'HEX' : 'SQUARE'}
+                  </span>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {searchTerm && !isSearching && results.length === 0 && (
+          <p className="text-sm text-gray-500 italic">No maps found. Try a different search term or create a new map in the Map Creator.</p>
+        )}
       </div>
 
       {/* Core Gameplay Timing */}
