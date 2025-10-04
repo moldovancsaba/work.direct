@@ -42,10 +42,15 @@ export default function GameClientClean({ game, cfg }: GameClientProps) {
           gameId={cfg.meta.gameId}
           isTrialMode={isTrial}
           onResult={async (r) => {
+            // WHAT: Map WHACKPOP result to GameOutcome using proper fields (v4.8.6)
+            // WHY: Store hits/misses/score in dedicated fields for accurate analytics
             const result: GameOutcome = {
               type: r.won ? 'WIN' : 'LOSE',
-              starsFound: r.hits,
-              totalStarsInGame: r.hits + r.misses,
+              hits: r.hits, // WHACKPOP: Successful target clicks
+              misses: r.misses, // WHACKPOP: Missed or expired targets
+              score: r.score, // WHACKPOP: Final calculated score
+              starsFound: 0, // Not applicable for WHACKPOP
+              totalStarsInGame: 0, // Not applicable for WHACKPOP
               foundAllStars: r.won,
               value: `${r.score}`,
               rewardIds: [],

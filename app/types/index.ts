@@ -925,6 +925,12 @@ export interface GameOutcome {
   hexagonId?: string // Which hexagon was revealed (when applicable)
   // Lucky Wheel specific field
   segmentId?: string // For wheel games - ID of the winning segment
+  // WHACKPOP specific fields (added v4.8.6)
+  // WHAT: Track hits, misses, and final score for target-clicking games
+  // WHY: Enables accurate analytics and leaderboard functionality for WHACKPOP game type
+  hits?: number // Number of successful target hits
+  misses?: number // Number of missed clicks or expired targets
+  score?: number // Final game score (separate from starsFound for non-quiz games)
   // Common metrics
   starsFound: number // Number of stars discovered in this attempt
   totalStarsInGame: number // Total stars hidden in the game

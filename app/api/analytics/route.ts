@@ -170,6 +170,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
               0
             ]
           },
+          // WHAT: Calculate avgScore intelligently based on game type (v4.8.6)
+          // WHY: QUIZZZ uses starsFound, WHACKPOP uses score field for accurate metrics
           avgScore: {
             $cond: [
               { $gt: ['$totalPlays', 0] },
@@ -178,7 +180,13 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
                   $map: {
                     input: '$results',
                     as: 'result',
-                    in: '$$result.outcome.starsFound'
+                    in: {
+                      $cond: [
+                        { $eq: ['$type', 'WHACKPOP'] },
+                        { $ifNull: ['$$result.outcome.score', 0] },
+                        { $ifNull: ['$$result.outcome.starsFound', 0] }
+                      ]
+                    }
                   }
                 }
               },

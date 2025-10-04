@@ -1,9 +1,74 @@
 # 📝 RELEASE_NOTES.md - PlayMass
 
-**Current Version**: 4.8.5
-**Last Updated**: 2025-10-04T11:36:26.056Z
+**Current Version**: 4.9.0
+**Last Updated**: 2025-01-08T21:45:00.000Z
 
 ## 🔹 Version History
+
+### [v4.9.0] — 2025-01-08T21:45:00.000Z
+**Feature: Analytics & Admin UI Multi-Game Support**
+
+**Summary**
+Fixed analytics data handling for multi-game-type platform with proper field separation between QUIZZZ and WHACKPOP. Added game-type-aware calculations and visual indicators throughout admin dashboard.
+
+**Problem Solved**
+- ❌ WHACKPOP was storing hits/misses in QUIZZZ's starsFound/totalStarsInGame fields
+- ❌ Analytics API calculating avgScore using starsFound for all game types (incorrect for WHACKPOP)
+- ❌ No visual distinction between game types in admin analytics
+- ❌ Data model confusion preventing accurate multi-game analytics
+
+**Type System Updates**
+- ✅ Added `hits?`, `misses?`, `score?` fields to GameOutcome interface
+- ✅ Updated GameResult Mongoose schema with dedicated WHACKPOP fields (default: null)
+- ✅ All new fields fully commented with WHAT and WHY
+
+**Data Collection Fix**
+- ✅ Updated GameClientClean.tsx WHACKPOP result mapping to use proper fields
+- ✅ Now stores: `hits: r.hits`, `misses: r.misses`, `score: r.score`
+- ✅ Sets starsFound/totalStarsInGame to 0 for WHACKPOP (not applicable)
+
+**Analytics API Enhancement**
+- ✅ Fixed avgScore calculation with game-type-aware MongoDB aggregation:
+  - WHACKPOP games: Use `outcome.score` field
+  - QUIZZZ games: Use `outcome.starsFound` field
+- ✅ Implemented using $cond operator for conditional field selection
+- ✅ Ensures accurate metrics for both game types
+
+**Admin UI Improvements**
+- ✅ Added game type badges to analytics cards: 🎯 WhackPop (purple) | ❓ Quizzz (blue)
+- ✅ Dynamic label switching: "Avg Score" for WHACKPOP vs "Avg Stars" for QUIZZZ
+- ✅ Added "Type" column to detailed analytics table with compact badges (🎯 WP | ❓ QZ)
+- ✅ Enhanced participants table with login type icons: 📘 FB, 📧 Email, 👤 Guest, ❓ Unknown
+- ✅ Fixed participants table header alignment (Login Type column)
+- ✅ Added .toFixed(1) formatting for avgScore display consistency
+
+**Files Modified** (8 files)
+1. `app/types/index.ts` - Added hits/misses/score to GameOutcome interface (+7 lines with comments)
+2. `app/lib/models/GameResult.ts` - Added WHACKPOP fields to schema (+21 lines with comments)
+3. `app/play/[gameId]/game/GameClientClean.tsx` - Updated WHACKPOP result mapping (+10 lines)
+4. `app/api/analytics/route.ts` - Fixed avgScore calculation with game-type-aware logic (+18 lines)
+5. `app/admin/analytics/page.tsx` - Added game type badges and dynamic labels (+35 lines)
+6. `app/admin/participants/page.tsx` - Enhanced login type display with icons (+5 lines)
+7. `package.json` - Version bump to 4.9.0
+8. `LEARNINGS.md` - Added comprehensive entry documenting changes
+
+**Benefits**
+- ✅ Accurate analytics for both game types without data pollution
+- ✅ Clear visual distinction between game types in admin dashboard
+- ✅ Proper data model separation (WHACKPOP score vs QUIZZZ stars)
+- ✅ Future-proof: Easy to add more game types with specific metrics
+- ✅ Backward compatible: Existing QUIZZZ data unaffected
+- ✅ No data migration required: New fields default to null for existing records
+
+**Build Status**
+- ✅ `npm run build` - PASSING (zero TypeScript errors, zero warnings)
+- ✅ Zero security vulnerabilities
+
+**Technical Pattern**
+Game-type-aware aggregation using MongoDB $cond operator enables accurate multi-game analytics without separate pipelines or complex joins.
+
+**Status**: Stable, ready for deployment
+
 
 ### [v4.8.5] — 2025-10-04T11:36:26.056Z
 - Automatic predev patch bump

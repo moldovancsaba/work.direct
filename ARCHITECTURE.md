@@ -1,6 +1,6 @@
 # ARCHITECTURE.md — PlayMass
 
-Version: 4.8.0
+Version: 4.9.0
 Last Updated: 2025-10-03T17:02:00.000Z
 
 ## Overview

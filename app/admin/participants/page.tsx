@@ -313,10 +313,10 @@ export default function ParticipantsPage() {
                     Referral Info
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Login
+                    Joined
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Joined
+                    Login Type
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Games Played
@@ -372,10 +372,10 @@ export default function ParticipantsPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       {(() => {
                         const p = participant.loginProvider || (participant.email ? 'email' : 'unknown')
-                        if (p === 'facebook') return <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">FB</span>
-                        if (p === 'email') return <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">Email</span>
-                        if (p === 'guest') return <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">Guest</span>
-                        return <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">Unknown</span>
+                        if (p === 'facebook') return <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">📘 FB</span>
+                        if (p === 'email') return <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">📧 Email</span>
+                        if (p === 'guest') return <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">👤 Guest</span>
+                        return <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">❓ Unknown</span>
                       })()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
