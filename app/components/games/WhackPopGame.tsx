@@ -550,11 +550,11 @@ export default function WhackPopGame({ config, platformMainBackgroundCss, onResu
               {isActive && activeTarget && (
                 <text
                   x={center.x + offsetX}
-                  y={center.y + offsetY}
+                  y={center.y + offsetY + (cellSize * 0.05)}
                   textAnchor="middle"
-                  dominantBaseline="central"
+                  dominantBaseline="middle"
                   fontSize={cellSize * 0.5}
-                  style={{ userSelect: 'none', pointerEvents: 'none' }}
+                  style={{ userSelect: 'none', pointerEvents: 'none', fontFamily: 'Arial, sans-serif' }}
                 >
                   {activeTarget.emoji}
                 </text>
