@@ -288,7 +288,16 @@ export default function AnalyticsPage() {
               {analyticsData.gameStats.map((game, index) => (
                 <div key={game.id} className="border border-gray-200 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium text-gray-900">{game.title}</h4>
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-medium text-gray-900">{game.title}</h4>
+                      <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${
+                        game.type === 'WHACKPOP' 
+                          ? 'bg-purple-100 text-purple-800'
+                          : 'bg-blue-100 text-blue-800'
+                      }`}>
+                        {game.type === 'WHACKPOP' ? '🎯 WhackPop' : '❓ Quizzz'}
+                      </span>
+                    </div>
                     <span className="text-sm text-gray-500">#{index + 1}</span>
                   </div>
                   <div className="grid grid-cols-2 gap-4 text-sm">
@@ -305,7 +314,7 @@ export default function AnalyticsPage() {
                       <span className="font-medium ml-1">{game.players}</span>
                     </div>
                     <div>
-                      <span className="text-gray-600">Avg Score:</span>
+                      <span className="text-gray-600">{game.type === 'WHACKPOP' ? 'Avg Score:' : 'Avg Stars:'}</span>
                       <span className="font-medium ml-1">{game.avgScore}</span>
                     </div>
                   </div>
@@ -340,6 +349,9 @@ export default function AnalyticsPage() {
                     Game
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Type
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Total Plays
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -364,6 +376,15 @@ export default function AnalyticsPage() {
                         {game.title}
                       </div>
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                        game.type === 'WHACKPOP' 
+                          ? 'bg-purple-100 text-purple-800'
+                          : 'bg-blue-100 text-blue-800'
+                      }`}>
+                        {game.type === 'WHACKPOP' ? '🎯 WP' : '❓ QZ'}
+                      </span>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {game.plays}
                     </td>
@@ -382,7 +403,7 @@ export default function AnalyticsPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {game.avgScore}
+                      {game.avgScore.toFixed(1)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <button className="text-blue-600 hover:text-blue-900 mr-3">

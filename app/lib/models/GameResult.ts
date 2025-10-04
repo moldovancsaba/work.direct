@@ -24,6 +24,27 @@ const gameOutcomeSchema = new Schema<GameOutcome>({
     default: null
   },
   
+  // WHACKPOP specific fields (added v4.8.6)
+  // WHAT: Store hits, misses, and score for WHACKPOP game analytics
+  // WHY: Enables accurate performance tracking and leaderboards for different game types
+  hits: {
+    type: Number,
+    default: null,
+    min: [0, 'Hits cannot be negative']
+  },
+  
+  misses: {
+    type: Number,
+    default: null,
+    min: [0, 'Misses cannot be negative']
+  },
+  
+  score: {
+    type: Number,
+    default: null,
+    min: [0, 'Score cannot be negative']
+  },
+  
   starsFound: {
     type: Number,
     default: 0,
