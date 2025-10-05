@@ -912,6 +912,90 @@ export interface Participant extends BaseDocument {
   metadata?: Record<string, any>
   isActive: boolean
   lastActivityAt: Date
+  // Referral system fields (added v4.10.0)
+  // WHAT: Track referral performance and rewards for viral growth
+  // WHY: Enables referral program with multi-level tracking and incentives
+  referralStats?: {
+    totalReferrals: number // Direct referrals (level 1)
+    successfulReferrals: number // Referrals who completed at least one game
+    referralPoints: number // Points earned from referrals
+    referralRewards: ObjectId[] // Rewards claimed from referrals
+    lastReferralAt?: Date // When they last referred someone
+  }
+}
+
+// Referral System Types (added v4.10.0)
+// WHAT: Complete referral tracking and campaign management system
+// WHY: Enable viral growth through incentivized referrals with multi-level tracking
+
+export type ReferralEventType = 'CLICK' | 'SIGNUP' | 'FIRST_GAME' | 'GAME_WIN' | 'REWARD_CLAIM'
+
+export type ReferralStatus = 'PENDING' | 'CONVERTED' | 'REWARDED' | 'EXPIRED'
+
+export interface ReferralTracking extends BaseDocument {
+  referrerUuid: string // UUID of person who shared the link
+  referredUuid?: string // UUID of person who signed up (null until conversion)
+  referredParticipantId?: ObjectId // Participant ID after signup
+  gameId?: ObjectId // Game being shared (optional, can be platform-wide)
+  referralCode: string // Unique short code for tracking (e.g., 6F3WDVU2)
+  status: ReferralStatus
+  // Event tracking
+  events: Array<{
+    type: ReferralEventType
+    timestamp: Date
+    metadata?: Record<string, any>
+  }>
+  // Analytics
+  clickCount: number // How many times the link was clicked
+  conversionDate?: Date // When referred user signed up
+  firstGameDate?: Date // When referred user played first game
+  // Reward tracking
+  rewardEarned: boolean // Whether referrer earned reward
+  rewardAmount?: number // Points or value earned
+  rewardClaimedAt?: Date
+  // Context
+  source?: string // Where link was shared (whatsapp, facebook, twitter, email, copy)
+  ipAddress?: string // IP of click (for fraud detection)
+  userAgent?: string // User agent of click
+  expiresAt?: Date // Optional expiration for time-limited campaigns
+}
+
+export interface ReferralCampaign extends BaseDocument {
+  name: string // Campaign name (e.g., "Summer 2025 Referral Blast")
+  description?: string
+  isActive: boolean
+  // Reward structure
+  rewards: {
+    referrerReward: {
+      type: 'POINTS' | 'REWARD_ID' | 'CUSTOM'
+      value: number | string // Points amount or reward ID
+      trigger: ReferralEventType // When reward is earned
+    }
+    referredReward?: {
+      type: 'POINTS' | 'REWARD_ID' | 'CUSTOM'
+      value: number | string
+      message?: string // Welcome bonus message
+    }
+  }
+  // Campaign rules
+  rules: {
+    maxReferralsPerUser?: number // Limit referrals per referrer
+    requireGameCompletion?: boolean // Must complete game to count
+    multiLevelEnabled?: boolean // Track referrals of referrals
+    multiLevelDepth?: number // How many levels deep (2-3)
+  }
+  // Targeting
+  targetGames?: ObjectId[] // Specific games (empty = all games)
+  startDate?: Date
+  endDate?: Date
+  // Analytics
+  stats: {
+    totalLinks: number
+    totalClicks: number
+    totalConversions: number
+    totalRewardsIssued: number
+    conversionRate: number // Percentage
+  }
 }
 
 // Game Results and Outcomes

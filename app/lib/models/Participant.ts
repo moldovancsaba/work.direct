@@ -81,6 +81,43 @@ const participantSchema = new Schema<Participant>({
   lastActivityAt: {
     type: Date,
     default: Date.now
+  },
+  
+  // Referral system statistics (added v4.10.0)
+  // WHAT: Track referral performance and rewards for viral growth
+  // WHY: Enable referral program with incentive tracking and leaderboards
+  referralStats: {
+    type: {
+      totalReferrals: {
+        type: Number,
+        default: 0,
+        min: [0, 'Total referrals cannot be negative']
+      },
+      successfulReferrals: {
+        type: Number,
+        default: 0,
+        min: [0, 'Successful referrals cannot be negative']
+      },
+      referralPoints: {
+        type: Number,
+        default: 0,
+        min: [0, 'Referral points cannot be negative']
+      },
+      referralRewards: [{
+        type: Schema.Types.ObjectId,
+        ref: 'Reward'
+      }],
+      lastReferralAt: {
+        type: Date
+      }
+    },
+    default: () => ({
+      totalReferrals: 0,
+      successfulReferrals: 0,
+      referralPoints: 0,
+      referralRewards: [],
+      lastReferralAt: null
+    })
   }
 }, {
   // Schema options for automatic timestamp management
@@ -126,6 +163,19 @@ participantSchema.index({ name: 'text' }, {
 
 // Index for statistics queries
 participantSchema.index({ totalGamesPlayed: -1, totalRewardsEarned: -1 })
+
+// Referral system indexes (added v4.10.0)
+// WHAT: Optimize queries for referral tracking and leaderboards
+// WHY: Fast lookups for referrer relationships and referral leaderboards
+
+// Index for finding all referrals made by a user (referral dashboard)
+participantSchema.index({ uuid: 1 })
+
+// Index for finding who referred a participant
+participantSchema.index({ referrerUuid: 1 })
+
+// Index for referral leaderboard (top referrers)
+participantSchema.index({ 'referralStats.totalReferrals': -1, 'referralStats.referralPoints': -1 })
 
 // Virtual fields for computed properties
 // These provide convenient access to calculated values without storing them
@@ -207,6 +257,63 @@ participantSchema.methods.recordGameResult = function(this: Participant, gameRes
 // Method to increment rewards earned
 participantSchema.methods.addReward = function(this: Participant, rewardCount: number = 1): void {
   this.totalRewardsEarned += rewardCount
+  ;(this as any).updateActivity()
+}
+
+// Referral system methods (added v4.10.0)
+// WHAT: Methods for managing referral tracking and rewards
+// WHY: Encapsulate referral business logic in the Participant model
+
+// Method to record a successful referral
+participantSchema.methods.addReferral = function(this: Participant, successful: boolean = true): void {
+  if (!this.referralStats) {
+    this.referralStats = {
+      totalReferrals: 0,
+      successfulReferrals: 0,
+      referralPoints: 0,
+      referralRewards: [],
+      lastReferralAt: undefined
+    }
+  }
+  
+  this.referralStats.totalReferrals += 1
+  if (successful) {
+    this.referralStats.successfulReferrals += 1
+  }
+  this.referralStats.lastReferralAt = new Date()
+  ;(this as any).updateActivity()
+}
+
+// Method to add referral points
+participantSchema.methods.addReferralPoints = function(this: Participant, points: number): void {
+  if (!this.referralStats) {
+    this.referralStats = {
+      totalReferrals: 0,
+      successfulReferrals: 0,
+      referralPoints: 0,
+      referralRewards: [],
+      lastReferralAt: undefined
+    }
+  }
+  
+  this.referralStats.referralPoints += points
+  ;(this as any).updateActivity()
+}
+
+// Method to add referral reward
+participantSchema.methods.addReferralReward = function(this: Participant, rewardId: string): void {
+  if (!this.referralStats) {
+    this.referralStats = {
+      totalReferrals: 0,
+      successfulReferrals: 0,
+      referralPoints: 0,
+      referralRewards: [],
+      lastReferralAt: undefined
+    }
+  }
+  
+  const rewardObjectId = new mongoose.Types.ObjectId(rewardId)
+  this.referralStats.referralRewards.push(rewardObjectId)
   ;(this as any).updateActivity()
 }
 
@@ -332,6 +439,72 @@ participantSchema.statics.getParticipationStats = function(): Promise<{
     totalGamesPlayed: gamesResult[0]?.total || 0,
     totalRewardsEarned: rewardsResult[0]?.total || 0
   }))
+}
+
+// Referral system static methods (added v4.10.0)
+// WHAT: Query methods for referral analytics and leaderboards
+// WHY: Support referral dashboard and campaign analytics
+
+// Find top referrers (leaderboard)
+participantSchema.statics.findTopReferrers = function(
+  limit: number = 10,
+  activeOnly: boolean = true
+): Promise<Participant[]> {
+  const filter: any = {}
+  if (activeOnly) {
+    filter.isActive = true
+  }
+  
+  return this.find(filter)
+    .sort({ 'referralStats.totalReferrals': -1, 'referralStats.referralPoints': -1 })
+    .limit(limit)
+    .exec()
+}
+
+// Find participant by UUID
+participantSchema.statics.findByUuid = function(
+  uuid: string
+): Promise<Participant | null> {
+  return this.findOne({ uuid }).exec()
+}
+
+// Find all referrals made by a participant
+participantSchema.statics.findReferralsByUuid = function(
+  uuid: string
+): Promise<Participant[]> {
+  return this.find({ referrerUuid: uuid })
+    .sort({ createdAt: -1 })
+    .exec()
+}
+
+// Get referral statistics for platform
+participantSchema.statics.getReferralStats = function(): Promise<{
+  totalReferrers: number,
+  totalReferrals: number,
+  totalReferralPoints: number,
+  avgReferralsPerUser: number
+}> {
+  return Promise.all([
+    this.countDocuments({ 'referralStats.totalReferrals': { $gt: 0 } }),
+    this.aggregate([
+      { $match: { 'referralStats.totalReferrals': { $gt: 0 } } },
+      { $group: { _id: null, total: { $sum: '$referralStats.totalReferrals' } } }
+    ]),
+    this.aggregate([
+      { $match: { 'referralStats.referralPoints': { $gt: 0 } } },
+      { $group: { _id: null, total: { $sum: '$referralStats.referralPoints' } } }
+    ])
+  ]).then(([totalReferrers, referralsResult, pointsResult]) => {
+    const totalReferrals = referralsResult[0]?.total || 0
+    const totalReferralPoints = pointsResult[0]?.total || 0
+    
+    return {
+      totalReferrers,
+      totalReferrals,
+      totalReferralPoints,
+      avgReferralsPerUser: totalReferrers > 0 ? (totalReferrals / totalReferrers) : 0
+    }
+  })
 }
 
 // Create and export the model
