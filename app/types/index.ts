@@ -922,6 +922,10 @@ export interface Participant extends BaseDocument {
     referralRewards: ObjectId[] // Rewards claimed from referrals
     lastReferralAt?: Date // When they last referred someone
   }
+  // Push notification subscriptions (added v4.11.0)
+  // WHAT: Store push notification subscriptions for each participant
+  // WHY: Enables sending targeted push notifications across multiple devices
+  pushSubscriptions?: PushSubscription[]
 }
 
 // Referral System Types (added v4.10.0)
@@ -1108,6 +1112,90 @@ export interface RewardClaim extends BaseDocument {
   validationCode?: string // For verification
   metadata?: Record<string, any>
   notes?: string
+}
+
+// Push Notification System
+// These interfaces manage web push notifications for user engagement
+
+export type NotificationStatus = 'SCHEDULED' | 'SENT' | 'DELIVERED' | 'FAILED' | 'CANCELLED'
+export type NotificationType = 'GAME_INVITE' | 'REWARD_CLAIM' | 'NEW_GAME' | 'REMINDER' | 'ANNOUNCEMENT' | 'CUSTOM'
+
+// Push subscription stored per participant
+// WHY: Enables sending push notifications to specific users across devices
+export interface PushSubscription {
+  endpoint: string // Push service endpoint URL
+  keys: {
+    p256dh: string // Encryption key
+    auth: string // Authentication secret
+  }
+  userAgent?: string // Device/browser info
+  subscribedAt: Date
+  lastUsedAt?: Date
+  isActive: boolean
+}
+
+// Notification campaign for bulk sends
+// WHY: Enables targeting specific participant segments with notifications
+export interface NotificationCampaign extends BaseDocument {
+  title: string
+  message: string
+  type: NotificationType
+  data?: Record<string, any> // Custom payload data
+  icon?: string
+  image?: string
+  badge?: string
+  url?: string // URL to open when notification clicked
+  
+  // Targeting
+  targetAll: boolean
+  targetParticipantIds?: ObjectId[] // Specific participants
+  targetFilter?: {
+    hasPlayedGame?: ObjectId // Game ID
+    hasNotPlayedSince?: Date
+    hasReferrals?: boolean
+    minGamesPlayed?: number
+  }
+  
+  // Scheduling
+  scheduledFor?: Date // null = send immediately
+  expiresAt?: Date
+  
+  // Status tracking
+  status: NotificationStatus
+  sentAt?: Date
+  sentCount: number
+  deliveredCount: number
+  failedCount: number
+  clickCount: number
+  
+  // Metadata
+  createdBy: string // Admin identifier
+  notes?: string
+}
+
+// Individual notification delivery record
+// WHY: Tracks delivery status and engagement per participant
+export interface NotificationDelivery extends BaseDocument {
+  campaignId?: ObjectId // null if one-off notification
+  participantId: ObjectId
+  
+  // Content (snapshot from campaign or custom)
+  title: string
+  message: string
+  type: NotificationType
+  data?: Record<string, any>
+  url?: string
+  
+  // Delivery status
+  status: NotificationStatus
+  sentAt?: Date
+  deliveredAt?: Date
+  clickedAt?: Date
+  failedAt?: Date
+  error?: string
+  
+  // Push subscription used
+  subscriptionEndpoint: string
 }
 
 // API Response Types

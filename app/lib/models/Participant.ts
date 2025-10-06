@@ -118,7 +118,37 @@ const participantSchema = new Schema<Participant>({
       referralRewards: [],
       lastReferralAt: null
     })
-  }
+  },
+  
+  // Push notification subscriptions (added v4.11.0)
+  // WHAT: Store push notification subscriptions for each participant device
+  // WHY: Enable sending targeted push notifications across multiple devices/browsers
+  pushSubscriptions: [{
+    endpoint: {
+      type: String,
+      required: true
+    },
+    keys: {
+      p256dh: {
+        type: String,
+        required: true
+      },
+      auth: {
+        type: String,
+        required: true
+      }
+    },
+    userAgent: String,
+    subscribedAt: {
+      type: Date,
+      default: Date.now
+    },
+    lastUsedAt: Date,
+    isActive: {
+      type: Boolean,
+      default: true
+    }
+  }]
 }, {
   // Schema options for automatic timestamp management
   timestamps: true, // Automatically adds createdAt and updatedAt fields
