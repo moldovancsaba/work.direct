@@ -3,6 +3,7 @@ import { Inter, Noto_Sans } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import FacebookSDK from "./components/FacebookSDK";
+import PWAInstaller from "./components/PWAInstaller";
 
 // Fonts: prefer Noto Sans (broad unicode coverage incl. latin-ext), Inter secondary
 const inter = Inter({
@@ -57,6 +58,8 @@ export default function RootLayout({
         <div id="fb-root" />
         {/* Load Facebook SDK via client component to avoid passing event handlers from Server Component */}
         <FacebookSDK />
+        {/* PWA Service Worker Registration - WHY: Enables offline functionality and caching */}
+        <PWAInstaller />
         <ThemeProvider>
           {children}
         </ThemeProvider>

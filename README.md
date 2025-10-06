@@ -1,7 +1,7 @@
 # PlayMass - Interactive Game Platform
 
-**Current Version**: 4.10.0
-Last Updated: 2025-10-05T18:24:19.049Z
+**Current Version**: 4.11.0
+Last Updated: 2025-10-06T20:05:00.000Z
 
 ## 🎮 Features
 
@@ -11,6 +11,18 @@ Last Updated: 2025-10-05T18:24:19.049Z
 - **Participant Management**: Track players across sessions
 - **Analytics & Tracking**: Attempt-level session analytics with validated results
 - **MongoDB Integration**: Robust data persistence with Mongoose ODM
+- **Progressive Web App (PWA)** (v4.11.0 ✅):
+  - **Service Worker**: Intelligent caching with network-first and cache-first strategies
+  - **Offline Support**: Plays without internet connection using cached assets
+  - **Push Notifications**: Web push with VAPID authentication for engagement
+  - **Install Prompts**: Smart PWA install prompts for mobile home screen
+  - **Multi-Device**: Push subscriptions work across all user devices
+- **Referral System** (v4.10.0 ✅):
+  - **UUID-Based Tracking**: Unique referral codes with full event attribution
+  - **Social Sharing**: WhatsApp, Facebook, Twitter, Email with one-click sharing
+  - **Fraud Detection**: IP-based prevention with configurable thresholds
+  - **Points & Rewards**: Automatic bonus points on successful conversions
+  - **Admin Analytics**: Platform-wide stats and top referrers leaderboard
 - **Security Hardening** (Phase 3 ✅):
   - **Structured Logging**: Pino-based logging with PII sanitization and production-ready JSON output
   - **Input Validation**: Zod schemas with XSS protection on all user input
@@ -97,12 +109,26 @@ npm install
 
 3. Environment variables are already configured for MongoDB Atlas connection.
 
-4. Run the development server:
+4. (Optional) Generate VAPID keys for push notifications:
+```bash
+npx web-push generate-vapid-keys
+```
+
+Then add to `.env.local`:
+```
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=<public_key>
+VAPID_PRIVATE_KEY=<private_key>
+VAPID_SUBJECT=mailto:your@email.com
+```
+
+5. Run the development server:
 ```bash
 npm run dev
 ```
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser.
+6. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+**Note**: The service worker caches assets for offline use. Push notifications require VAPID keys to function.
 
 ## 📁 Project Structure
 

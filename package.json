@@ -1,6 +1,6 @@
 {
   "name": "playmass",
-  "version": "4.10.1",
+  "version": "4.11.0",
   "private": true,
   "description": "Interactive game platform for creating and distributing Hexa games to target groups with rewards management",
   "author": "Narimato",
@@ -37,11 +37,13 @@
     "source-map-js": "1.2.1",
     "to-regex-range": "5.0.1",
     "uuid": "^9.0.1",
+    "web-push": "^3.6.7",
     "xss": "^1.0.15",
     "zod": "^4.1.11"
   },
   "devDependencies": {
     "@types/uuid": "^9.0.8",
+    "@types/web-push": "^3.6.3",
     "autoprefixer": "^10.4.17",
     "eslint": "^9",
     "eslint-config-next": "15.5.2",
