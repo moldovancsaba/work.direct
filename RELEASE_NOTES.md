@@ -1,8 +1,12 @@
 # 📝 RELEASE_NOTES.md - PlayMass
 
-**Current Version**: 4.10.0
-**Last Updated**: 2025-01-09T18:30:00.000Z
+**Current Version**: 4.10.1
+**Last Updated**: 2025-10-05T18:24:19.049Z
 ## 🔹 Version History
+
+### [v4.10.1] — 2025-10-05T18:24:19.049Z
+- Automatic predev patch bump
+
 
 ### [v4.10.0] — 2025-01-09T18:30:00.000Z
 **Feature: Referral & Viral Growth System + PWA Foundation**
