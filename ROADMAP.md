@@ -1,6 +1,6 @@
 # ROADMAP.md — PlayMass
 
-Last Updated: 2025-01-08T22:00:00.000Z
+Last Updated: 2025-10-05T18:24:19.049Z
 - Forward-looking plan for PlayMass.
 - Priorities and dependencies are explicitly stated to enable safe parallelization.
 
