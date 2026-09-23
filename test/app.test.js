@@ -126,6 +126,16 @@ test("create → find → partial update keeps notes → complete → hidden sti
   assert.match(missing.content[0].text, /404/);
 });
 
+test("public home and privacy pages; they do not reveal the secret path", async () => {
+  for (const p of ["/", "/privacy"]) {
+    const r = await worker.fetch(new Request("https://work.direct.example" + p), env);
+    assert.equal(r.status, 200);
+    assert.doesNotMatch(await r.text(), /s3cret/);
+  }
+  const viaRewrite = await worker.fetch(new Request("https://work.direct.example/api/index?path=privacy"), env);
+  assert.equal(viaRewrite.status, 200);
+});
+
 test("vercel rewrite: /api/index?path=<secret>/health reaches the same route; wrong secret still 404", async () => {
   const ok = await worker.fetch(new Request("https://work.direct.example/api/index?path=s3cret/health"), env);
   assert.equal(ok.status, 200);

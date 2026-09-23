@@ -412,6 +412,8 @@ export default {
     if (!secret) return text("MCP_PATH_SECRET is not configured", 500);
     const base = `/${secret}`;
     const pathname = requestPath(url);
+    if (request.method === "GET" && (pathname === "/" || pathname === "")) return html(HOME_PAGE);
+    if (request.method === "GET" && pathname === "/privacy") return html(PRIVACY_PAGE);
     if (!pathname.startsWith(base + "/") && pathname !== base) return text("Not found", 404);
     const route = pathname.slice(base.length) || "/";
 
@@ -436,6 +438,16 @@ export default {
     return text("Not found", 404);
   },
 };
+
+// Public pages required by the Google OAuth consent screen (home page + privacy policy links).
+const HOME_PAGE = `<h1>work.direct</h1>
+<p>A personal tool of Csaba Moldovan: Claude triages his Gmail and keeps his own Google Tasks up to date. Single user, not a public service.</p>
+<p><a href="/privacy">Privacy</a> · <a href="https://github.com/moldovancsaba/work.direct">Source</a></p>`;
+const PRIVACY_PAGE = `<h1>work.direct — privacy</h1>
+<p>work.direct is used only by its owner (moldovancsaba@gmail.com). It requests one Google scope, <code>https://www.googleapis.com/auth/tasks</code>, to read and write the owner's Google Tasks on his behalf.</p>
+<p>No task data is stored by this service: every request is passed straight to the Google Tasks API. The only stored credential is the owner's OAuth refresh token, kept encrypted in the hosting provider's environment settings. No data is sold, shared or used for advertising, and no analytics or cookies are used.</p>
+<p>Use of information received from Google APIs adheres to the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including the Limited Use requirements.</p>
+<p>Revoke access at any time at <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>. Contact: moldovancsaba@gmail.com.</p>`;
 
 /** The vercel.json rewrite sends every path to /api/index?path=<original>; direct calls keep their own path. */
 function requestPath(url) {
