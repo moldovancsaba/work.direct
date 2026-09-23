@@ -1,0 +1,11 @@
+{
+  "name": "work-direct",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Inbox Triage v2: dependency-free Google Tasks MCP server on Vercel. Google Tasks is the single source of truth for tasks.",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  }
+}
