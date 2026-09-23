@@ -10,7 +10,7 @@ Single source for the plan. Work is tracked as issues on this repo's one project
 | Piece | Where | Job |
 |---|---|---|
 | Claude scheduled task "Inbox Triage refresh" | claude.ai, hourly (Anthropic's schedule) | Scan Gmail, classify Do / Delegate / Delete, archive, write the per-task Google Doc and Calendar events, create/update Google Tasks, append a run-log line, push a notification |
-| Google Tasks MCP server | this repo → Vercel project `narimato/work.direct` | The only way Claude reads and writes Google Tasks (custom connector) |
+| Google Tasks MCP server | this repo → Vercel project `narimato/work.direct` at https://workdirect.vercel.app | The only way Claude reads and writes Google Tasks (custom connector) |
 | Google Tasks app / web | your phone and browser | The task surface: tick, reorder, edit due dates, add notes |
 | Per-task Google Doc | Google Drive | Long content: full context, thread excerpts, drafts |
 | Runbook Google Doc | Google Drive | Run log (one line per run) and status: last run, archive counts |
@@ -69,7 +69,7 @@ Vercel Hobby (personal, non-commercial): ≈ 24 runs/day × ~10 calls ≈ 7,000 
 ## Delivery (issues on the board)
 
 1. Deploy the MCP server to Vercel (`framework: null`), set `MCP_PATH_SECRET` — `/health` answers (Google not yet connected).
-2. Google Cloud OAuth client (Web), redirect URI `https://workdirect-narimato.vercel.app/<secret>/oauth/callback`, consent screen In production; set client id/secret, run `/oauth/start`, store `GOOGLE_REFRESH_TOKEN` — `/health` → `ok: true`.
+2. Google Cloud OAuth client (Web), redirect URI `https://workdirect.vercel.app/<secret>/oauth/callback`, consent screen In production; set client id/secret, run `/oauth/start`, store `GOOGLE_REFRESH_TOKEN` — `/health` → `ok: true`.
 3. Add the claude.ai custom connector **Google Tasks** (`…/<secret>/mcp`, no auth); create the lists `Triage · Do` and `Triage · Delegate`.
 4. Migrate: export the 30 artifact rows once, create them as Google Tasks per the representation above (done ones as completed); verify counts per list.
 5. Update the scheduled-task prompt and the runbook to this flow; run one full cycle and check the run-log line.
