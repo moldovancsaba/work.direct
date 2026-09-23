@@ -2,5 +2,14 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
   "buildCommand": "",
-  "rewrites": [{ "source": "/:path*", "destination": "/api/index?path=:path*" }]
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/:path*",
+      "destination": "/api/index?path=:path*"
+    }
+  ]
 }
