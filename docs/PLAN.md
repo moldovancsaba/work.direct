@@ -10,7 +10,7 @@ Single source for the plan. Work is tracked as issues on this repo's one project
 | Piece | Where | Job |
 |---|---|---|
 | Claude scheduled task "Inbox Triage refresh" | claude.ai, hourly (Anthropic's schedule) | Scan Gmail, classify Do / Delegate / Delete, archive, write the per-task Google Doc and Calendar events, create/update Google Tasks, append a run-log line, push a notification |
-| Google Tasks MCP server | this repo → Vercel project `narimato/work.direct` at https://workdirect.vercel.app | The only way Claude reads and writes Google Tasks (custom connector) |
+| Google Tasks MCP server | this repo → Vercel project `workdirect` (scope `narimato`) at https://workdirect.vercel.app | The only way Claude reads and writes Google Tasks (custom connector) |
 | Google Tasks app / web | your phone and browser | The task surface: tick, reorder, edit due dates, add notes |
 | Per-task Google Doc | Google Drive | Long content: full context, thread excerpts, drafts |
 | Runbook Google Doc | Google Drive | Run log (one line per run) and status: last run, archive counts |
@@ -54,7 +54,7 @@ Dependency-free JavaScript: `src/app.js` (MCP Streamable HTTP, JSON-RPC 2.0, sta
 
 Tools: `list_task_lists`, `create_task_list`, `list_tasks`, `find_tasks`, `get_task`, `create_task`, `update_task` (partial), `move_task`, `complete_task`, `reopen_task`, `delete_task`, `clear_completed`.
 
-Endpoints, all under `/<MCP_PATH_SECRET>/`: `mcp` (POST), `oauth/start`, `oauth/callback`, `health`. Anything else → 404.
+Endpoints, all under `/<MCP_PATH_SECRET>/`: `mcp` (POST), `oauth/start`, `oauth/callback`, `health`. Public, outside the secret prefix: `GET /` (home) and `GET /privacy`, which the Google consent screen requires. Anything else → 404.
 
 ## Security
 

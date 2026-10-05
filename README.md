@@ -1,6 +1,6 @@
 # work.direct
 
-Inbox Triage v2. Claude triages Gmail hourly; **Google Tasks is the single source of truth for tasks**. This repo is the small MCP server that lets Claude read and write Google Tasks, deployed on Vercel (`narimato/work.direct`).
+Inbox Triage v2. Claude triages Gmail hourly; **Google Tasks is the single source of truth for tasks**. This repo is the small MCP server that lets Claude read and write Google Tasks, deployed on Vercel (scope `narimato`, project `workdirect`, https://workdirect.vercel.app); the GitHub repo is `moldovancsaba/work.direct`.
 
 - Plan: [docs/PLAN.md](docs/PLAN.md)
 - Work: the repo's one project board
