@@ -1,19 +1,20 @@
 # Changelog
 
 Generated from git history by `management/scripts/changelog-from-git.mjs`. Do not edit by hand: regenerate it.
-Covers history up to commit `ed99a86` (2026-10-05).
+Covers history up to commit `ae8b7f2` (2026-10-05).
 
 ## 2026-10-05
 
-- Documentation baseline: handover, agent instructions, env example, README and plan accuracy fixes (`ed99a86`)
+- Add a licence and a changelog generated from git history (`ae8b7f2`)
+- Documentation baseline: handover, agent instructions, env example, README and plan accuracy fixes (`ee29bfa`)
 
 ## 2026-09-23
 
-- vercel.json: rewrite the bare root too (`24c9607`)
-- Public home and privacy pages for the Google OAuth consent screen (`d51441f`)
-- docs: production host is workdirect.vercel.app (`3676b5c`)
-- Google Tasks MCP server on Vercel + v2 plan (`0e0951c`)
-- Reset repository for Inbox Triage v2 (`fa20def`)
+- vercel.json: rewrite the bare root too (`bdecb32`)
+- Public home and privacy pages for the Google OAuth consent screen (`98335ea`)
+- docs: production host is workdirect.vercel.app (`5b1b67a`)
+- Google Tasks MCP server on Vercel + v2 plan (`973e417`)
+- Reset repository for Inbox Triage v2 (`2e76b50`)
 
 ## 2025-10-06
 
